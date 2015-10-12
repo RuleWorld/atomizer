@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+                # -*- coding: utf-8 -*-
 """
 Created on Fri May 2 16:56:13 2014
 
@@ -19,7 +19,7 @@ import threading
 import SBMLparser.utils.consoleCommands as consoleCommands
 
 import tempfile
-import gml2sbgn.libsbgn
+import gml2sbgn.libsbgn as libsbgn
 import networkx
 iid = 1
 iid_lock = threading.Lock()
