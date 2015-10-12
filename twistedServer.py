@@ -90,10 +90,11 @@ class AtomizerServer(xmlrpc.XMLRPC):
         if graphtype in ['regulatory', 'contactmap']:
             consoleCommands.setBngExecutable(bngDistro)
             consoleCommands.generateGraph(pointer[1], graphtype)
-            name = pointer[1].split('.')[0]
+            name = pointer[1].split('.')[0].split('/')[-1]
             with open('{0}_{1}.gml'.format(name, graphtype), 'r') as f:
                 graphContent = f.read()
                 self.addToDict(ticket, graphContent)
+                os.remove('{0}_{1}.gml'.format(name, 'contactmap'))
                 print 'success', ticket
         elif graphtype in ['sbgn_er']:
             consoleCommands.setBngExecutable(bngDistro)
