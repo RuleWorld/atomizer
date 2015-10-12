@@ -94,7 +94,7 @@ class AtomizerServer(xmlrpc.XMLRPC):
             with open('{0}_{1}.gml'.format(name, graphtype), 'r') as f:
                 graphContent = f.read()
                 self.addToDict(ticket, graphContent)
-                os.remove('{0}_{1}.gml'.format(name, 'contactmap'))
+                os.remove('{0}_{1}.gml'.format(name, graphtype))
                 print 'success', ticket
         elif graphtype in ['sbgn_er']:
             consoleCommands.setBngExecutable(bngDistro)
