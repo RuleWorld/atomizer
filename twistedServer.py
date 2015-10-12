@@ -4,6 +4,9 @@ Created on Fri May 2 16:56:13 2014
 
 @author: proto
 """
+
+import os
+
 import sys
 sys.path.insert(0, 'SBMLparser')
 
@@ -95,13 +98,14 @@ class AtomizerServer(xmlrpc.XMLRPC):
         elif graphtype in ['sbgn_er']:
             consoleCommands.setBngExecutable(bngDistro)
             consoleCommands.generateGraph(pointer[1], 'contactmap')
-            name = pointer[1].split('.')[0]
+            name = pointer[1].split('.')[0].split('/')[-1]
             # with open('{0}_{1}.gml'.format(name,'contactmap'),'r') as f:
             #   graphContent = f.read()
             graphContent = networkx.read_gml(
                 '{0}_{1}.gml'.format(name, 'contactmap'))
             sbgn = libsbgn.createSBNG_ER_gml(graphContent)
             self.addToDict(ticket, sbgn)
+            os.remove('{0}_{1}.gml'.format(name, 'contactmap'))
             print 'success', ticket
 
         # except:
