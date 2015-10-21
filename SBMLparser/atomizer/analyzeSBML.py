@@ -1491,22 +1491,21 @@ class SBMLAnalyzer:
         else:
             dictionary[patternName] = deepcopy(tmp)
         labelDictionary[patternName] = [tuple(label)]
-        
-        
+
     def getUserDefinedComplexes(self):
         dictionary = {}
         partialDictionary = {}
         userLabelDictionary = {}
         equivalencesList = []
         lexicalLabelDictionary = {}
-        if self.speciesEquivalences != None:
-            speciesdictionary =self.loadConfigFiles(self.speciesEquivalences)
+        if self.speciesEquivalences is not None:
+            speciesdictionary = self.loadConfigFiles(self.speciesEquivalences)
             userEquivalences = speciesdictionary['complexDefinition'] \
                 if 'complexDefinition' in speciesdictionary else None
             for element in userEquivalences:
-                self.userJsonToDataStructure(element[0], element,dictionary,
-                                             userLabelDictionary,equivalencesList)
-                                             
+                self.userJsonToDataStructure(element[0], element, dictionary,
+                                             userLabelDictionary, equivalencesList)
+
             complexEquivalences = speciesdictionary['modificationDefinition']
             for element in complexEquivalences:
                 userLabelDictionary[element] = [tuple(complexEquivalences[element])]
@@ -1515,12 +1514,12 @@ class SBMLAnalyzer:
                 if 'partialComplexDefinition' in speciesdictionary else []
 
             for element in partialUserEquivalences:
-                self.userJsonToDataStructure(tuple(sorted(element[0])), element,partialDictionary,
-                                             {},[])
-        
+                self.userJsonToDataStructure(tuple(sorted(element[0])), element, partialDictionary,
+                                             {}, [])
+
         #stuff we got from string similarity
         for element in self.lexicalSpecies:
-            self.userJsonToDataStructure(element[0], element,dictionary,lexicalLabelDictionary,
+            self.userJsonToDataStructure(element[0], element, dictionary, lexicalLabelDictionary,
                                          equivalencesList)
-        return dictionary,userLabelDictionary,lexicalLabelDictionary, partialDictionary
+        return dictionary, userLabelDictionary, lexicalLabelDictionary, partialDictionary
         

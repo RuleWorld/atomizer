@@ -384,8 +384,15 @@ def getContextRequirements(inputfile, collapse=True, motifFlag=False, excludeRev
 
     label, center, context, product, atomicArray, actions, doubleAction = extractCenterContext(rules, excludeReverse=excludeReverse)
     reactionCenterStateDictionary, doubleActionDict = getRestrictedChemicalStates(label, product, context, doubleAction)
-    
-    # print reactionCenterStateDictionary['Ras%0'][('Ras_GDPmod',0,'Ras_GDP')]['Ras_GTPmod']
+
+    #molecule1 = 'socs3'
+    #molecule2 = 'shp2'
+    #print molecule1,molecule2
+    #print('---',reactionCenterStateDictionary['gp130%0'][(molecule1,1,'')][molecule2])
+    #print('---',reactionCenterStateDictionary['gp130%0'][(molecule2,1,'')][molecule1])
+    #print(reactionCenterStateDictionary['STAT3%0'][('astmod',0,'AST')])
+    #print '++++'
+
     # print reactionCenterStateDictionary['Ras%0'][('Ras_GTPmod',0,'Ras_GTP')]['Ras_GDPmod']
     backupstatedictionary = deepcopy(reactionCenterStateDictionary)
     # print reactionCenterStateDictionary['EGFR%1'][('_Pmod',0,'_P')]
@@ -395,6 +402,9 @@ def getContextRequirements(inputfile, collapse=True, motifFlag=False, excludeRev
     # totalStateDictionary = sortChemicalStates(chemicalStates)
     # print reactionCenterStateDictionary['Shc%0'][('egfr', 0, '')]['mmod']
     requirementDependencies = detectDependencies(reactionCenterStateDictionary, molecules)
+
+
+    #print requirementDependencies['JAK']['requirement']
     # repression
     for molecule in reactionCenterStateDictionary:
         moleculeName = molecule.split('%')[0]
@@ -418,8 +428,12 @@ def getContextRequirements(inputfile, collapse=True, motifFlag=False, excludeRev
         getMutualExclusions(requirementDependencies, molecules)
         exclusionCliques = {}
 
+    processNodes = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+
     if motifFlag:
         # double interactions
+        print doubleActionDict['gp130']
+        multiInteractionDict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         doubleInteractions = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         for molecule in [x for x in requirementDependencies if x in doubleActionDict]:
             for motif in requirementDependencies[molecule]:
@@ -428,8 +442,8 @@ def getContextRequirements(inputfile, collapse=True, motifFlag=False, excludeRev
                     for combination1 in [True, False]:
                         for combination2 in [True, False]:
                             if len(doubleActionDict[molecule][relationship[0]][combination1][relationship[1]][combination2]) > 0:
+                                multiInteractionDict[molecule][(combination1, combination2)][relationship] = tuple(doubleActionDict[molecule][relationship[0]][combination1][relationship[1]][combination2])
                                 doubleInteractions[molecule][tuple(relationship)][motif].append((combination1, combination2))
-    
 
         for molecule in doubleInteractions:
             for relationship in doubleInteractions[molecule]:
@@ -437,24 +451,29 @@ def getContextRequirements(inputfile, collapse=True, motifFlag=False, excludeRev
                     if motif in ['partialIndependence-', 'partialIndependence+', 'fullIndependence']:
                         requirementDependencies[molecule][motif].remove(relationship)
                     for combination in doubleInteractions[molecule][relationship][motif]:
+                        label = multiInteractionDict[molecule][combination][relationship]
                         if combination[0] and combination[1]:
                             requirementDependencies[molecule]['doubleActivation'].append(relationship)
-
+                            processNodes[molecule]['doubleActivation'][relationship] = '{0}_{1}'.format(molecule, '_'.join(label))
                         elif not combination[0] and combination[1]:
                             if motif in ['ordering']:
                                 requirementDependencies[molecule][motif].remove(relationship)
                             elif motif in ['repression']:
-                                requirementDependencies[molecule][motif].remove((relationship[1], relationship[0]))
+                                if (relationship[1], relationship[0]) in requirementDependencies[molecule][motif]:
+                                    requirementDependencies[molecule][motif].remove((relationship[1], relationship[0]))
                             requirementDependencies[molecule]['reprordering'].append(relationship)
+                            processNodes[molecule]['reprordering'][relationship] = '{0}_{1}'.format(molecule, '_'.join(label))
+
                         elif not combination[0] and not combination[1]:
+                            processNodes[molecule]['doubleRepression'][relationship] = '{0}_{1}'.format(molecule, '_'.join(label))
                             if motif == 'repression':
                                 requirementDependencies[molecule][motif].remove(relationship)
                                 requirementDependencies[molecule]['doubleRepression'].append(relationship)
                             elif motif == 'partialIndependence-':
-                                #requirementDependencies[molecule][motif].remove(relationship)
+                                # requirementDependencies[molecule][motif].remove(relationship)
                                 requirementDependencies[molecule]['doubleRepression'].append(relationship)
 
-    return requirementDependencies, backupstatedictionary, exclusionCliques
+    return requirementDependencies, backupstatedictionary, exclusionCliques, processNodes
 
 
 def reverseContextDict(dependencies):
@@ -494,9 +513,10 @@ if __name__ == "__main__":
     namespace = parser.parse_args()
     inputFile = namespace.input
     # print askQuestions(inputFile, 'EGFR', 'shc','grb2')
-    dependencies, backup, _ = getContextRequirements(inputFile, collapse=True, motifFlag=True)
+    dependencies, backup, _, _ = getContextRequirements(inputFile, collapse=True, motifFlag=True)
 
     # print dependencies
     # print(dict(dependencies['EGFR']))
     # print backup
     # print printDependencyLog(dependencies)
+    

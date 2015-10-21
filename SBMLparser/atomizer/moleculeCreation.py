@@ -971,6 +971,7 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
             species.addMolecule(mol)
     
     dependencyGraphCounter = Counter(dependencyGraph[element[0]][0])
+
     # XXX: this wont work for species with more than one molecule with the same name
     changeFlag = False
     partialBonds = defaultdict(list)
@@ -994,6 +995,7 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
                             else:
                                 molecule2.addComponent(deepcopy(component))
                         '''
+
     bondSeeding = [partialBonds[x] for x in partialBonds if x > 0]
     bondExclusion = [partialBonds[x] for x in partialBonds if x < 0]
     # how do things bind together?
@@ -1361,7 +1363,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                         continue
                     database.dependencyGraph[mod] = [[base]]
 
-
     '''
     #complex catalysis reactions
     for key in indirectEquivalenceTranslator:
@@ -1425,7 +1426,6 @@ tmp,removedElement,tmp3))
             database.dependencyGraph[element] = [list(
                 database.lexicalLabelDictionary[element][0])]
 
-
     strippedMolecules = [x.strip('()') for x in molecules]
     orphanedSpecies = [x for x in strippedMolecules if x not in database.dependencyGraph or database.dependencyGraph[x] == []]
     orphanedSpecies.extend([x for x in database.dependencyGraph if database.dependencyGraph[x] == [] and x not in orphanedSpecies])
@@ -1434,7 +1434,7 @@ tmp,removedElement,tmp3))
     annotationDict = parser.getFullAnnotation()
     annotationDependencyGraph, _ = fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database)
     for annotatedSpecies in annotationDependencyGraph:
-        if len(annotationDependencyGraph[annotatedSpecies]) > 0:
+        if len(annotationDependencyGraph[annotatedSpecies]) > 0 and annotatedSpecies not in database.userLabelDictionary:
             addToDependencyGraph(database.dependencyGraph, annotatedSpecies, annotationDependencyGraph[annotatedSpecies][0])
 
     # TODO: merge both lists and use them as a tiebreaker for consolidation

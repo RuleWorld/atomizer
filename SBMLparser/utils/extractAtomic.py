@@ -82,7 +82,7 @@ def extractTransformations(rules, differentiateDimers=False):
             transformationContext.append(context)
             atomicArray.update(atomic)
             productSites = [getMapping(rule.mapping, action.site1), getMapping(rule.mapping, action.site2)]
-            atomic, rc, _ = extractMolecules(action.action, productSites[0], productSites[1], rule.products,differentiateDimers)
+            atomic, rc, _ = extractMolecules(action.action, productSites[0], productSites[1], rule.products, differentiateDimers)
             productElements.append(rc)
             atomicArray.update(atomic)
             actionName.append('%i-%s' % (index, action.action))
