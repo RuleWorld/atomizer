@@ -552,7 +552,6 @@ class SBMLAnalyzer:
         
         '''
         
-        
         #strippedMolecules = [x.strip('()') for x in molecules]
         molecules = [reactant,product] if len(reactant) < len(product) else [product,reactant]
         similarityThreshold = 10
@@ -1203,14 +1202,16 @@ class SBMLAnalyzer:
         return reactantList,productList
 
     def testAgainstExistingConventions(self, fuzzyKey, modificationList, threshold=4):
+
         @memoize
         def testAgainstExistingConventionsHelper(fuzzyKey, modificationList, threshold):
             if not fuzzyKey:
                 return None
             for i in xrange(1, threshold):
-                combinations = itertools.permutations([x[:-3] for x in modificationList], i)
+                combinations = itertools.permutations(modificationList, i)
+                
                 validKeys = list(itertools.ifilter(lambda x: (''.join(x)).upper() == fuzzyKey.upper(), combinations))
-
+                
                 if (validKeys):
                     return validKeys
             return None
@@ -1233,43 +1234,43 @@ class SBMLAnalyzer:
             #fuzzyKey,fuzzyDifference = self.processAdHocNamingConventions(reaction[0][0],reaction[1][0],localSpeciesDict,compartmentChangeFlag)
             if fuzzyKey and fuzzyKey.strip('_') not in strippedMolecules:
                 # if our state isnt yet on the dependency graph preliminary data structures
-                if '{0}mod'.format(fuzzyKey) not in equivalenceTranslator:
-                    # print '---','{0}mod'.format(fuzzyKey),equivalenceTranslator.keys()
+                if '{0}'.format(fuzzyKey) not in equivalenceTranslator:
+                    # print '---','{0}'.format(fuzzyKey),equivalenceTranslator.keys()
                     # check if there is a combination of existing keys that deals with this modification without the need of creation a new one
                     if self.testAgainstExistingConventions(fuzzyKey,self.namingConventions['modificationList']):
                         logMess('DEBUG:Atomization', 'added relationship to existing convention {0}'.format(str(reaction)))
-                        if '{0}mod'.format(fuzzyKey) not in equivalenceTranslator:
-                            equivalenceTranslator['{0}mod'.format(fuzzyKey)] = []
-                        if '{0}mod'.format(fuzzyKey) not in indirectEquivalenceTranslator:
-                            indirectEquivalenceTranslator['{0}mod'.format(fuzzyKey)] = []
-                        if tuple(sorted([x[0] for x in reaction],key=len)) not in equivalenceTranslator['{0}mod'.format(fuzzyKey)]:
-                            equivalenceTranslator['{0}mod'.format(fuzzyKey)].append(tuple(sorted([x[0] for x in reaction],key=len)))
+                        if '{0}'.format(fuzzyKey) not in equivalenceTranslator:
+                            equivalenceTranslator['{0}'.format(fuzzyKey)] = []
+                        if '{0}'.format(fuzzyKey) not in indirectEquivalenceTranslator:
+                            indirectEquivalenceTranslator['{0}'.format(fuzzyKey)] = []
+                        if tuple(sorted([x[0] for x in reaction],key=len)) not in equivalenceTranslator['{0}'.format(fuzzyKey)]:
+                            equivalenceTranslator['{0}'.format(fuzzyKey)].append(tuple(sorted([x[0] for x in reaction],key=len)))
                         return
 
                     logMess('DEBUG:Atomization', 'added induced naming convention {0}'.format(str(reaction)))
-                    equivalenceTranslator['{0}mod'.format(fuzzyKey)] = []
+                    equivalenceTranslator['{0}'.format(fuzzyKey)] = []
                     if fuzzyKey == '0':
                         tmpState = 'ON'
                     else:
                         tmpState = fuzzyKey.upper()
                             
-                    adhocLabelDictionary['{0}mod'.format(fuzzyKey)] = ['{0}mod'.format(fuzzyKey),tmpState]
+                    adhocLabelDictionary['{0}'.format(fuzzyKey)] = ['{0}'.format(fuzzyKey),tmpState]
                     #fill main naming convention data structure
-                    self.namingConventions['modificationList'].append('{0}mod'.format(fuzzyKey))
+                    self.namingConventions['modificationList'].append('{0}'.format(fuzzyKey))
                     self.namingConventions['reactionState'].append(tmpState)
-                    self.namingConventions['reactionSite'].append('{0}mod'.format(fuzzyKey))
-                    self.namingConventions['patterns'][fuzzyDifference] = '{0}mod'.format(fuzzyKey)
+                    self.namingConventions['reactionSite'].append('{0}'.format(fuzzyKey))
+                    self.namingConventions['patterns'][fuzzyDifference] = '{0}'.format(fuzzyKey)
                     self.namingConventions['definitions'].append({'rst':len(self.namingConventions['reactionState'])-1,
                             'rsi':len(self.namingConventions['reactionSite'])-1})
                     if fuzzyKey not in translationKeys:
                         translationKeys.append(fuzzyKey)
                 #if this same definition doesnt already exist. this is to avoid cycles
-                if tuple(sorted([x[0] for x in reaction],key=len)) not in equivalenceTranslator['{0}mod'.format(fuzzyKey)]:
-                    equivalenceTranslator['{0}mod'.format(fuzzyKey)].append(tuple(sorted([x[0] for x in reaction],key=len)))
+                if tuple(sorted([x[0] for x in reaction],key=len)) not in equivalenceTranslator['{0}'.format(fuzzyKey)]:
+                    equivalenceTranslator['{0}'.format(fuzzyKey)].append(tuple(sorted([x[0] for x in reaction],key=len)))
                     newTranslationKeys.append(fuzzyKey)
-                conventionDict[fuzzyDifference] = '{0}mod'.format(fuzzyKey)
-                if '{0}mod'.format(fuzzyKey) not in indirectEquivalenceTranslator:
-                    indirectEquivalenceTranslator['{0}mod'.format(fuzzyKey)] = []
+                conventionDict[fuzzyDifference] = '{0}'.format(fuzzyKey)
+                if '{0}'.format(fuzzyKey) not in indirectEquivalenceTranslator:
+                    indirectEquivalenceTranslator['{0}'.format(fuzzyKey)] = []
                 return True
             return False
         

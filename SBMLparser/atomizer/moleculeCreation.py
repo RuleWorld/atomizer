@@ -893,7 +893,7 @@ def createCatalysisRBM(dependencyGraph, element, translator, reactionProperties,
 
                 species = createEmptySpecies(baseName)
                 
-                componentStateArray.append(['{0}mod'.format(tmp), tmp])
+                componentStateArray.append(['{0}'.format(tmp), tmp])
                 logMess('WARNING:ATOMIZATION', 'adding forced transformation: {0}:{1}:{2}'.format(baseName, dependencyGraph[element[0]], element[0]))
                 #return
             # bail out if we couldn't figure out what modification it is
@@ -928,7 +928,7 @@ def createCatalysisRBM(dependencyGraph, element, translator, reactionProperties,
             # this modification was already activated so create a second modification component
             if addStateToComponent(modifiedSpecies, baseName,
                                    componentState[0], componentState[1]) == componentState[1]:
-                componentName = '{0}{1}mod'.format(componentState[0].split('mod')[0],  modificationCounter[componentState[0]])
+                componentName = '{0}{1}'.format(componentState[0].split('mod')[0],  modificationCounter[componentState[0]])
                 modificationCounter[componentState[0]] += 1
                 addComponentToMolecule(modifiedSpecies, baseName, componentName)
                 addStateToComponent(modifiedSpecies, baseName, componentName,
@@ -1319,7 +1319,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
          _, adhocLabelDictionary, _, _ =  database.sbmlAnalyzer.classifyReactions(rules, molecules,database.dependencyGraph)
     database.reactionProperties.update(adhocLabelDictionary)
 
-
     #update catalysis equivalences
     #catalysis reactions
     for key in database.eequivalenceTranslator2:
@@ -1337,7 +1336,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                     #    continue
                 addToDependencyGraph(database.dependencyGraph, modElement,
                                      [baseElement])
-
 
     # non lexical-analysis catalysis reactions
     if database.forceModificationFlag:
@@ -1532,8 +1530,9 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
                 addToDependencyGraph(database.eequivalenceTranslator, modification, instance)
 
     database.weights = sorted(database.weights, key=lambda rule: (rule[1], len(rule[0])))
+
     atomize(database.prunnedDependencyGraph, database.weights, database.translator, database.reactionProperties,
-            database.eequivalenceTranslator, bioGridFlag, database.sbmlAnalyzer, database, parser)
+            database.eequivalenceTranslator2, bioGridFlag, database.sbmlAnalyzer, database, parser)
     onlySynDec = len([x for x in database.classifications if x not in ['Generation', 'Decay']]) == 0
     propagateChanges(database.translator, database.prunnedDependencyGraph)
 
