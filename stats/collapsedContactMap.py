@@ -257,77 +257,84 @@ def fillContextGraphInformation(graphDictionary, extendedInformation, speciesNam
                                 edgeColor = False
                         if edgeColor:
                             graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
-                                                                                           'style': "dashed"}, weight=0.1)
+                                                                                           }, weight=0.1)
                     elif relationship in ['doubleActivation']:
                         if bipartiteFlag:
                             label = extendedInformation['processNodes'][molecule][relationship][(requirement1, requirement2)]
                             if label not in graphDictionary[relationship].node:
                                 createNode(graphDictionary[relationship], label,
-                                           {'type': "diamond", 'fill': fill2, "w": 15, "h": 15}, {'text': ' '}, 0, graphDictionary[relationship].node[molecule]['id'])
+                                           {'type': "rectangle", 'fill': fill2, "w": 15, "h": 15}, {'text': ' '}, 0, graphDictionary[relationship].node[molecule]['id'])
                             if (node1, label) not in graphDictionary[relationship].edges():
                                 graphDictionary[relationship].add_edge(node1, label, graphics={
-                                                                       'style': "dotted"}, weight=0.1)
+                                                                       'targetArrow':"standard"}, weight=0.1)
                             if (label, node2) not in graphDictionary[relationship].edges():
                                 graphDictionary[relationship].add_edge(label, node2, graphics={
-                                                                       'fill': '#0000FF', 'style': "dashed", 'targetArrow': "standard"}, weight=0.1)
+                                                                       'fill': '#0000FF', 'targetArrow': "standard"}, weight=0.1)
                             if (label, node1) not in graphDictionary[relationship].edges():
                                 graphDictionary[relationship].add_edge(label, node1, graphics={
-                                                                       'fill': '#0000FF', 'style': "dashed", 'targetArrow': "standard"}, weight=0.1)
+                                                                       'fill': '#0000FF', 'targetArrow': "standard"}, weight=0.1)
 
                         else:
                             graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
-                                                                   'style': "dashed", 'targetArrow': "diamond"}, weight=0.1)
+                                                                   'targetArrow': "rectangle"}, weight=0.1)
                     elif relationship in ['reprordering']:
                         if bipartiteFlag:
                             label = extendedInformation['processNodes'][molecule][relationship][(requirement1, requirement2)]
                             if label not in graphDictionary[relationship].node:
                                 createNode(graphDictionary[relationship], label,
-                                           {'type': "diamond", 'fill': fill2, "w": 15, "h": 15}, {'text': ' '}, 0, graphDictionary[relationship].node[molecule]['id'])
+                                           {'type': "rectangle", 'fill': fill2, "w": 15, "h": 15}, {'text': ' '}, 0, graphDictionary[relationship].node[molecule]['id'])
                             if (node1, label) not in graphDictionary[relationship].edges():
                                 graphDictionary[relationship].add_edge(node1, label, graphics={
-                                                                       'style': "dotted"}, weight=0.1)
+                                                                       'targetArrow':"standard"}, weight=0.1)
                             if (label, node2) not in graphDictionary[relationship].edges():
                                 graphDictionary[relationship].add_edge(label, node2, graphics={
-                                                                       'fill': '#0000FF', 'style': "dashed", 'targetArrow': "standard"}, weight=0.1)
+                                                                       'fill': '#0000FF', 'targetArrow': "standard"}, weight=0.1)
                             if (label, node1) not in graphDictionary[relationship].edges():
                                 graphDictionary[relationship].add_edge(label, node1, graphics={
-                                                                       'fill': '#008000', 'style': "dashed", 'targetArrow': "dash", "arcType": "fixedRatio",
+                                                                       'fill': '#008000', 'targetArrow': "dash", "arcType": "fixedRatio",
                                                                        "arcHeight": 34, "arcRatio": 2}, weight=0.1)
 
                         else:
                             graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
-                                                                   'style': "dashed", 'targetArrow': "standard", 'sourceArrow': "dash"}, weight=0.1)
+                                                                    'targetArrow': "standard", 'sourceArrow': "dash"}, weight=0.1)
                     elif relationship in ['repression']:
 
                         graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
-                                                               'style': "dashed", 'targetArrow': "dash"}, weight=0.1)
+                                                                'targetArrow': "dash"}, weight=0.1)
                     elif relationship in ['doubleRepression']:
                         if bipartiteFlag:
                             label = extendedInformation['processNodes'][molecule][relationship][(requirement1, requirement2)]
                             if label not in graphDictionary[relationship].node:
                                 createNode(graphDictionary[relationship], label,
-                                           {'type': "diamond", 'fill': fill2, "w": 15, "h": 15}, {'text': ' '}, 0, graphDictionary[relationship].node[molecule]['id'])
+                                           {'type': "rectangle", 'fill': fill2, "w": 15, "h": 15}, {'text': ' '}, 0, graphDictionary[relationship].node[molecule]['id'])
                             if (node1, label) not in graphDictionary[relationship].edges():
                                 graphDictionary[relationship].add_edge(node1, label, graphics={
-                                                                       'style': "dotted"}, weight=0.1)
+                                                                       'targetArrow':"standard"}, weight=0.1)
                             if (label, node2) not in graphDictionary[relationship].edges():
                                 graphDictionary[relationship].add_edge(label, node2, graphics={
-                                                                       'fill': '#008000', 'style': "dashed", 'targetArrow': "dash"}, weight=0.1)
+                                                                       'fill': '#008000',  'targetArrow': "dash"}, weight=0.1)
                             if (label, node1) not in graphDictionary[relationship].edges():
                                 graphDictionary[relationship].add_edge(label, node1, graphics={
-                                                                       'fill': '#008000', 'style': "dashed", 'targetArrow': "dash", "arcType": "fixedRatio",
+                                                                       'fill': '#008000',  'targetArrow': "dash", "arcType": "fixedRatio",
                                                                        "arcHeight": 34, "arcRatio": 2}, weight=0.1)
 
                         else:
                             graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
-                                                                   'style': "dashed", 'targetArrow': "crows_foot_one_mandatory"}, weight=0.1)
-                    elif relationship in ['partialIndependence-', 'partialIndependence+']:
+                                                                    'targetArrow': "crows_foot_one_mandatory"}, weight=0.1)
+                    elif relationship in ['partialIndependence-']:
+                        print '---',node2,node1
                         graphDictionary[relationship].add_edge(node2, node1, graphics={'fill': color[relationship],
-                                                               'style': "dashed", 'targetArrow': "diamond"}, weight=0.1)
+                                                                'targetArrow': "diamond"}, weight=0.1)
+                    elif relationship in ['partialIndependence+']:
+                        print '+++',node1,node2
+                        graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
+                                                                'targetArrow': "diamond"}, weight=0.1)
+                        print graphDictionary[relationship].edges()
+
                     #elif relationship not in ['fullIndependence']:
                     else:
                         graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
-                                                               'style': "dashed", 'targetArrow': "standard"}, weight=0.1)
+                                                                'targetArrow': "standard"}, weight=0.1)
                 else:
                     #if relationship == 'exclusion':
                     pass
@@ -394,7 +401,7 @@ def createCollapsedContact(rules, species, transformations, fileName, extendedIn
 
                 if len(bondpartners) == 2:
                     dummyNode, label1, fill1 = getDummyNode(bondpartners[0], bondpartners[1], collapsedComponents)
-                    dummyNode2, label2, fill2 = getDummyNode(bondpartners[1], bondpartners[0], collapsedComponents)
+                    dummyNode2, label2, fill2 = getDum  myNode(bondpartners[1], bondpartners[0], collapsedComponents)
                     parentNode1 = graph.node[bondpartners[0]]['id']
                     parentNode2 = graph.node[bondpartners[1]]['id']
                     if bondpartners[0] in extendedInformation['exclusionCliques']:
@@ -547,7 +554,7 @@ def createCollapsedContact(rules, species, transformations, fileName, extendedIn
 
 
 
-                    graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship], 'style': "dashed", 'targetArrow': "standard"}, weight=0.1)
+                    graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],  'targetArrow': "standard"}, weight=0.1)
                 else:
                     #if relationship == 'exclusion':
                     pass

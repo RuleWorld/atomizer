@@ -8,10 +8,6 @@ Created on Fri May 2 16:56:13 2014
 import os
 
 import sys
-sys.path.insert(0, 'SBMLparser')
-
-import SBMLparser.libsbml2bngl as libsbml2bngl
-import SBMLparser.utils.annotationExtender as annotationExtender
 # Restrict to a particular path.
 from twisted.web import xmlrpc, server
 from twisted.internet import reactor
@@ -21,11 +17,20 @@ import SBMLparser.utils.consoleCommands as consoleCommands
 import tempfile
 import gml2sbgn.libsbgn as libsbgn
 import networkx
-iid = 1
-iid_lock = threading.Lock()
 from subprocess import call
+import yaml
+
+sys.path.insert(0, 'SBMLparser')
+import SBMLparser.libsbml2bngl as libsbml2bngl
+import SBMLparser.utils.readBNGXML as readBNGXML
+import SBMLparser.utils.annotationExtender as annotationExtender
+import SBMLparser.utils.nameNormalizer as normalizer
+import SBMLparser.utils.modelComparison as modelComparison
 
 bngDistro = '/home/ubuntu/wokspace/bionetgen/bng2/BNG2.pl'
+iid = 1
+iid_lock = threading.Lock()
+
 #bngDistro = '/home/proto/workspace/bionetgen/bng2/BNG2.pl'
 
 
@@ -58,6 +63,59 @@ class AtomizerServer(xmlrpc.XMLRPC):
         except:
             self.addToDict(ticket, -5)
             print 'failure'
+
+    def extractMoleculeTypes(self,ticket,bnglContents, bnglContents2):
+
+        moleculeTypesList = []
+        for element in [bnglContents, bnglContents2]:
+            pointer = tempfile.mkstemp(suffix='.bngl', text=True)
+            with open(pointer[1], 'w') as f:
+                f.write(element)
+            print pointer[1]
+            consoleCommands.setBngExecutable(bngDistro)
+            consoleCommands.bngl2xml(pointer[1])
+
+            xmlFileName = pointer[1].split('.')[0] + '.xml'
+            xmlFileName = xmlFileName.split(os.sep)[-1]
+            moleculeTypes, _, _ = readBNGXML.parseXML(xmlFileName)
+            moleculeTypesList.append(moleculeTypes)
+            os.remove(xmlFileName)
+        self.addToDict(ticket, moleculeTypesList)
+        print 'success', ticket
+
+    def compareFiles(self, ticket, bnglContents, bnglContents2, mappingFile):
+        finalBNGLContent = []
+        finalNamespace = []
+        for mapInfo, bnglContent in zip(mappingFile['model'], [bnglContents, bnglContents2]):
+            pointer = tempfile.mkstemp(suffix='.bngl', text=True)
+            with open(pointer[1], 'w') as f:
+                f.write(bnglContent)
+
+            print pointer[1]
+            consoleCommands.setBngExecutable(bngDistro)
+            consoleCommands.bngl2xml(pointer[1])
+
+            xmlFileName = pointer[1].split('.')[0] + '.xml'
+            xmlFileName = xmlFileName.split(os.sep)[-1]
+            bnglNamespace = readBNGXML.parseFullXML(xmlFileName)
+            normalizer.normalizeNamespace(bnglNamespace, mapInfo)
+            
+            finalBNGLContent.append(readBNGXML.createBNGLFromDescription(bnglNamespace))
+            finalNamespace.append(bnglNamespace)
+
+
+
+            # os.remove(pointer[1])
+            os.remove(xmlFileName)
+
+        similarity = modelComparison.evaluateSimilarity(finalNamespace[0], finalNamespace[1])
+        self.addToDict(ticket, [finalBNGLContent, similarity])
+        print 'success', ticket
+
+
+
+        pass
+
 
     def generateAnnotation(self, ticket, xmlFile):
 
@@ -143,11 +201,37 @@ class AtomizerServer(xmlrpc.XMLRPC):
 
         return counter
 
+    def xmlrpc_getMoleculeTypes(self, bbnglFile, bbnglFile2):
+        """receives bbnglFile returns the molecule types in the BNGL"""
+        counter = next_id()
+        bnglFile = bbnglFile.data
+        bnglFile2 = bbnglFile2.data
+        reactor.callInThread(self.extractMoleculeTypes, counter, bnglFile, bnglFile2)
+        # process is ready to start status
+        processDict[counter] = -2
+
+        return counter
+
+    def xmlrpc_compareFiles(self, bbnglFile, bbnglFile2, mappingScript):
+        """receives bbnglFile returns the molecule types in the BNGL"""
+        counter = next_id()
+        bnglFile = bbnglFile.data
+        bnglFile2 = bbnglFile2.data
+        mappingDict = yaml.load(mappingScript.data)
+        print mappingDict, type(mappingDict)
+        reactor.callInThread(self.compareFiles, counter, bnglFile, bnglFile2, mappingDict)
+        # process is ready to start status
+        processDict[counter] = -2
+
+        return counter
+
     def xmlrpc_getDict(self, ticketNumber):
         if ticketNumber in processDict:
             return processDict.pop(ticketNumber)
         else:
             return -1
+
+
 
     def xmlrpc_isready(self, ticketNumber):
         if ticketNumber in processDict:

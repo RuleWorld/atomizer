@@ -261,8 +261,7 @@ def parseFullXML(xmlFile):
     return structureDefinitions
 
 
-def parseXML(xmlFile):
-    doc = etree.parse(xmlFile)
+def parseXMLStruct(doc):
     molecules = doc.findall('.//{http://www.sbml.org/sbml/level3}MoleculeType')
     rules = doc.findall('.//{http://www.sbml.org/sbml/level3}ReactionRule')
     ruleDescription = []
@@ -285,6 +284,16 @@ def parseXML(xmlFile):
         ruleDescription.append(parseRule(rule, parameterDict))
     return moleculeList, ruleDescription, parameterDict
 
+
+def parseXMLFromString(xmlString):
+    doc = etree.fromstring(xmlString)
+    return parseXMLStruct(doc)
+
+
+
+def parseXML(xmlFile):
+    doc = etree.parse(xmlFile)
+    return parseXMLStruct(doc)
 
 def getNumObservablesXML(xmlFile):
     doc = etree.parse(xmlFile)
@@ -352,5 +361,8 @@ def createBNGLFromDescription(namespace):
 if __name__ == "__main__":
     #mol,rule,par = parseXML("output19.xml")
     # print [str(x) for x in mol]
-    print getNumObservablesXML('output19.xml')
+    with open('output19.xml','r') as f:
+        s = f.read()
+    print parseXMLFromString(s)
+    #print getNumObservablesXML('output19.xml')
 

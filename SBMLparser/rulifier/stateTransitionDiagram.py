@@ -53,6 +53,7 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
         flag = True
 
         for centerUnit, productUnit, actionUnit, contextUnit in zip(center, product, action, context):
+
             # create a node label based on reactant + context/ product + context
             if 'ChangeCompartment' in actionUnit:
                 continue
@@ -105,16 +106,14 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
             destinationCounter[element].subtract(tmpSourceCounter[element])
         for molecule in sourceCounter:
             if molecule in destinationCounter:
-
                 sourceTuple = tuple(sorted([(x[0], x[1] > 0) for x in sourceCounter[molecule].items()], key=lambda x: x[0]))
                 destinationTuple = tuple(sorted([(x[0], x[1] > 0) for x in destinationCounter[molecule].items()], key=lambda x: x[0]))
 
                 #sourceTuple = tuple(sorted([x[0] for x in sourceCounter[molecule].items()]))
                 #destinationTuple = tuple(sorted([x[0] for x in destinationCounter[molecule].items() if x[1]> 0]))
-
-            nodeList[molecule].add(sourceTuple)
-            nodeList[molecule].add(destinationTuple)
-            edgeList[molecule].add((sourceTuple, destinationTuple))
+                nodeList[molecule].add(sourceTuple)
+                nodeList[molecule].add(destinationTuple)
+                edgeList[molecule].add((sourceTuple, destinationTuple))
 
         # find the intersection context set
     return nodeList, edgeList
@@ -128,7 +127,15 @@ def getContextRequirements(inputfile, collapse=True, motifFlag=False, excludeRev
     moleculeStateMatrix = {}
  
     label, center, context, product, atomicArray, actions, doubleAction = extractCenterContext(rules, excludeReverse=excludeReverse)
+
     return getStateTransitionDiagram(label, center, product, context, actions, molecules)
+
+
+def getContextRequirementsFromNamespace(namespace, excludeReverse=False):
+    label, center, context, product,\
+         atomicArray, actions, doubleAction = extractCenterContext(namespace['rules'], excludeReverse=excludeReverse)
+    return getStateTransitionDiagram(label, center, product, context, actions, namespace['molecules'])
+
 
 
 def defineConsole():
@@ -146,3 +153,4 @@ if __name__ == "__main__":
     inputFile = namespace.input
 
     stateDictionary = getContextRequirements(inputFile, collapse=True, motifFlag=True)
+    print stateDictionary[0]['JAK']
