@@ -63,15 +63,13 @@ def evaluateProcessSimilarity(bnglNamespace, bnglNamespace2):
         scoreDict[element]['score2'] = 1 - scoreDict[element]['intersection'][1]*1.0/scoreDict[element]['file2']
 
     return scoreDict
-    #print stdDictionary1
-    #print stdDictionary2
+
 
 def evaluateSimilarity(bnglNamespace, bnglNamespace2):
     similarity = {}
-    similarity['structure']  = evaluateStructureSimilarity(bnglNamespace['molecules'], bnglNamespace2['molecules'])
-    similarity['process'] = evaluateProcessSimilarity(bnglNamespace,bnglNamespace2)
+    similarity['structure'] = evaluateStructureSimilarity(bnglNamespace['molecules'], bnglNamespace2['molecules'])
+    similarity['process'] = evaluateProcessSimilarity(bnglNamespace, bnglNamespace2)
     return similarity
-
 
 
 if __name__ == "__main__":

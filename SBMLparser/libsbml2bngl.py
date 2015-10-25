@@ -33,7 +33,7 @@ from rulifier import postAnalysis
 import pprint
 
 # returntype for the sbml analyzer translator and helper functions
-AnalysisResults = namedtuple('AnalysisResults', ['rlength', 'slength', 'reval', 'reval2', 'clength', 'rdf', 'finalString', 'speciesDict', 'database'])
+AnalysisResults = namedtuple('AnalysisResults', ['rlength', 'slength', 'reval', 'reval2', 'clength', 'rdf', 'finalString', 'speciesDict', 'database', 'annotation'])
 
 
 def loadBioGrid():
@@ -421,13 +421,14 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     if bioGrid:
         bioGridDict = loadBioGrid()
     
-    #call the atomizer (or not). structured molecules are contained in translator
-    #onlysyndec is a boolean saying if a model is just synthesis of decay reactions
+    # call the atomizer (or not). structured molecules are contained in translator
+    # onlysyndec is a boolean saying if a model is just synthesis of decay reactions
     if atomize:
-        translator, onlySynDec = mc.transformMolecules(parser, database, reactionDefinitions, namingConventions, speciesEquivalence,bioGrid)
+        translator, onlySynDec = mc.transformMolecules(parser, database, reactionDefinitions,
+                                                       namingConventions, speciesEquivalence, bioGrid)
     else:    
         translator={}
-    #process other sections of the sbml file (functions reactions etc.)
+    # process other sections of the sbml file (functions reactions etc.)
     '''
     pr.disable()
     s = StringIO.StringIO()
@@ -450,10 +451,10 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     if atomize and onlySynDec:
         returnArray = list(returnArray)
         #returnArray.translator = -1
-    returnArray = AnalysisResults(*(list(returnArray[0:-1]) + [database]))
+    returnArray = AnalysisResults(*(list(returnArray[0:-2]) + [database] + [returnArray[-1]]))
     return returnArray
 
-def correctRulesWithParenthesis(rules,parameters):
+def correctRulesWithParenthesis(rules, parameters):
     '''
     helper function. Goes through a list of rules and adds a parenthesis
     to the reaction rates of those functions whose rate is in list
@@ -555,8 +556,9 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             rawtemp = parser.getRawSpecies(species,[x.split(' ')[0] for x in param])
             rawSpecies[rawtemp['identifier']] = rawtemp
     parser.reset()
-    
-    molecules, initialConditions, observables, speciesDict, observablesDict = parser.getSpecies(translator,[x.split(' ')[0] for x in param])
+
+    molecules, initialConditions, observables, speciesDict,\
+        observablesDict, annotationInfo = parser.getSpecies(translator, [x.split(' ')[0] for x in param])
     # finally, adjust parameters and initial concentrations according to whatever  initialassignments say
     param, zparam, initialConditions = parser.getInitialAssignments(translator, param, zparam, molecules, initialConditions)
     # FIXME: this method is a mess, improve handling of assignmentrules since we can actually handle those
@@ -577,8 +579,8 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     observables.extend('Species {0} {0}'.format(x.split(' ')[0]) for x in removeParams)
     for x in removeParams:
         initialConditions.append(x.split(' ')[0] + tags + ' ' + x.split(' ')[1])
-    ##Comment out those parameters that are defined with assignment rules
-    ##TODO: I think this is correct, but it may need to be checked
+    ## Comment out those parameters that are defined with assignment rules
+    ## TODO: I think this is correct, but it may need to be checked
     tmpParams = []
     for idx, parameter in enumerate(param):
         for key in artificialObservables:
@@ -695,30 +697,18 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     meta = parser.getMetaInformation(commentDictionary)
 
     
-    from collections import OrderedDict
-    finalString = writer.finalText(meta,param+reactionParameters,molecules,initialConditions,list(OrderedDict.fromkeys(observables)),list(OrderedDict.fromkeys(rules)),functions,compartments,outputFile)
+    finalString = writer.finalText(meta, param + reactionParameters, molecules, initialConditions, list(OrderedDict.fromkeys(observables)), list(OrderedDict.fromkeys(rules)),functions,compartments,outputFile)
     
-    #print outputFile
-    
-    logMess('INFO:Summary','File contains {0} molecules out of {1} original SBML species'.format(len(molecules),len(observables)))
-    #store a logfile
-    '''
-    try:
-        if len(logMess.log) > 0:
-            with open(outputFile + '.log', 'w') as f:
-                for element in logMess.log:
-                    f.write(element + '\n')
-    except AttributeError:
-        print "error"
-    except IOError:
-        pass
-        #print ""
-    '''
+    logMess('INFO:Summary','File contains {0} molecules out of {1} original SBML species'.format(len(molecules), len(observables)))
+
     # rate of each classified rule
     evaluate2 = 0 if len(observables) == 0 else len(molecules)*1.0/len(observables)
 
+    # add unit information to annotations
+
+    annotationInfo['units'] = parser.getUnitDefinitions()
     return AnalysisResults(len(rules), len(observables), evaluate, evaluate2, len(compartments),
-                          parser.getSpeciesAnnotation(), finalString, speciesDict,None)
+                           parser.getSpeciesAnnotation(), finalString, speciesDict, None, annotationInfo)
 
     '''
     if translator != {}:

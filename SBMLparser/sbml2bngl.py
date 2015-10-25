@@ -43,15 +43,17 @@ class SBML2BNGL:
     that are translatable into bngl
     '''
     def __init__(self, model, useID=True):
+
         self.useID = useID
         self.model = model
         self.tags = {}
         self.boundaryConditionVariables = []
         self.speciesDictionary = {}
         self.speciesMemory = []
+        self.speciesAnnotationDict = None
         self.getSpecies()
         self.reactionDictionary = {}
-        self.speciesAnnotation = None    
+        self.speciesAnnotation = None
         self.speciesCompartments = None
         self.getUnitDefinitions()
         self.convertSubstanceUnits = False
@@ -76,7 +78,7 @@ class SBML2BNGL:
         lista = libsbml.CVTermList()
         libsbml.RDFAnnotationParser.parseRDFAnnotation(annotation, lista)
         for idx in range(lista.getSize()):
-            #biol,qual = lista.get(idx).getBiologicalQualifierType(), lista.get(idx).getModelQualifierType()
+            # biol,qual = lista.get(idx).getBiologicalQualifierType(), lista.get(idx).getModelQualifierType()
             qualifierType = lista.get(idx).getQualifierType()
             qualifierDescription = bioqual[lista.get(idx).getBiologicalQualifierType()] if qualifierType \
                 else modqual[lista.get(idx).getModelQualifierType()]
@@ -261,6 +263,7 @@ class SBML2BNGL:
                     name = unit.getName() if unit.getName() else unitDefinition.getName()
                     unitList.append({'kind':unit2.getKind(), 'scale': unit2.getScale(), 'multiplier':unit2.getMultiplier(), 'exponent': unit2.getExponent(), 'name':name})
             self.unitDictionary[unitDefinition.getId()] = unitList
+        return self.unitDictionary
 
     def preProcessStoichiometry(self, reactants):
         '''
@@ -942,6 +945,16 @@ but reaction is marked as reversible'.format(reactionID))
             parameterValue **= int(factor['exponent'])
         return parameterValue
 
+
+    def __getRawParameters(self, parameter):
+        parameterSpecs = {}
+        parameterSpecs['id'] = parameter.getId()
+        parameterSpecs['value'] = parameter.getValue()
+        parameterSpecs['name'] = parameter.getName()
+        parameterSpecs['units'] = parameter.getUnits
+
+        return parameterSpecs
+
     def getParameters(self):
         parameters = []
         zparam = []
@@ -974,7 +987,12 @@ but reaction is marked as reversible'.format(reactionID))
         in sbml parameters and species have their own namespace. not so in
         bionetgen, so we need to rename things if they share the same name
         '''
+        def default_to_regular(d):
+            if isinstance(d, defaultdict):
+                d = {k: default_to_regular(v) for k, v in d.iteritems()}
+            return d
 
+        
         moleculesText = []
         speciesText = []
         observablesText = []
@@ -984,6 +1002,9 @@ but reaction is marked as reversible'.format(reactionID))
         speciesTranslationDict = {}
         compartmentDict = {}
         compartmentDict[''] = 1
+        speciesAnnotationInfo = default_to_regular(self.getFullAnnotation())
+        annotationInfo = {'moleculeTypes': {}, 'species': {}}
+
         for compartment in self.model.getListOfCompartments():
             compartmentDict[compartment.getId()] = compartment.getSize()
 
@@ -996,13 +1017,20 @@ but reaction is marked as reversible'.format(reactionID))
             if(rawSpecies['returnID'] in translator):
                 if rawSpecies['returnID'] in rawSpeciesName:
                     rawSpeciesName.remove(rawSpecies['returnID'])
-                if translator[rawSpecies['returnID']].getSize()==1 \
-                and translator[rawSpecies['returnID']].molecules[0].name not in names \
-                and translator[rawSpecies['returnID']].molecules[0].name not in rawSpeciesName:
+                if translator[rawSpecies['returnID']].getSize() == 1 \
+                    and translator[rawSpecies['returnID']].molecules[0].name not in names \
+                        and translator[rawSpecies['returnID']].molecules[0].name not in rawSpeciesName:
                     names.append(translator[rawSpecies['returnID']].molecules[0].name)
                     moleculesText.append(translator[rawSpecies['returnID']].str2())
+                    if rawSpecies['returnID'] in speciesAnnotationInfo:
+                        annotationInfo['moleculeTypes'][rawSpecies['returnID']] = speciesAnnotationInfo[rawSpecies['returnID']]
+                        del speciesAnnotationInfo[rawSpecies['returnID']]
             else:
                 moleculesText.append(rawSpecies['returnID'] + '()')
+                if rawSpecies['returnID'] in speciesAnnotationInfo:
+                    annotationInfo['moleculeTypes'][rawSpecies['returnID']] = speciesAnnotationInfo[rawSpecies['returnID']]
+                    del speciesAnnotationInfo[rawSpecies['returnID']]
+
             temp = '$' if rawSpecies['isConstant'] != 0 else ''
             tmp = translator[str(rawSpecies['returnID'])] if rawSpecies['returnID'] in translator \
                 else rawSpecies['returnID'] + '()'
@@ -1029,12 +1057,16 @@ but reaction is marked as reversible'.format(reactionID))
             if translator[species].getSize()==1 and translator[species].molecules[0].name not in names:
                 names.append(translator[species].molecules[0].name)
                 moleculesText.append(translator[species].str2())
+
+        annotationInfo['species'] = speciesAnnotationInfo
+
         #moleculesText.append('NullSpecies()')
         #speciesText.append('$NullSpecies() 1')
-        self.speciesMemory = []
-        return moleculesText,speciesText,observablesText,speciesTranslationDict, observablesDict
 
-    def getInitialAssignments(self,translator,param,zparam,molecules,initialConditions):
+        self.speciesMemory = []
+        return moleculesText,speciesText,observablesText,speciesTranslationDict, observablesDict, annotationInfo
+
+    def getInitialAssignments(self, translator, param, zparam, molecules, initialConditions):
         '''
         process the get initial assigmnetns section. This can be used to initialize
         parameters or species, so we have to account for both checking both arrays
@@ -1110,36 +1142,33 @@ but reaction is marked as reversible'.format(reactionID))
         return self.speciesAnnotation
 
     def getFullAnnotation(self):
-        if self.speciesAnnotation:
-            return self.speciesAnnotation
-        
-        speciesAnnotationDict = defaultdict(lambda: defaultdict(list))
+        if self.speciesAnnotationDict:
+            return self.speciesAnnotationDict
+        self.speciesAnnotationDict = defaultdict(lambda: defaultdict(list))
 
         for species in self.model.getListOfSpecies():
-            rawSpecies = self.getRawSpecies(species,logEntries=False)
+            rawSpecies = self.getRawSpecies(species, logEntries=False)
             annotationXML = species.getAnnotation()
             lista = libsbml.CVTermList()
-            libsbml.RDFAnnotationParser.parseRDFAnnotation(annotationXML,lista)
+            libsbml.RDFAnnotationParser.parseRDFAnnotation(annotationXML, lista)
             if lista.getSize() == 0:
-                speciesAnnotationDict[rawSpecies['returnID']] =  {}
+                self.speciesAnnotationDict[rawSpecies['returnID']] = {}
             else:
                 for idx in range(lista.getSize()):
                     for idx2 in range(0, lista.get(idx).getResources().getLength()):
                         resource = lista.get(idx).getResources().getValue(idx2)
                         qualifierType = lista.get(idx).getQualifierType()
                         qualifierDescription = bioqual[lista.get(idx).getBiologicalQualifierType()] if qualifierType \
-                        else modqual[lista.get(idx).getModelQualifierType()]
-                        speciesAnnotationDict[rawSpecies['returnID']][qualifierDescription].append(resource)
+                            else modqual[lista.get(idx).getModelQualifierType()]
+                        self.speciesAnnotationDict[rawSpecies['returnID']][qualifierDescription].append(resource)
 
-       
-
-        return speciesAnnotationDict
+        return self.speciesAnnotationDict
 
     def getModelAnnotation(self):
         modelAnnotation = []
         annotationXML = self.model.getAnnotation()
         lista = libsbml.CVTermList()
-        libsbml.RDFAnnotationParser.parseRDFAnnotation(annotationXML,lista)
+        libsbml.RDFAnnotationParser.parseRDFAnnotation(annotationXML, lista)
         if lista.getSize() == 0:
             modelAnnotations = []
         else:

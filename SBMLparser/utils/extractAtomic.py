@@ -96,12 +96,13 @@ def extractTransformations(rules, differentiateDimers=False):
 
 if __name__ == "__main__":
     import readBNGXML
-    _, rules, _ = readBNGXML.parseXML('output205_test.xml')
+    _, rules, _ = readBNGXML.parseXML('output48.xml')
     for idx, rule in enumerate(rules):
         tatomicArray, ttransformationCenter, ttransformationContext, \
             tproductElements, tactionNames, tlabelArray = extractTransformations(
                 [rule], True)
-        if rule[0].label == 'reaction_3':
+        if rule[0].label == '_reverse_v7':
+            print str(rule[0])
             print ttransformationContext
             print tproductElements
             raise Exception
