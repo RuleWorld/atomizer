@@ -362,12 +362,9 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
         '''
         # if all the candidates are about modification changes to a complex
         # then try to do it through lexical analysis
-
         if all([len(candidate) == 1 for candidate in candidates]) and \
                 candidates[0][0] != reactant and len(tmpCandidates[0]) > 1:
             if reactant is not None:
-                pass
-            if reactant == 'EGF_pEGFR_2_Grb2_MEKK1abpMEKcdef':
                 pass
 
             # analyze based on standard modifications
@@ -375,7 +372,6 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
             #print lexCandidate
             #print '++++'
             lexCandidate, translationKeys, tmpequivalenceTranslator = sbmlAnalyzer.analyzeSpeciesModification2(candidates[0][0], reactant, originalTmpCandidates[0])
-
             #lexCandidate, translationKeys, tmpequivalenceTranslator = sbmlAnalyzer.analyzeSpeciesModification(candidates[0][0], reactant, tmpCandidates[0])            # FIXME: this is iffy. is it always an append modification? could be prepend
             #lexCandidate = None
             if lexCandidate is not None:
@@ -928,7 +924,7 @@ def createCatalysisRBM(dependencyGraph, element, translator, reactionProperties,
             # this modification was already activated so create a second modification component
             if addStateToComponent(modifiedSpecies, baseName,
                                    componentState[0], componentState[1]) == componentState[1]:
-                componentName = '{0}{1}'.format(componentState[0].split('mod')[0],  modificationCounter[componentState[0]])
+                componentName = '{0}{1}'.format(componentState[0],  modificationCounter[componentState[0]])
                 modificationCounter[componentState[0]] += 1
                 addComponentToMolecule(modifiedSpecies, baseName, componentName)
                 addStateToComponent(modifiedSpecies, baseName, componentName,
@@ -984,7 +980,8 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
                     if molecule.name == molecule2.name:
                         for component in molecule.components:
                             for bond in component.bonds:
-                                partialBonds[bond].append(molecule2)
+                                if molecule2.name not in  [x.name for x in partialBonds[bond]]:
+                                    partialBonds[bond].append(molecule2)
                         '''
                         for component in molecule.components:
                             component2 = [x for x in molecule2.components if x.name == component.name]
@@ -1449,8 +1446,10 @@ tmp,removedElement,tmp3))
                 addToDependencyGraph(database.dependencyGraph, species, instance)
 
     # initialize and remove zero elements
+
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator, database.eequivalenceTranslator, database.sbmlAnalyzer, database)
+
     return database
 
 

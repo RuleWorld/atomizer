@@ -157,10 +157,14 @@ class SBMLAnalyzer:
                 #try fuzzy search
                 sequenceMatcher = difflib.SequenceMatcher(None,token,tmpModifiedElement)
                 match = ''.join(tmpModifiedElement[j:j+n] for i, j, n in sequenceMatcher.get_matching_blocks() if n)
+
                 if (len(match)) / float(len(token)) < 0.8:
                     tokenPosition.append([999999999])
                 else:
                     tmp = [i for i, y in enumerate(difflib.ndiff(token, tmpModifiedElement)) if not y.startswith('+')]
+                    if tmp[-1] - tmp[0] > len(token) + 5:
+                        tokenPosition.append([999999999])
+                        continue
                     tmpModifiedElement = list(tmpModifiedElement)
                     for idx in tmp:
                         tmpModifiedElement[idx] = '_'
