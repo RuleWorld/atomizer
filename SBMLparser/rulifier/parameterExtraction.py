@@ -6,6 +6,31 @@ import stateTransitionDiagram as std
 import pprint
 import xlwt
 import yaml
+import arial10
+
+class FitSheetWrapper(object):
+    """Try to fit columns to max size of any entry.
+    To use, wrap this around a worksheet returned from the 
+    workbook's add_sheet method, like follows:
+
+        sheet = FitSheetWrapper(book.add_sheet(sheet_name))
+
+    The worksheet interface remains the same: this is a drop-in wrapper
+    for auto-sizing columns.
+    """
+    def __init__(self, sheet):
+        self.sheet = sheet
+        self.widths = dict()
+
+    def write(self, r, c, label='', *args, **kwargs):
+        self.sheet.write(r, c, label, *args, **kwargs)
+        width = arial10.fitwidth(label)
+        if width > self.widths.get(c, 0):
+            self.widths[c] = int(width)
+            self.sheet.col(c).width = int(width)
+
+    def __getattr__(self, attr):
+        return getattr(self.sheet, attr)
 
 class PrettyDefaultDict(collections.defaultdict):
     __repr__ = dict.__repr__
@@ -43,7 +68,7 @@ if __name__ == "__main__":
     parser = defineConsole()
     namespace = parser.parse_args()
     inputFile = namespace.input
-    modelNameList = ['egfr/output19.xml', 'egfr/output48.xml', 'egfr/output151.xml', 'egfr/output543.xml']
+    modelNameList = ['egfr/output19.xml', 'egfr/output48.xml', 'egfr/output49.xml', 'egfr/output151.xml', 'egfr/output543.xml']
     #modelName = ['egfr/output151.xml']
     parameterSpace = []
     for element in modelNameList:
@@ -52,7 +77,7 @@ if __name__ == "__main__":
     keys = collections.Counter([y for x in parameterSpace for y in x])
     wb = xlwt.Workbook()
 
-    ws = wb.add_sheet('Units')
+    ws = FitSheetWrapper(wb.add_sheet('Units'))
     unitColumn = []
     for midx, element in enumerate(modelNameList):
         modelName = element.split('.')[0]
@@ -77,7 +102,7 @@ if __name__ == "__main__":
     for molecule in keys:
         if keys[molecule] == 1:
             continue
-        ws = wb.add_sheet(molecule)
+        ws = FitSheetWrapper(wb.add_sheet(molecule))
         componentColumn = []
         for midx, model in enumerate(parameterSpace):
             ws.write(midx + 1, 0, modelNameList[midx])

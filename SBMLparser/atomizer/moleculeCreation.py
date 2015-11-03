@@ -1333,7 +1333,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                     #    continue
                 addToDependencyGraph(database.dependencyGraph, modElement,
                                      [baseElement])
-
     # non lexical-analysis catalysis reactions
     if database.forceModificationFlag:
         for reaction, classification in zip(rules, database.classifications):
@@ -1431,6 +1430,12 @@ tmp,removedElement,tmp3))
     for annotatedSpecies in annotationDependencyGraph:
         if len(annotationDependencyGraph[annotatedSpecies]) > 0 and annotatedSpecies not in database.userLabelDictionary:
             addToDependencyGraph(database.dependencyGraph, annotatedSpecies, annotationDependencyGraph[annotatedSpecies][0])
+            logMess('INFO:Atomization', 'Added equivalence from annotation information {0}={1}'.format(annotatedSpecies,
+                    annotationDependencyGraph[annotatedSpecies][0]))
+            for element in annotationDependencyGraph[annotatedSpecies][0]:
+                # in case one of the compositional elements is not yet in the dependency graph
+                if element not in database.dependencyGraph:
+                    addToDependencyGraph(database.dependencyGraph, element, [])
 
     # TODO: merge both lists and use them as a tiebreaker for consolidation
     #completeAnnotationDependencyGraph, completePartialMatches = fillSCTwithAnnotationInformation(strippedMolecules, annotationDict, database, False)
