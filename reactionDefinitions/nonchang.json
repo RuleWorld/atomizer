@@ -9,13 +9,13 @@
         "PI":[],
         "ht2AR":[],
         "Src_star":["Src"],
+        "ERK_P":["ERK"],
+        "ERK_PP":["ERK_P"],
         "Ras":[],
         "AA":[],
         "APC":[],
-        "RasGAP":["Ras"],
         "RasGDP":["Ras"],
         "RasGTP":["Ras"],
-        "RasGEF":["Ras"],
         "MKP_PPstar":["MKP_PP"],
         "DAGactive":["DAG"],
         "PKC_Ca_DAGactive":["PKC","Ca","DAGactive"],
@@ -24,14 +24,14 @@
         "MKP_PPstar":["MKP_PP"],
         "cpxERKP_MKP_PPstar":["ERKP","MKP_PPstar"],
         "cpxERKP_MKP_PP":["ERKP","MKP_PP"],
-        "cpxKetanserin_2AR":["cpxKetanserin","ht2AR"],
+        "cpxKetanserin_2AR":["Ketanserin","ht2AR"],
         "ht2AR_internal":["ht2AR"],
         "ht1AR_internal":["HT1AR"],
         "cpxA_2AR_internal":["TCB","ht2AR_internal"],
         "cpxA_HT1AR_internal":["serotonin","ht1AR_internal"],
         "Sos_P":["Sos"],
         "Grb2_sos_P":["Grb2","Sos_P"],
-        "cpxKetanserin_2AR":["ht2AR","cpxKetanserin"]
+        "cpxKetanserin_2AR":["ht2AR","Ketanserin"]
 
     }
 }

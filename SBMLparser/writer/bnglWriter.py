@@ -40,7 +40,7 @@ def bnglReaction(reactant, product, rate, tags, translator=[], isCompartments=Fa
     for index in range(0,len(product)):
         tag = ''
         if isCompartments:
-            if product[index][2] in tags:
+            if len(product[index]) > 2 and product[index][2] in tags:
                 tag = tags[product[index][2]]
         finalString +=  printTranslate(product[index],tag,translator) 
         if index < len(product) -1:

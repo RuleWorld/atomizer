@@ -1,16 +1,28 @@
 from utils import readBNGXML
 import argparse
 import collections
-import csv
 import stateTransitionDiagram as std
-import pprint
 import xlwt
 import yaml
 import arial10
+import os
+import fnmatch
+
+
+def getValidFiles(directory, extension):
+    """
+    Gets a list of bngl files that could be correctly translated in a given 'directory'
+    """
+    matches = []
+    for root, dirnames, filenames in os.walk(directory):
+        for filename in fnmatch.filter(filenames, '*.{0}'.format(extension)):
+            matches.append(os.path.join(root, filename))
+    return matches
+
 
 class FitSheetWrapper(object):
     """Try to fit columns to max size of any entry.
-    To use, wrap this around a worksheet returned from the 
+    To use, wrap this around a worksheet returned from the
     workbook's add_sheet method, like follows:
 
         sheet = FitSheetWrapper(book.add_sheet(sheet_name))
@@ -50,7 +62,7 @@ def getParameterDictionary(bnglNamespace):
                         value = bnglNamespace['parameters'][rate] if rate in bnglNamespace['parameters'] else 'nma'
                         moleculeName = molecule.split('(')[0].split('%')[0]
                         component = molecule.split('(')[1].strip(')')
-                        parameterDict[moleculeName][component].add(value)
+                        parameterDict[moleculeName.lower()][component].add(value)
                         simpleParameterDict[molecule].add(value)
 
     return parameterDict
@@ -65,22 +77,25 @@ def defineConsole():
 
 
 if __name__ == "__main__":
-    parser = defineConsole()
-    namespace = parser.parse_args()
-    inputFile = namespace.input
-    modelNameList = ['egfr/output19.xml', 'egfr/output48.xml', 'egfr/output49.xml', 'egfr/output151.xml', 'egfr/output543.xml']
+    #parser = defineConsole()
+    #namespace = parser.parse_args()
+    #inputFile = namespace.input
+    #modelNameList = ['egfr/output19.xml', 'egfr/output48.xml', 'egfr/output49.xml', 'egfr/output151.xml', 'egfr/output543.xml']
+    modelNameList = getValidFiles('curated','xml')
     #modelName = ['egfr/output151.xml']
     parameterSpace = []
     for element in modelNameList:
         parameterSpace.append(getParameterDictionary(readBNGXML.parseFullXML(element)))
 
-    keys = collections.Counter([y for x in parameterSpace for y in x])
+    keys = collections.Counter([y.lower() for x in parameterSpace for y in x])
     wb = xlwt.Workbook()
 
     ws = FitSheetWrapper(wb.add_sheet('Units'))
     unitColumn = []
+    rowIdx = 0
     for midx, element in enumerate(modelNameList):
-        modelName = element.split('.')[0]
+        modelName = element.split('.')[:-1]
+        modelName = '.'.join(modelName)
         ymlName = modelName + '.bngl.yml'
 
         try:
@@ -96,16 +111,24 @@ if __name__ == "__main__":
             #for instance in annotationDict['units'][unit]:
             instance = annotationDict['units'][unit][0]
             if instance['exponent'] == 1:
-                ws.write(midx + 1, unitColumn.index(unit) + 1, '{0} ({1})'.format(instance['multiplier'], instance['name']))
+                ws.write(rowIdx + 1, unitColumn.index(unit) + 1, '{0} ({1})'.format(instance['multiplier'], instance['name']).decode('utf-8'))
             else:
-                ws.write(midx + 1, unitColumn.index(unit) + 1, '{0}^{2} ({1})'.format(instance['multiplier'], instance['name'], instance['exponent']))
+                ws.write(rowIdx + 1, unitColumn.index(unit) + 1, '{0}^{2} ({1})'.format(instance['multiplier'], instance['name'], instance['exponent']).decode('utf-8'))
+        rowIdx += 1            
     for molecule in keys:
-        if keys[molecule] == 1:
+        if keys[molecule] <= 1:
             continue
-        ws = FitSheetWrapper(wb.add_sheet(molecule))
+
+        sheetName = molecule if len(molecule) <= 31 else molecule[0:31]
+        ws = FitSheetWrapper(wb.add_sheet(sheetName))
         componentColumn = []
+        rowIdx = -1
         for midx, model in enumerate(parameterSpace):
-            ws.write(midx + 1, 0, modelNameList[midx])
+            # write modelName
+            if len(model[molecule]) == 0:
+                continue
+            rowIdx += 1
+            ws.write(rowIdx + 1, 0, modelNameList[midx])
             for component in model[molecule]:
                 if component not in componentColumn:
                     componentColumn.append(component)
@@ -120,7 +143,7 @@ if __name__ == "__main__":
 
                     ws.write(0, componentColumn.index(component) + 1, componentTxt)
                 data = '/'.join(model[molecule][component]) 
-                ws.write(midx+1, componentColumn.index(component) + 1, data)
+                ws.write(rowIdx+1, componentColumn.index(component) + 1, data)
 
     wb.save('19_151_48.xls')
     '''

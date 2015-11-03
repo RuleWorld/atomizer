@@ -65,7 +65,7 @@ class TestOne(ParametrizedTestCase):
                 result = call(['python','sbmlTranslator.py','-i',
                 #'XMLExamples/curated/BIOMD%010i.xml' % self.param,
                 self.param,
-                '-o','new_non_curated/' + str(self.param.split('/')[-1]) + '.bngl',
+                '-to','curated/' + str(self.param.split('/')[-1]) + '.bngl',
                 '-c','config/reactionDefinitions.json',
                 '-n','config/namingConventions.json',
                 '-a'],stdout=f)
@@ -132,13 +132,14 @@ def getValidBNGLFiles(directory):
     return validNumbers
     '''
 import fnmatch
-def getValidXMLFiles(directory):
+
+def getValidXMLFiles(directory, extension='xml'):
     """
     Gets a list of bngl files that could be correctly translated in a given 'directory'
     """
     matches = []
     for root, dirnames, filenames in os.walk(directory):
-        for filename in fnmatch.filter(filenames, '*.xml'):
+        for filename in fnmatch.filter(filenames, extension):
             matches.append(os.path.join(root, filename))
     return matches
 
@@ -190,7 +191,7 @@ if __name__ == "__main__":
     #suite3 = unittest.TestSuite()
     
     #ran = [151]
-    ran = range(1,549)
+    ran = range(1,576)
     #ran  = [252]
     #ran = [452,453,465,474,492,500,501,504,505,506,510]
     blackList = []
@@ -207,13 +208,15 @@ if __name__ == "__main__":
     ''' 
     #ran  = [5,6,7,36,56,107,111,144,195,265,297,306,307,308,309,310,311,312]       
     #ran  = [19]  
-    files = getValidXMLFiles('XMLExamples/curated/')
+    files = getValidXMLFiles('../XMLExamples/curated/')
     #files = sorted(files,key=os.path.getsize)
     #files = sorted(files)
     #files = getValidXMLFiles('biomodels')
     #print files
-    for index in files:
-        suite.addTest(ParametrizedTestCase.parametrize(TestOne, param=index))
+    
+    #for index in files:
+    #    suite.addTest(ParametrizedTestCase.parametrize(TestOne, param=index))
+    
     #suite.addTest(ParametrizedTestCase.parametrize(TestOne, param='complex/BIOMD0000000474.xml'))
     #for fileName in validFiles:
     #suite4 = testtools.ConcurrentStreamTestSuite(lambda: (split_suite_into_chunks(4,suite)))
@@ -228,9 +231,9 @@ if __name__ == "__main__":
         #suite.addTest(ParametrizedTestCase.parametrize(TestValid,param='./raw/' + fileName))
         suite.addTest(ParametrizedTestCase.parametrize(TestEval,param='./non_curated/' + fileNumber))
     ''' 
-    validGdats = getValidGDats('.')
+    #validGdats = getValidGDats('.')
     
-    #validFiles = getValidBNGLFiles('complex')
+    #validFiles = getValidXMLFiles('curated', '')
     #for fileNumber in validFiles:
     #    fileName = 'output{0}.bngl'.format(fileNumber)
     #    suite.addTest(ParametrizedTestCase.parametrize(TestEval,param='./complex/' + fileName))

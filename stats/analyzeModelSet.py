@@ -12,12 +12,13 @@ import yaml
 from os.path import expanduser,join
 import readBNGXML
 import pandas
+import argparse
 
 sys.path.insert(0, '.')
 sys.path.insert(0, os.path.join('.','SBMLparser'))
-import argparse
 home = expanduser("~")
 sbmlTranslator = join(home, 'workspace', 'bionetgen', 'parsers', 'SBMLparser', 'SBMLparser', 'sbmlTranslator.py')
+
 bngExecutable = join(home,'workspace','bionetgen','bng2','BNG2.pl')
 visualizeExecutable = join(home,'workspace','bionetgen','bng2','Perl2','Visualization','visualize.pl')
 graphAnalysis = join(home,'workspace','bionetgen','parsers','SBMLparser','stats','graphAnalysis.py')
@@ -25,7 +26,8 @@ collapsedContact = join(home,'workspace','bionetgen','parsers','SBMLparser','sta
 compareModels = join(home, 'workspace', 'bionetgen', 'parsers', 'SBMLparser', 'SBMLparser', 'rulifier', 'compareModels.py')    
 sbmlparserhome = join(home, 'workspace', 'bionetgen', 'parsers', 'SBMLparser', 'SBMLparser')
 
-def getFiles(directory,extension):
+
+def getFiles(directory, extension):
     """
     Gets a list of <*.extension> files. include subdirectories and return the absolute 
     path. also sorts by size.
@@ -33,7 +35,7 @@ def getFiles(directory,extension):
     matches = []
     for root, dirnames, filenames in os.walk(directory):
         for filename in fnmatch.filter(filenames, '*.{0}'.format(extension)):
-            matches.append([os.path.join(root, filename),os.path.getsize(os.path.join(root, filename))])
+            matches.append([os.path.join(os.path.abspath(root), filename),os.path.getsize(os.path.join(root, filename))])
 
     #sort by size
     matches.sort(key=lambda filename: filename[1], reverse=False)
@@ -249,9 +251,9 @@ if __name__ == "__main__":
             options = []
     else:
         #filenameset = getFiles('curated/atomized','xml')
-        filenameset = getFiles('XMLExamples/curated','xml')
-        outputdirectory = 'raw'
-        ttype = 'atomize'
+        filenameset = getFiles('curated','bngl')
+        outputdirectory = 'curated'
+        ttype = 'bngxml'
         options = []
 
     if ttype == 'atomize':

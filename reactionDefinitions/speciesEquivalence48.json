@@ -2,12 +2,13 @@
 	"reactionDefinition" : [
 	],
 	"complexDefinition" : [
-	["PLCgP_I",[["PLCg","iMod",["s","I"],"phospho",["s","P"]]]]
 	]
 	,
 	"modificationDefinition": {
+        "EGFR_P":["EGFR"],
 		"Shc_Grb2":["Shc_P","Grb2"],
-		"Shc_Grb2_SOS":["Shc_P","Grb2","SOS"]
+		"Shc_Grb2_SOS":["Shc_P","Grb2","SOS"],
+        "__EGF_EGFR__2_P":["Epidermal_Growth_Factor","EGFR","EGFR_P","Epidermal_Growth_Factor"]
 	}
 	
 	

@@ -33,7 +33,7 @@ def extractCenterContext(rules, excludeReverse=False):
         transformationProduct, atomicArray, actionNames, doubleModificationRules
 
 
-def getStateTransitionDiagram(labels, centers, products, contexts, actions, molecules):
+def getStateTransitionDiagram(labels, centers, products, contexts, actions, molecules, rules, parameters):
     def isActive(state):
         return '!' in state or ('~' in state and '~0' not in state)
 
@@ -44,7 +44,7 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
             moleculeDict[molecule.name].append(component.name)
     nodeList = defaultdict(set)
     edgeList = defaultdict(set)
-    for label, center, product, context, action in zip(labels, centers, products, contexts, actions):
+    for label, center, product, context, action, rule in zip(labels, centers, products, contexts, actions, rules):
         sourceCounter = {}
         destinationCounter = {}
 
@@ -89,6 +89,7 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
                     if isActive(element.split('(')[1][:-1]):
                         componentName = element.split('(')[1][:-1].split('~')[0].split('!')[0]
                         destinationCounter[element.split('(')[0].split('%')[0]][componentName] += productUnit[species]
+
         #add the first context unit
         for speciesUnit in tmpContext:
             for species in speciesUnit:
@@ -111,9 +112,11 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
 
                 #sourceTuple = tuple(sorted([x[0] for x in sourceCounter[molecule].items()]))
                 #destinationTuple = tuple(sorted([x[0] for x in destinationCounter[molecule].items() if x[1]> 0]))
+
                 nodeList[molecule].add(sourceTuple)
                 nodeList[molecule].add(destinationTuple)
-                edgeList[molecule].add((sourceTuple, destinationTuple))
+                parameterList = [parameters[x] if x in parameters else x for x in rule[0].rates]
+                edgeList[molecule].add((sourceTuple, destinationTuple, label, ','.join(parameterList)))
 
         # find the intersection context set
     return nodeList, edgeList
@@ -122,19 +125,19 @@ def getContextRequirements(inputfile, collapse=True, motifFlag=False, excludeRev
     """
     Receives a BNG-XML file and returns the contextual dependencies implied by this file
     """
-    molecules, rules, _ = readBNGXML.parseXML(inputfile)
+    molecules, rules, parameters = readBNGXML.parseXML(inputfile)
 
     moleculeStateMatrix = {}
  
     label, center, context, product, atomicArray, actions, doubleAction = extractCenterContext(rules, excludeReverse=excludeReverse)
 
-    return getStateTransitionDiagram(label, center, product, context, actions, molecules)
+    return getStateTransitionDiagram(label, center, product, context, actions, molecules, rules, parameters)
 
 
 def getContextRequirementsFromNamespace(namespace, excludeReverse=False):
     label, center, context, product,\
          atomicArray, actions, doubleAction = extractCenterContext(namespace['rules'], excludeReverse=excludeReverse)
-    return getStateTransitionDiagram(label, center, product, context, actions, namespace['molecules'])
+    return getStateTransitionDiagram(label, center, product, context, actions, namespace['molecules'], namespace['rules'], namespace['parameters'])
 
 
 
@@ -153,4 +156,3 @@ if __name__ == "__main__":
     inputFile = namespace.input
 
     stateDictionary = getContextRequirements(inputFile, collapse=True, motifFlag=True)
-    print stateDictionary[0]['JAK']
