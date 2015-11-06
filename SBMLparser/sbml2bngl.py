@@ -289,7 +289,7 @@ class SBML2BNGL:
         processedReactants = self.preProcessStoichiometry(reactants)
 
         for x in processedReactants:
-            highStoichoiMetryFactor  *= factorial(x[1])
+            highStoichoiMetryFactor *= factorial(x[1])
             y = [i[1] for i in products if i[0] == x[0]]
             y = y[0] if len(y) > 0 else 0
             # TODO: check if this actually keeps the correct dynamics
@@ -356,7 +356,7 @@ class SBML2BNGL:
                     math.getRightChild().deepCopy(), rProduct, rReactant, parameterFunctions))
                 elif(self.getIsTreeNegative(math.getLeftChild())):
                     rateR, nr = (self.removeFactorFromMath(
-                    math.getLeftChild().deepCopy(), rProduct, rReactant, parameterFunctions))
+                                 math.getLeftChild().deepCopy(), rProduct, rReactant, parameterFunctions))
                     rateL, nl = (self.removeFactorFromMath(
                     math.getRightChild().deepCopy(), rReactant, rProduct, parameterFunctions))
                 else:
@@ -400,7 +400,7 @@ but reaction is marked as reversible'.format(reactionID))
                 #nl, nr = 1,1
         else:
             rateL, nl = (self.removeFactorFromMath(math.deepCopy(),
-                                                 rReactant, rProduct, parameterFunctions))
+                                                   rReactant, rProduct, parameterFunctions))
 
             rateR, nr = '0', '-1'
         return rateL, rateR, nl, nr
@@ -414,7 +414,7 @@ but reaction is marked as reversible'.format(reactionID))
                        for product in reaction.getListOfProducts() if product.getSpecies()
                        not in ['EmptySet']]
         else:
-            reactant = [(self.speciesDictionary[rElement.getSpecies()], rElement.getStoichiometry(),rElement.getSpecies())
+            reactant = [(self.speciesDictionary[rElement.getSpecies()], rElement.getStoichiometry(), rElement.getSpecies())
                         for rElement in reaction.getListOfReactants() if rElement.getSpecies() not in ['EmptySet']]
             product = [(self.speciesDictionary[rProduct.getSpecies()], rProduct.getStoichiometry(), rProduct.getSpecies())
                        for rProduct in reaction.getListOfProducts() if rProduct.getSpecies() not in ['EmptySet']]
@@ -423,7 +423,7 @@ but reaction is marked as reversible'.format(reactionID))
 
         if kineticLaw is None:
             return {'reactants': reactant, 'products': product, 'parameters': [], 'rates': ['0', '0'],
-                    'reversible': reversible, 'reactionID': reaction.getId(), 'numbers': [0, 0]}
+                    'reversible': reversible, 'reactionID': reaction.getId(), 'numbers': [0, 0], 'modifiers': None}
 
         rReactant = []
         rProduct = []
@@ -446,7 +446,7 @@ but reaction is marked as reversible'.format(reactionID))
         #rReactant = [(x.getSpecies(), x.getStoichiometry()) for x in reaction.getListOfReactants() if x.getSpecies() not in ['EmptySet']]
         #rProduct = [(x.getSpecies(), x.getStoichiometry()) for x in reaction.getListOfProducts() if x.getSpecies() not in ['EmptySet']]
         rModifiers = [x.getSpecies() for x in reaction.getListOfModifiers() if x.getSpecies() != 'EmptySet']
-        parameters = [(parameter.getId(), parameter.getValue(),parameter.getUnits()) for parameter in kineticLaw.getListOfParameters()]
+        parameters = [(parameter.getId(), parameter.getValue(), parameter.getUnits()) for parameter in kineticLaw.getListOfParameters()]
 
         rateL = rateR = nl = nr = None
         if True:
@@ -486,31 +486,31 @@ but reaction is marked as reversible'.format(reactionID))
                             rateL = '{0} * {1}'.format(rateL,compartment.getSize())
                         if len(rProduct) != 2:
                              rateR = '{0} * {1}'.format(rateR,compartment.getSize())
-            '''     
+            '''
         return {'reactants': reactant, 'products': product, 'parameters': parameters, 'rates': [rateL, rateR],
-                'reversible': reversible, 'reactionID': reaction.getId(), 'numbers': [nl, nr],'modifiers':rModifiers}
+                'reversible': reversible, 'reactionID': reaction.getId(), 'numbers': [nl, nr], 'modifiers': rModifiers}
 
     def getReactionCenter(self, reactant, product, translator):
         rcomponent = Counter()
         pcomponent = Counter()
-        
+
         for element in reactant:
             if element[0] in translator:
                 for molecule in translator[element[0]].molecules:
                     for component in molecule.components:
                         molecule.sort()
-                        rcomponent.update(Counter([(molecule.name,component.name,len(component.bonds)>0,component.activeState)]))
+                        rcomponent.update(Counter([(molecule.name, component.name, len(component.bonds) > 0, component.activeState)]))
         for element in product:
             if element[0] in translator:
                 for molecule in translator[element[0]].molecules:
                     molecule.sort()
                     for component in molecule.components:
                         molecule.sort()
-                        pcomponent.update(Counter([(molecule.name,component.name,len(component.bonds)>0,component.activeState)]))
-        reactionCenter = [(x[0],x[1]) for x in rcomponent for y in pcomponent if (x[0],x[1]) == (y[0],y[1]) and x!= y and rcomponent[x] != pcomponent[y]]
-        rreactionCenter = [(x[0],x[1]) for x in pcomponent for y in rcomponent if (x[0],x[1]) == (y[0],y[1]) and x!= y and pcomponent[x] != rcomponent[y]]
-        return reactionCenter,rreactionCenter
-        
+                        pcomponent.update(Counter([(molecule.name, component.name, len(component.bonds) > 0, component.activeState)]))
+        reactionCenter = [(x[0], x[1]) for x in rcomponent for y in pcomponent if (x[0], x[1]) == (y[0], y[1]) and x != y and rcomponent[x] != pcomponent[y]]
+        rreactionCenter = [(x[0], x[1]) for x in pcomponent for y in rcomponent if (x[0], x[1]) == (y[0], y[1]) and x != y and pcomponent[x] != rcomponent[y]]
+        return reactionCenter, rreactionCenter
+
     def updateComponentCount(self, counterArray, reference, updateValue):
         for element in counterArray:
             if reference in counterArray[element]:
@@ -548,7 +548,7 @@ but reaction is marked as reversible'.format(reactionID))
         
         #get the total count of components in the reactants and products
         #e.g. components across diffent species
-        freactionCenter,breactionCenter = self.getReactionCenter(reactant,product,translator)
+        freactionCenter,breactionCenter = self.getReactionCenter(reactant, product, translator)
         
         for element in reactant:
             if element[0] in translator:

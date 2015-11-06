@@ -54,7 +54,7 @@ def main():
     if namespace.bionetgen_analysis and returnArray:
         ls2b.postAnalyzeFile(options['outputFile'], namespace.bionetgen_analysis, returnArray.database)
 
-    if namespace.annotation:
+    if namespace.annotation and returnArray:
         with open(options['outputFile'] + '.yml', 'w') as f:
             f.write(yaml.dump(returnArray.annotation, default_flow_style=False))
 
