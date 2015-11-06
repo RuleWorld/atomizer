@@ -19,6 +19,8 @@ import gml2sbgn.libsbgn as libsbgn
 import networkx
 from subprocess import call
 import yaml
+from stats.gml2cyjson import gml2cyjson
+import json
 
 sys.path.insert(0, 'SBMLparser')
 import SBMLparser.libsbml2bngl as libsbml2bngl
@@ -151,9 +153,16 @@ class AtomizerServer(xmlrpc.XMLRPC):
             name = pointer[1].split('.')[0].split('/')[-1]
             with open('{0}_{1}.gml'.format(name, graphtype), 'r') as f:
                 graphContent = f.read()
-                self.addToDict(ticket, graphContent)
-                os.remove('{0}_{1}.gml'.format(name, graphtype))
-                print 'success', ticket
+
+            gml = networkx.read_gml('{0}_{1}.gml'.format(name, graphtype))
+            result = gml2cyjson(gml)
+            jsonStr = json.dumps(result, indent=1, separators=(',', ': '))
+
+            result = {'jsonStr': jsonStr, 'gmlStr': graphContent}
+            self.addToDict(ticket, result)
+            os.remove('{0}_{1}.gml'.format(name, graphtype))
+            print 'success', ticket
+
         elif graphtype in ['sbgn_er']:
             consoleCommands.setBngExecutable(bngDistro)
             consoleCommands.generateGraph(pointer[1], 'contactmap')
