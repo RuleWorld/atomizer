@@ -1068,12 +1068,12 @@ but reaction is marked as reversible'.format(reactionID))
 
     def getInitialAssignments(self, translator, param, zparam, molecules, initialConditions):
         '''
-        process the get initial assigmnetns section. This can be used to initialize
+        process the get initial assignments section. This can be used to initialize
         parameters or species, so we have to account for both checking both arrays
         '''
         param2 = param
         zparam2 = zparam
-        initialConditions2 =initialConditions
+        initialConditions2 = initialConditions
         pparam = {}
         for element in param:
             pparam[element.split(' ')[0]] =(element.split(' ')[1],None)
@@ -1097,8 +1097,7 @@ but reaction is marked as reversible'.format(reactionID))
             for element in pparam:
                 if element in math:
                     math = re.sub(r'(\W|^)({0})(\W|$)'.format(element),
-                    r'{0}'.format(pparam[element][0]),math)
-            
+                    r'\1({0})\3'.format(pparam[element][0]),math)
             param2 = [x for x in param if '{0} '.format(symbol) not in x]
             zparam2 = [x for x in zparam if '{0}'.format(symbol) not in x]
             '''

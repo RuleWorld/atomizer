@@ -568,17 +568,20 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     assigmentRuleDefinedParameters = []
     reactionParameters, rules, rateFunctions = parser.getReactions(translator, len(compartments) > 1,
                                                                    atomize=atomize, parameterFunctions=artificialObservables)
+
     functions.extend(rateFunctions)
     for element in nonzparam:
         param.append('{0} 0'.format(element))
     param = [x for x in param if x not in removeParams]
+
+
     tags = '@{0}'.format(compartments[0].split(' ')[0]) if len(compartments) == 1 else '@cell'
     molecules.extend([x.split(' ')[0] for x in removeParams])
     if len(molecules) == 0:
         compartments = []
     observables.extend('Species {0} {0}'.format(x.split(' ')[0]) for x in removeParams)
     for x in removeParams:
-        initialConditions.append(x.split(' ')[0] + tags + ' ' + x.split(' ')[1])
+        initialConditions.append(x.split(' ')[0] + tags + ' ' + ' '.join(x.split(' ')[1:]))
     ## Comment out those parameters that are defined with assignment rules
     ## TODO: I think this is correct, but it may need to be checked
     tmpParams = []
@@ -805,7 +808,7 @@ def main():
     #18,32,87,88,91,109,253,255,268,338,330
     #normal:51,353
     #cycles 18,108,109,255,268,392
-    for bioNumber in range(1,549):
+    for bioNumber in range(1,576):
         
         #if bioNumber in [81,151,175,205,212,223,235,255,326,328,347,370,404,428,430,431,443,444,452,453,465,474]:
         #    continue
@@ -1076,8 +1079,8 @@ if __name__ == "__main__":
     #processDatabase()
     
     #main2()
-    
-    analyzeFile('../XMLExamples/curated/BIOMD0000000048.xml', resource_path('config/reactionDefinitions.json'),
+        
+    analyzeFile('../XMLExamples/curated/BIOMD0000000007.xml', resource_path('config/reactionDefinitions.json'),
                     False, resource_path('config/namingConventions.json'),
                     'BIOMD0000000027.xml' + '.bngl', 
                     speciesEquivalence=None,atomize=True,bioGrid=False)

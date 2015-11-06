@@ -72,7 +72,7 @@ def createNode(graph, name, graphicsDict, labelGraphicsDict, isGroup, gid):
 
 def createBitNode(graph, molecule, nodeList):
 
-    gridDict = {1:1, 2:2, 3:3, 4:4,5:5,6:3,7:4,8:4,9:3,10:5,11:4,12:4,13:5,14:5,15:5,16:4,17:5,18:4,19:5,20:5}
+    gridDict = {1:1, 2:2, 3:3, 4:2,5:3,6:3,7:4,8:4,9:3,10:5,11:4,12:4,13:5,14:5,15:5,16:4,17:5,18:4,19:5,20:5}
 
     for node in nodeList[molecule]:
         componentLegend = ''
@@ -87,6 +87,7 @@ def createBitNode(graph, molecule, nodeList):
                 nodeName += u"\u25CB "
                 #nodeName += u"\u00B7 "
             if (idx+1)%gridDict[len(node)] == 0 and idx+1 != len(node):
+                nodeName.strip(' ')
                 nodeName += '\n'
                 componentLegend += '\n'
             else:
@@ -191,24 +192,25 @@ def createPDEdge(graph, molecule, edge):
 
         #differenceText = edge[2].strip('_reverse_')
         differenceText += '\n===\n'
+        differenceText = ''
         if len(differencePositive) > 0 and len(differenceNegative) > 0:
             differenceText += ', '.join(differencePositive) + '\n___\n' + ', '.join(differenceNegative)
         else:
             differenceText += ', '.join(differencePositive) + ', '.join(differenceNegative)
         
-
-        createNode(graph, processNodeName, {'type': "rectangle", 'fill': "#FFFFFF"}, {'text': differenceText}, 0, graph.node[molecule]['id'])
+        createNode(graph, processNodeName, {'type': "rectangle", 'fill': "#FFFFFF"},
+                   {'text': differenceText, "fontStyle": "bold", "fontSize": 20}, 0, graph.node[molecule]['id'])
 
         if bidirectional:
             graph.add_edge('{0}_{1}'.format(molecule, '/'.join(nodeId0)), processNodeName,
-                           graphics={'fill': '#000000', 'sourceArrow': "standard"})
+                           graphics={'fill': '#000000', 'sourceArrow': "standard", "width": 3})
             graph.add_edge(processNodeName, '{0}_{1}'.format(molecule, '/'.join(nodeId1)),
-                           graphics={'fill': '#000000', 'targetArrow': "standard"})
+                           graphics={'fill': '#000000', 'targetArrow': "standard", "width": 3})
         else:
             graph.add_edge('{0}_{1}'.format(molecule, '/'.join(nodeId0)), processNodeName,
-                           graphics={'fill': '#000000'})
+                           graphics={'fill': '#000000', "width": 3})
             graph.add_edge(processNodeName, '{0}_{1}'.format(molecule, '/'.join(nodeId1)),
-                           graphics={'fill': '#000000', 'targetArrow': "standard"})
+                           graphics={'fill': '#000000', 'targetArrow': "standard", "width": 3})
     return bidirectional
 
 def generateSTD(nodeList, edgeList):
@@ -216,7 +218,7 @@ def generateSTD(nodeList, edgeList):
     globalLabelDict = {}
     for molecule in nodeList:
         createNode(graph, molecule, {'type': 'roundrectangle', 'fill': '#FFFFFF'},
-                   {'fontSize': 16, 'fontStyle': "bold", 'alignment': "right", 'autoSizePolicy': "node_size"}, 1, 0)
+                   {'fontSize': 24, 'fontStyle': "bold", 'alignment': "right", 'autoSizePolicy': "node_size"}, 1, 0)
 
         #globalLabelDict.update(createPDLabelNode(graph, molecule, nodeList))
         createBitNode(graph,molecule,nodeList)

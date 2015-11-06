@@ -1218,32 +1218,33 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database,l
 
         #validAnnotationPairs.sort()
 
-        return intersectionMatches,partialMatches
+        return intersectionMatches, partialMatches
+
 
 def createSpeciesCompositionGraph(parser, database, configurationFile, namingConventions,
-                       speciesEquivalences=None, bioGridFlag=False):
+                                  speciesEquivalences=None, bioGridFlag=False):
     _, rules, _ = parser.getReactions(atomize=True)
     molecules, _, _, _, _, _ = parser.getSpecies()
     database.sbmlAnalyzer = \
-    analyzeSBML.SBMLAnalyzer(parser, configurationFile, namingConventions, speciesEquivalences, conservationOfMass=True)
+        analyzeSBML.SBMLAnalyzer(parser, configurationFile, namingConventions, speciesEquivalences, conservationOfMass=True)
 
     # classify reactions
     database.classifications, equivalenceTranslator, database.eequivalenceTranslator,\
-    indirectEquivalenceTranslator, \
-        adhocLabelDictionary, lexicalDependencyGraph, userEquivalenceTranslator = database.sbmlAnalyzer.classifyReactions(rules, molecules,{})
+        indirectEquivalenceTranslator, \
+        adhocLabelDictionary, lexicalDependencyGraph, userEquivalenceTranslator = database.sbmlAnalyzer.classifyReactions(rules, molecules, {})
     database.reactionProperties = database.sbmlAnalyzer.getReactionProperties()
     # user defined and lexical analysis naming conventions are stored here
     database.reactionProperties.update(adhocLabelDictionary)
 
     database.translator, database.userLabelDictionary, \
-    database.lexicalLabelDictionary, database.partialUserLabelDictionary = database.sbmlAnalyzer.getUserDefinedComplexes()
+        database.lexicalLabelDictionary, database.partialUserLabelDictionary = database.sbmlAnalyzer.getUserDefinedComplexes()
     database.dependencyGraph = {}
     database.alternativeDependencyGraph = {}
     # ###dependency graph
     # binding reactions
     for reaction, classification in zip(rules, database.classifications):
         bindingReactionsAnalysis(database.dependencyGraph,
-                        list(parseReactions(reaction)), classification)
+                                 list(parseReactions(reaction)), classification)
 
     # lexical dependency graph contains lexically induced binding compositions. atomizer gives preference to binding obtained this way as opposed to stoichiometry
     # stronger bounds on stoichiometry based binding can be defined in reactionDefinitions.json.
@@ -1267,7 +1268,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
         for dependencyCandidate in database.dependencyGraph[element]:
             for molecule in [x for x in dependencyCandidate if x not in database.dependencyGraph]:
                 database.dependencyGraph[molecule] = []
-    #user defined transformations
+    # user defined transformations
     for key in userEquivalenceTranslator:
         for namingEquivalence in userEquivalenceTranslator[key]:
             baseElement = min(namingEquivalence, key=len)
@@ -1287,7 +1288,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                 if baseElement not in database.dependencyGraph or database.dependencyGraph[baseElement] == []:
                     if modElement not in database.dependencyGraph or database.dependencyGraph[modElement] == []:
                         database.dependencyGraph[baseElement] = []
-                    #do we have a meaningful reverse dependence?
+                    # do we have a meaningful reverse dependence?
                     #elif all([baseElement not in x for x in database.dependencyGraph[modElement]]):
                     #    addToDependencyGraph(database.dependencyGraph,baseElement,[modElement])
                     #    continue
@@ -1311,7 +1312,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
 
     # add species elements defined by the user into the naming convention definition
     molecules.extend(['{0}()'.format(x) for x in database.userLabelDictionary if '{0}()'.format(x) not in molecules])
-    #recalculate 1:1 equivalences now with binding information 
+    # recalculate 1:1 equivalences now with binding information 
     _, _, database.eequivalenceTranslator2,\
          _, adhocLabelDictionary, _, _ =  database.sbmlAnalyzer.classifyReactions(rules, molecules,database.dependencyGraph)
     database.reactionProperties.update(adhocLabelDictionary)
@@ -1356,6 +1357,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                     if [mod] in database.dependencyGraph[base]:
                         continue
                     database.dependencyGraph[mod] = [[base]]
+
 
     '''
     #complex catalysis reactions

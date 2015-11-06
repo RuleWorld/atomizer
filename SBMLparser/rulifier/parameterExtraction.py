@@ -7,7 +7,7 @@ import yaml
 import arial10
 import os
 import fnmatch
-
+from collections import defaultdict
 
 def getValidFiles(directory, extension):
     """
@@ -75,24 +75,68 @@ def defineConsole():
     parser.add_argument('-i', '--input', type=str, help='settings file', required=True)
     return parser
 
+def remove_empty_keys(d):
+    for k in d.keys():
+        if not d[k]:
+            del d[k]
 
-if __name__ == "__main__":
-    #parser = defineConsole()
-    #namespace = parser.parse_args()
-    #inputFile = namespace.input
-    #modelNameList = ['egfr/output19.xml', 'egfr/output48.xml', 'egfr/output49.xml', 'egfr/output151.xml', 'egfr/output543.xml']
-    modelNameList = getValidFiles('curated','xml')
-    #modelName = ['egfr/output151.xml']
-    parameterSpace = []
-    for element in modelNameList:
-        parameterSpace.append(getParameterDictionary(readBNGXML.parseFullXML(element)))
+def getDifferences(modelNameList, parameterSpace):
+    keys = collections.Counter([y.lower() for x in parameterSpace for y in x])
 
+    rowIdx = 0
+    parameterDict = {x: defaultdict(set) for x in keys}
+    parameterModelDict = {x: defaultdict(list) for x in keys}
+    for molecule in keys:
+        if keys[molecule] <= 1:
+            continue
+        rowIdx = -1
+        for midx, model in enumerate(parameterSpace):
+            # write modelName
+            if len(model[molecule]) == 0:
+                continue
+            rowIdx += 1
+
+            for component in model[molecule]:
+                if '!' in component:
+                    componentTxt = component.split('!')[0] + ('(association)')
+                elif '~0' in component:
+                    componentTxt = component.split('~')[0] + ('(repression)')
+                elif '~' in component:
+                    componentTxt = component.split('~')[0] + ('(activation)')
+                else:
+                    componentTxt = component + ('(dissociation)')
+                
+                if all([len(x.intersection(model[molecule][component])) == 0 for x in parameterDict[molecule][componentTxt]]) \
+                        or len(parameterDict[molecule][componentTxt]) == 0:
+                    parameterDict[molecule][componentTxt].add(frozenset(model[molecule][component]))
+                    parameterModelDict[molecule][componentTxt].append(modelNameList[midx])
+            removeKeys = []
+        for component in parameterDict[molecule]:
+            if len(parameterDict[molecule][component]) <= 1:
+                removeKeys.append(component)
+        for component in removeKeys:
+            del parameterDict[molecule][component]
+            if component in parameterModelDict[molecule]:
+                parameterModelDict[molecule][component]
+
+    remove_empty_keys(parameterDict)
+    remove_empty_keys(parameterModelDict)
+
+    import pprint
+    print '---'
+    pprint.pprint(parameterDict)
+
+
+
+def ExcelOutput(modelNameList, parameterSpace):
     keys = collections.Counter([y.lower() for x in parameterSpace for y in x])
     wb = xlwt.Workbook()
 
     ws = FitSheetWrapper(wb.add_sheet('Units'))
     unitColumn = []
     rowIdx = 0
+
+    
     for midx, element in enumerate(modelNameList):
         modelName = element.split('.')[:-1]
         modelName = '.'.join(modelName)
@@ -146,6 +190,24 @@ if __name__ == "__main__":
                 ws.write(rowIdx+1, componentColumn.index(component) + 1, data)
 
     wb.save('19_151_48.xls')
+
+
+
+if __name__ == "__main__":
+    #parser = defineConsole()
+    #namespace = parser.parse_args()
+    #inputFile = namespace.input
+    #modelNameList = getValidFiles('egfr','xml')
+    #modelNameList = getValidFiles('curated','xml')
+
+    modelNameList =  getValidFiles('tmp','xml')
+    #modelName = ['egfr/output151.xml']
+    parameterSpace = []
+    for element in modelNameList:
+        parameterSpace.append(getParameterDictionary(readBNGXML.parseFullXML(element)))
+
+    ExcelOutput(modelNameList, parameterSpace)
+    getDifferences(modelNameList, parameterSpace)
     '''
     with open('19_151_48.csv','wb') as f:
         writer = csv.DictWriter(f, keys)

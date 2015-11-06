@@ -553,58 +553,62 @@ class SBMLAnalyzer:
         '''
         1-1 string comparison. This method will attempt to detect if there's
         a modifiation relatinship between string <reactant> and <product>
-        
         '''
-        
+
         #strippedMolecules = [x.strip('()') for x in molecules]
-        molecules = [reactant,product] if len(reactant) < len(product) else [product,reactant]
+        molecules = [reactant, product] if len(reactant) < len(product) else [product, reactant]
         similarityThreshold = 10
         if reactant == product:
-            return [[[[reactant],[product]],None,None]]
-            
-        namePairs,differenceList,_ = detectOntology.defineEditDistanceMatrix(molecules,similarityThreshold=similarityThreshold)
+            return [[[[reactant], [product]], None, None]]
+
+        namePairs, differenceList, _ = detectOntology.defineEditDistanceMatrix(molecules, similarityThreshold=similarityThreshold)
         #print '+++',namePairs,differenceList
         #print '---',detectOntology.defineEditDistanceMatrix2(molecules,similarityThreshold=similarityThreshold)
-        
-        
-        #FIXME:in here we need a smarter heuristic to detect actual modifications
-        #for now im just going with a simple heuristic that if the species name
-        #is long enough, and the changes from a to be are all about modification
+
+        # FIXME:in here we need a smarter heuristic to detect actual modifications
+        # for now im just going with a simple heuristic that if the species name
+        # is long enough, and the changes from a to be are all about modification
         longEnough = 3
         if (len(reactant) >= longEnough or reactant in moleculeSet) and len(differenceList) > 0 and len(reactant) >= len(differenceList[0]):
-            #one is strictly a subset of the other a,a_b
+            # one is strictly a subset of the other a,a_b
             if len([x for x in differenceList[0] if '-' in x]) == 0:
-                return [[[[reactant],[product]],''.join([x[-1] for x in differenceList[0]]),differenceList[0]]]
-            #string share a common subset but they contain mutually exclusive appendixes: a_b,a_c
+                return [[[[reactant], [product]], ''.join([x[-1] for x in differenceList[0]]), differenceList[0]]]
+            # string share a common subset but they contain mutually exclusive appendixes: a_b,a_c
             else:
-                commonRoot = detectOntology.findLongestSubstring(reactant,product)
+                commonRoot = detectOntology.findLongestSubstring(reactant, product)
+
                 if len(commonRoot) > longEnough or commonRoot in moleculeSet:
-                    mostSimilarRealMolecules =  get_close_matches(commonRoot,[x for x in moleculeSet if x not in [reactant,product]])
+                    mostSimilarRealMolecules = get_close_matches(commonRoot, [x for x in moleculeSet if x not in [reactant, product]])
                     for commonMolecule in mostSimilarRealMolecules:
                         if commonMolecule in reactant and commonMolecule in product:
                             commonRoot = commonMolecule
-                            logMess('INFO:Atomization','common root {0}={1}:{2}'.format(commonRoot,reactant,product))
+                            logMess('INFO:Atomization', 'common root {0}={1}:{2}'.format(commonRoot, reactant, product))
                         #if commonMolecule == commonRoot.strip('_'):
                         #    commonRoot= commonMolecule
                         #    break
-                    molecules = [commonRoot,reactant,product]
-                    
-                    namePairs,differenceList,_ = detectOntology.defineEditDistanceMatrix([commonRoot,reactant],similarityThreshold=10)  
-                    namePairs2,differenceList2,_ = detectOntology.defineEditDistanceMatrix([commonRoot,product],similarityThreshold=10)  
+                    molecules = [commonRoot, reactant, product]
+                    namePairs, differenceList, _ = detectOntology.defineEditDistanceMatrix([commonRoot, reactant], similarityThreshold=10)
+                    namePairs2, differenceList2, _ = detectOntology.defineEditDistanceMatrix([commonRoot, product], similarityThreshold=10)
                     namePairs.extend(namePairs2)
+
+                    for element in namePairs:
+                        # supposed modification is actually a pre-existing species. if that happens then refuse to proceeed
+                        if element[1] in moleculeSet:
+                            return [[[[reactant],[product]],None,None]]
+
                     differenceList.extend(differenceList2)
-                    #obtain the name of the component from an anagram using the modification letters
-                    validDifferences = [''.join([x[-1] 
+                    # obtain the name of the component from an anagram using the modification letters
+                    validDifferences = [''.join([x[-1]
                         for x in difference]) 
-                        for difference in differenceList if '-' not in [y[0] 
+                        for difference in differenceList if '-' not in [y[0]
                         for y in difference]]
                     validDifferences.sort()
-                    #avoid trivial differences
+                    # avoid trivial differences
                     if len(validDifferences) < 2 or any([x in moleculeSet for x in validDifferences]):
                         return [[[[reactant],[product]],None,None]]
-                    #FIXME:here it'd be helpful to come up with a better heuristic
-                    #for infered component names
-                    #componentName =  ''.join([x[0:max(1,int(math.ceil(len(x)/2.0)))] for x in validDifferences])
+                    # FIXME:here it'd be helpful to come up with a better heuristic
+                    # for infered component names
+                    # componentName =  ''.join([x[0:max(1,int(math.ceil(len(x)/2.0)))] for x in validDifferences])
 
                     #for namePair,difference in zip(namePairs,differenceList):
                     #    if len([x for x in difference if '-' in x]) == 0:
@@ -1336,6 +1340,7 @@ class SBMLAnalyzer:
                 productString = [[y for y in x if y!=''] for x in productString]        
 
             else:
+
                 reactantString = []
                 productString = []
                 #check how the reactants are composed and add it to the list
@@ -1344,6 +1349,7 @@ class SBMLAnalyzer:
                         reactantString.append([element])
                     else:
                         reactantString.append(deepcopy(externalDependencyGraph[element][0]))
+
                 #same for products
                 for element in reaction[1]:
                     if element not in externalDependencyGraph or externalDependencyGraph[element] == []:
@@ -1352,11 +1358,10 @@ class SBMLAnalyzer:
                         productString.append(deepcopy(externalDependencyGraph[element][0]))
 
         
-                #remove those chemicals that match exactly on both sides since those are not interesting.
-                #and unlike lexical pattern matching we are not going to go around trying to increase string size
-
-
+                # remove those chemicals that match exactly on both sides since those are not interesting.
+                # and unlike lexical pattern matching we are not going to go around trying to increase string size
                 reactantString, productString = self.removeExactMatches(reactantString, productString)
+
             if [0] in reactantString or [0] in productString:
                 continue
             matching, matching2 = self.approximateMatching2(reactantString, productString, strippedMolecules, translationKeys)
