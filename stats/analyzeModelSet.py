@@ -17,14 +17,14 @@ import argparse
 sys.path.insert(0, '.')
 sys.path.insert(0, os.path.join('.','SBMLparser'))
 home = expanduser("~")
-sbmlTranslator = join(home, 'workspace', 'bionetgen', 'parsers', 'SBMLparser', 'SBMLparser', 'sbmlTranslator.py')
+sbmlTranslator = join(home, 'workspace', 'atomizer', 'SBMLparser', 'sbmlTranslator.py')
 
 bngExecutable = join(home,'workspace','bionetgen','bng2','BNG2.pl')
 visualizeExecutable = join(home,'workspace','bionetgen','bng2','Perl2','Visualization','visualize.pl')
-graphAnalysis = join(home,'workspace','bionetgen','parsers','SBMLparser','stats','graphAnalysis.py')
-collapsedContact = join(home,'workspace','bionetgen','parsers','SBMLparser','stats','collapsedContactMap.py')
-compareModels = join(home, 'workspace', 'bionetgen', 'parsers', 'SBMLparser', 'SBMLparser', 'rulifier', 'compareModels.py')    
-sbmlparserhome = join(home, 'workspace', 'bionetgen', 'parsers', 'SBMLparser', 'SBMLparser')
+graphAnalysis = join(home,'workspace','atomizer','stats','graphAnalysis.py')
+collapsedContact = join(home,'workspace','atomizer','stats','collapsedContactMap.py')
+compareModels = join(home, 'workspace', 'atomizer', 'SBMLparser', 'rulifier', 'compareModels.py')    
+sbmlparserhome = join(home, 'workspace', 'atomizer', 'SBMLparser')
 
 
 def getFiles(directory, extension):
@@ -54,7 +54,7 @@ def callSBMLTranslator(fileName,outputdirectory,options=[]):
     outputdirectory -- The directory where the resulting bngl will be placed
     """
     with open(os.devnull,"w") as f:
-        result = call(['python', sbmlTranslator, '-api',
+        result = call(['python', sbmlTranslator, '-a', '-t', '-p', '-i',
         #'XMLExamples/curated/BIOMD%010i.xml' % self.param,
                        fileName,
                        '-o', os.path.join(outputdirectory, str(fileName.split('/')[-1])) + '.bngl',
