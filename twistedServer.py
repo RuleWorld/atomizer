@@ -155,7 +155,7 @@ class AtomizerServer(xmlrpc.XMLRPC):
                 graphContent = f.read()
 
             gml = networkx.read_gml('{0}_{1}.gml'.format(name, graphtype))
-            result = gml2cyjson(gml)
+            result = gml2cyjson(gml, graphtype=graphtype)
             jsonStr = json.dumps(result, indent=1, separators=(',', ': '))
 
             result = {'jsonStr': jsonStr, 'gmlStr': graphContent}

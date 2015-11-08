@@ -1,6 +1,7 @@
 import random
 
-def gml2cyjson(gmlText):
+
+def gml2cyjson(gmlText, graphtype=None):
     """
     Converts a gml graph definition to the format that cytoscape.js expects
     """
@@ -61,27 +62,41 @@ def gml2cyjson(gmlText):
             if str(gmlText.node[node]['gid']) not in colorDict:
                 if 'gid' in gmlText.node[str(gmlText.node[node]['gid'])]:
                     if str(gmlText.node[str(gmlText.node[node]['gid'])]['gid']) not in colorDict:
-                        newColor = '#%02X%02X%02X' % (r(),r(),r())
+                        if graphtype == 'regulatory':
+                            newColor = gmlText.node[node]['graphics']['fill']
+                        else:
+                            newColor = '#%02X%02X%02X' % (r(), r(), r())
                         colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])] = newColor
                         colorDict[str(gmlText.node[node]['gid'])] = newColor
                     else:
-                        colorDict[str(gmlText.node[node]['gid'])] = colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])] 
+                        colorDict[str(gmlText.node[node]['gid'])] = colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])]
                 else:
-                    colorDict[str(gmlText.node[node]['gid'])] = '#%02X%02X%02X' % (r(),r(),r())
+                    if graphtype == 'regulatory':
+                        colorDict[str(gmlText.node[node]['gid'])] = gmlText.node[node]['graphics']['fill']
+                    else:
+                        colorDict[str(gmlText.node[node]['gid'])] = '#%02X%02X%02X' % (r(), r(), r())
             colorDict[str(node)] = colorDict[str(gmlText.node[node]['gid'])]
         if str(node) not in colorDict:
-            colorDict[str(node)] = '#%02X%02X%02X' % (r(),r(),r())
+            if graphtype == 'regulatory':
+                colorDict[str(node)] = gmlText.node[node]['graphics']['fill']
+            else:
+                colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
         tmp['data']['faveColor'] = colorDict[str(node)]
 
         jsonDict['elements']['nodes'].append(tmp)
     for link in gmlText.edge:
+        print gmlText.edge[link]
         for dlink in gmlText.edge[link]:
             if link != '' and dlink != '':
+
                 tmp = {'data':{}}
                 tmp['data']['source'] = int(link)
                 tmp['data']['target'] = int(dlink)
-                tmp['data']['id'] = '{0}_{1}'.format(tmp['data']['source'],tmp['data']['target'])
-                tmp['data']['faveColor'] = colorDict[str(link)]
+                tmp['data']['id'] = '{0}_{1}'.format(tmp['data']['source'], tmp['data']['target'])
+                if graphtype == 'regulatory':
+                    tmp['data']['faveColor'] = gmlText.edge[link][dlink]['graphics']['fill']
+                else:
+                    tmp['data']['faveColor'] = colorDict[str(link)]
                 jsonDict['elements']['edges'].append(tmp)
 
     jsonDict['layout'] = {
