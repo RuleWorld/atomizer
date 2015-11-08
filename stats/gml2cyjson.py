@@ -85,7 +85,6 @@ def gml2cyjson(gmlText, graphtype=None):
 
         jsonDict['elements']['nodes'].append(tmp)
     for link in gmlText.edge:
-        print gmlText.edge[link]
         for dlink in gmlText.edge[link]:
             if link != '' and dlink != '':
 
