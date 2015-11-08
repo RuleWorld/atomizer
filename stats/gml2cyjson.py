@@ -30,7 +30,7 @@ def gml2cyjson(gmlText):
     {
       'selector': 'edge',
       'css': {
-        'target-arrow-shape': 'triangle'
+        'target-arrow-shape': 'none'
       }
     },
     {

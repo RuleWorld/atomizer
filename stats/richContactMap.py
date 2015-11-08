@@ -18,13 +18,14 @@ import matplotlib.patches as mpatches
 from copy import copy, deepcopy
 import scipy.stats
 from scipy import linalg
+import seaborn as sns
 
 import sys
 import os
 sys.path.insert(0, os.getcwd())
 sys.path.insert(0, os.path.join(os.getcwd(),'SBMLparser'))
 sys.path.insert(0, '../ContactMap')
-import createGraph
+#import createGraph
 
 import SBMLparser.utils.consoleCommands as console
 import SBMLparser.utils.readBNGXML as readBNGXML
@@ -1051,8 +1052,11 @@ def reactionBasedAtomizationDistro(directory):
 
     constructHistogram(syndelArray, 'syndelHist', 'Fraction of synthesis and degradation reactions', np.ones(
         len(syndelArray)), normed=False)
+
     plt.clf()
-    plt.hist(ratomization)
+
+    sns.distplot(ratomization, kde=False, rug=True, bins=10);
+    #plt.hist(ratomization)
     plt.xlabel('Reaction atomization level', fontsize=18)
     plt.ylabel('Number of models', fontsize=18)
     plt.savefig('ratomizationHist.png')
@@ -1434,11 +1438,11 @@ if __name__ == "__main__":
     #print failures
     #spaceCoveredCDF('complex2')
     # modelCompositionCDF('complex2')
-    #reactionBasedAtomizationDistro('complex2')
+    reactionBasedAtomizationDistro('curated')
     # nonAtomizedSpeciesAnalysis()
     # createGroupingCDF()
     #print reactionBasedAtomizationFile('curated/BIOMD0000000019.xml.xml')
-    print reactionBasedAtomizationFile('SBMLparser/nonchang.xml')
+    #print reactionBasedAtomizationFile('SBMLparser/nonchang.xml')
     # analyzeGroupingCDF()
 
     # createSpaceDistribution()

@@ -284,8 +284,8 @@ def fillContextGraphInformation(graphDictionary, extendedInformation, speciesNam
                                 createNode(graphDictionary[relationship], label,
                                            {'type': "rectangle", 'fill': fill2, "w": 15, "h": 15}, {'text': ' '}, 0, graphDictionary[relationship].node[molecule]['id'])
                             if (node1, label) not in graphDictionary[relationship].edges():
-                                graphDictionary[relationship].add_edge(node1, label, graphics={
-                                                                       'targetArrow':"standard"}, weight=0.1)
+                                graphDictionary[relationship].add_edge(node1, label,
+                                                                       graphics={'targetArrow': "standard"}, weight=0.1)
                             if (label, node2) not in graphDictionary[relationship].edges():
                                 graphDictionary[relationship].add_edge(label, node2, graphics={
                                                                        'fill': '#0000FF', 'targetArrow': "standard"}, weight=0.1)
@@ -296,11 +296,11 @@ def fillContextGraphInformation(graphDictionary, extendedInformation, speciesNam
 
                         else:
                             graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
-                                                                    'targetArrow': "standard", 'sourceArrow': "dash"}, weight=0.1)
+                                                                   'targetArrow': "standard", 'sourceArrow': "dash"}, weight=0.1)
                     elif relationship in ['repression']:
 
                         graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
-                                                                'targetArrow': "dash"}, weight=0.1)
+                                                                                       'targetArrow': "dash"}, weight=0.1)
                     elif relationship in ['doubleRepression']:
                         if bipartiteFlag:
                             label = extendedInformation['processNodes'][molecule][relationship][(requirement1, requirement2)]
@@ -401,7 +401,7 @@ def createCollapsedContact(rules, species, transformations, fileName, extendedIn
 
                 if len(bondpartners) == 2:
                     dummyNode, label1, fill1 = getDummyNode(bondpartners[0], bondpartners[1], collapsedComponents)
-                    dummyNode2, label2, fill2 = getDum  myNode(bondpartners[1], bondpartners[0], collapsedComponents)
+                    dummyNode2, label2, fill2 = getDummyNode(bondpartners[1], bondpartners[0], collapsedComponents)
                     parentNode1 = graph.node[bondpartners[0]]['id']
                     parentNode2 = graph.node[bondpartners[1]]['id']
                     if bondpartners[0] in extendedInformation['exclusionCliques']:
