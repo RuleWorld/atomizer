@@ -97,8 +97,7 @@ def gml2cyjson(gmlText, graphtype=None):
         for dlink in gmlText.edge[link]:
             if link != '' and dlink != '':
                 tmp = {'data':{}}
-                tmp['data']['id'] = '{0}_{1}'.format(tmp['data']['source'], tmp['data']['target'])
-                print link, dlink, gmlText.edge[link][dlink]
+                
 
                 if graphtype == 'regulatory':
                     if 'graphics' in gmlText.edge[link][dlink]:
@@ -108,18 +107,26 @@ def gml2cyjson(gmlText, graphtype=None):
                         else:
                             tmp['data']['source'] = int(link)
                             tmp['data']['target'] = int(dlink)
-
+                        tmp['data']['id'] = '{0}_{1}'.format(tmp['data']['source'], tmp['data']['target'])
                         tmp['data']['faveColor'] = gmlText.edge[link][dlink]['graphics']['fill']
                         jsonDict['elements']['edges'].append(tmp)
                     else:
                         for multiedge in gmlText.edge[link][dlink]:
+                            if gmlText.edge[link][dlink][multiedge]['graphics']['arrow'] == 'first':
+                                tmp['data']['source'] = int(dlink)
+                                tmp['data']['target'] = int(link)
+                            else:
+                                tmp['data']['source'] = int(link)
+                                tmp['data']['target'] = int(dlink)
+                            tmp['data']['id'] = '{0}_{1}'.format(tmp['data']['source'], tmp['data']['target'])
+
                             if 'graphics' in gmlText.edge[link][dlink][multiedge]:
                                 tmp['data']['faveColor'] = gmlText.edge[link][dlink][multiedge]['graphics']['fill']
                                 jsonDict['elements']['edges'].append(copy(tmp))
                 else:
                     tmp['data']['source'] = int(link)
                     tmp['data']['target'] = int(dlink)
-
+                    tmp['data']['id'] = '{0}_{1}'.format(tmp['data']['source'], tmp['data']['target'])
                     tmp['data']['faveColor'] = colorDict[str(link)]
                     jsonDict['elements']['edges'].append(tmp)
 
