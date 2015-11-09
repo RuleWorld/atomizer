@@ -92,7 +92,6 @@ def gml2cyjson(gmlText, graphtype=None):
         
         jsonDict['elements']['nodes'].append(tmp)
 
-    pprint.pprint(jsonDict['elements']['nodes'])
     for link in gmlText.edge:
         for dlink in gmlText.edge[link]:
             if link != '' and dlink != '':
