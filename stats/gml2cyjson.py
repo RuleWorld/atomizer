@@ -1,5 +1,8 @@
 import random
+from copy import copy
 
+def processEdge(edgeInfo):
+    pass
 
 def gml2cyjson(gmlText, graphtype=None):
     """
@@ -87,19 +90,24 @@ def gml2cyjson(gmlText, graphtype=None):
     for link in gmlText.edge:
         for dlink in gmlText.edge[link]:
             if link != '' and dlink != '':
-
                 tmp = {'data':{}}
                 tmp['data']['source'] = int(link)
                 tmp['data']['target'] = int(dlink)
                 tmp['data']['id'] = '{0}_{1}'.format(tmp['data']['source'], tmp['data']['target'])
+
+
                 if graphtype == 'regulatory':
                     if 'graphics' in gmlText.edge[link][dlink]:
                         tmp['data']['faveColor'] = gmlText.edge[link][dlink]['graphics']['fill']
+                        jsonDict['elements']['edges'].append(tmp)
                     else:
-                        tmp['data']['faveColor'] = '#000000'
+                        for multiedge in gmlText.edge[link][dlink]:
+                            if 'graphics' in gmlText.edge[link][dlink][multiedge]:
+                                tmp['data']['faveColor'] = gmlText.edge[link][dlink][multiedge]['graphics']['fill']
+                                jsonDict['elements']['edges'].append(copy(tmp))
                 else:
                     tmp['data']['faveColor'] = colorDict[str(link)]
-                jsonDict['elements']['edges'].append(tmp)
+                    jsonDict['elements']['edges'].append(tmp)
 
     jsonDict['layout'] = {
     'name': 'cose',
@@ -119,3 +127,15 @@ def gml2cyjson(gmlText, graphtype=None):
     jsonDict['ready'] =  'function(){window.cy = this;}'
 
     return jsonDict
+
+'''
+if __name__ == '__main__':
+    import networkx as nx
+    import pprint
+    #with open ('/home/proto/workspace/bionetgen/bng2/Models2/toy-jim_regulatory.gml','r') as f:
+    #    s = f.read()
+    s = nx.read_gml('/home/proto/workspace/bionetgen/bng2/Models2/toy-jim_regulatory.gml')    
+    graph = gml2cyjson(s,'regulatory')
+    pprint.pprint(graph['elements']['edges'])
+''' 
+
