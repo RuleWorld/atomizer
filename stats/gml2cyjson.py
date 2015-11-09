@@ -93,7 +93,10 @@ def gml2cyjson(gmlText, graphtype=None):
                 tmp['data']['target'] = int(dlink)
                 tmp['data']['id'] = '{0}_{1}'.format(tmp['data']['source'], tmp['data']['target'])
                 if graphtype == 'regulatory':
-                    tmp['data']['faveColor'] = gmlText.edge[link][dlink]['graphics']['fill']
+                    if 'graphics' in gmlText.edge[link][dlink]:
+                        tmp['data']['faveColor'] = gmlText.edge[link][dlink]['graphics']['fill']
+                    else:
+                        tmp['data']['faveColor'] = '#000000'
                 else:
                     tmp['data']['faveColor'] = colorDict[str(link)]
                 jsonDict['elements']['edges'].append(tmp)
