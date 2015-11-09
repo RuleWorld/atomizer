@@ -16,6 +16,7 @@ def gml2cyjson(gmlText, graphtype=None):
       'selector': 'node',
       'css': {
         'content': 'data(label)',
+        'shape': 'data(faveShape)',
         'text-valign': 'center',
         'text-halign': 'center'
       }
@@ -53,6 +54,7 @@ def gml2cyjson(gmlText, graphtype=None):
     #    gmlText.node[nd].pop('id')
     #jsgrph = json_graph.node_link_data(gmlText)
     colorDict = {}
+    shapeDict = {'roundrectangle':'rectangle','hexagon':'octagon'}
     for node in gmlText.node:
         if gmlText.node[node] == {}:
             continue
@@ -85,7 +87,8 @@ def gml2cyjson(gmlText, graphtype=None):
             else:
                 colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
         tmp['data']['faveColor'] = colorDict[str(node)]
-
+        tmp['data']['faveShape'] = shapeDict[gmlText.node[node]['graphics']['type']] if 'type' in gmlText.node[node]['graphics'] else 'rectangle'
+        
         jsonDict['elements']['nodes'].append(tmp)
     for link in gmlText.edge:
         for dlink in gmlText.edge[link]:
@@ -128,7 +131,7 @@ def gml2cyjson(gmlText, graphtype=None):
 
     return jsonDict
 
-'''
+
 if __name__ == '__main__':
     import networkx as nx
     import pprint
@@ -136,6 +139,5 @@ if __name__ == '__main__':
     #    s = f.read()
     s = nx.read_gml('/home/proto/workspace/bionetgen/bng2/Models2/toy-jim_regulatory.gml')    
     graph = gml2cyjson(s,'regulatory')
-    pprint.pprint(graph['elements']['edges'])
-''' 
+
 
