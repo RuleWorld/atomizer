@@ -24,4 +24,4 @@ before_install:
 # command to run tests
 notifications:
   slack: faederlab:8ABlK9WdYWbm2sc4UAkaRTGB
-script: nosetests
+script: cd test && tar xvfj bionetgen-2.2.6.tar.bz2 && python testSuite.py

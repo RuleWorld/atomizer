@@ -21,11 +21,11 @@ sys.path.insert(0, os.path.join(pathname, '..', 'SBMLparser'))
 
 import SBMLparser.libsbml2bngl as libsbml2bngl
 
-
+bionetgenBinary = os.path.join(pathname, 'BioNetGen-2.2.6-stable', 'BNG2.pl')
 def bnglExecution(bnglFile, settings):
     os.chdir(os.path.join(pathname, 'tmp'))
     try:
-        bngconsole = pexpect.spawn('bngdev --console')
+        bngconsole = pexpect.spawn('perl {0} --console'.format(bionetgenBinary))
         bngconsole.expect('BNG>')
         bngconsole.sendline('load {0}.bngl'.format(bnglFile))
 
@@ -150,6 +150,7 @@ class AtomizationTestCase(ParametrizedTestCase):
         for element in dirs:
             os.remove(os.path.join(pathname, 'tmp', element))
 
+AtomizationTestCase.slow = 1
 
 class TestValid(ParametrizedTestCase):
 
@@ -172,7 +173,7 @@ class TestValid(ParametrizedTestCase):
     #dirs = ['00813', '00834', '00853', '00856', '00859', '00862', '00896', '01034', '01059']
     #dirs = ['01059']
     #dirs = ['00076', '00077', '00603', '00602']
-    
+    #dirs = ['00001']
     suite = unittest.TestSuite()
     for t in [x for x in dirs if x not in xdirs]:
         suite.addTest(ParametrizedTestCase.parametrize(
