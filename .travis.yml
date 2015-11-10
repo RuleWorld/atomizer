@@ -10,6 +10,8 @@ addons:
     - libxml2-dev
     - zlib1g-dev
     - libbz2-dev
+    - libxslt-dev
+    - lib32z1-dev
     - python-lxml
 python:
   - "2.7"
@@ -17,6 +19,7 @@ python:
 before_install: 
  - pip install networkx==1.9.1
  - pip install pexpect==3.3
+ - pip install lxml
  - pip install python-libsbml
 # command to run tests
 notifications:
