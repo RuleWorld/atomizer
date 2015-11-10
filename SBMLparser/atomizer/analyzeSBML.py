@@ -69,21 +69,21 @@ def addToDependencyGraph(dependencyGraph, label, value):
         dependencyGraph[label].append(value)
 
 class SBMLAnalyzer:
-    
+
     def __init__(self, modelParser, configurationFile, namingConventions, speciesEquivalences=None, conservationOfMass = True):
-        self.modelParser = modelParser        
+        self.modelParser = modelParser
         self.configurationFile = configurationFile
         self.namingConventions = detectOntology.loadOntology(namingConventions)
         self.userNamingConventions = copy(self.namingConventions)
-        self.speciesEquivalences= speciesEquivalences
+        self.speciesEquivalences = speciesEquivalences
         self.userEquivalencesDict = None
-        self.lexicalSpecies= []
-        self.conservationOfMass = conservationOfMass        
+        self.lexicalSpecies = []
+        self.conservationOfMass = conservationOfMass
 
-    def distanceToModification(self,particle,modifiedElement,translationKeys):
-        posparticlePos = [m.start()+len(particle) for m in re.finditer(particle,modifiedElement)]
-        preparticlePos = [m.start() for m in re.finditer(particle,modifiedElement)]
-        keyPos = [m.start() for m in re.finditer(translationKeys,modifiedElement)]
+    def distanceToModification(self, particle, modifiedElement, translationKeys):
+        posparticlePos = [m.start() + len(particle) for m in re.finditer(particle, modifiedElement)]
+        preparticlePos = [m.start() for m in re.finditer(particle, modifiedElement)]
+        keyPos = [m.start() for m in re.finditer(translationKeys, modifiedElement)]
         distance = [abs(y-x) for x in posparticlePos for y in keyPos]
         distance.extend([abs(y-x) for x in preparticlePos for y in keyPos])
         distance.append(9999)

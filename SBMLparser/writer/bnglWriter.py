@@ -256,9 +256,11 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
     
     tmp = rule
     #delete the compartment from the rate function since cBNGL already does it
+    #this is not true as seen by the test
     for compartment in compartments:
-        tmp = re.sub('^{0}\s*[*]'.format(compartment[0]),'',tmp)
-        tmp = re.sub('([*]\s*{0})$'.format(compartment[0]),'',tmp)
+        #if len(reactants) < 2:
+        #    tmp = re.sub('^{0}\s*[*]'.format(compartment[0]),'',tmp)
+        #    tmp = re.sub('([*]\s*{0})$'.format(compartment[0]),'',tmp)
 
         if compartment[0] in tmp:
             tmp =re.sub(r'(\W|^)({0})(\W|$)'.format(compartment[0]),r'\1 {0} \3'.format(str(compartment[1])),tmp)

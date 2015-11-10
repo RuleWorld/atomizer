@@ -191,7 +191,6 @@ class SBML2BNGL:
         artificialObservables: species that are changed through an sbml assignment rule. their
         usage in bng requires special handling.
         """
-
         swapDict = {libsbml.AST_NAME_TIME : 'Time'}
         for node in [x for x in math.getLeftChild(), math.getRightChild() if x != None]:
             if node.getType() in swapDict.keys():
@@ -223,6 +222,7 @@ class SBML2BNGL:
         right now we are relying on  the modelers not being malicious
         when writing their rates laws.
         '''
+
         if (math.getCharacter() == '*' or math.getCharacter() == '/'):
             if math.getLeftChild().isUMinus():
                 math.setCharacter('+')
@@ -321,8 +321,15 @@ class SBML2BNGL:
             rateR = '{0} * {1}'.format(rateR, int(highStoichoiMetryFactor))
         return rateR, max(math.getNumChildren(), len(ifStack))
 
+    def isAmount(self, reactantName):
+        for species in self.model.getListOfSpecies():
+            if species.getName() == reactantName:
+                if species.isSetInitialAmount():
+                    return True
+        return False
 
-    def analyzeReactionRate(self, math, compartmentList, reversible, rReactant, rProduct, reactionID, parameterFunctions):
+
+    def analyzeReactionRate(self, math, compartmentList, reversible, rReactant, rProduct, reactionID, parameterFunctions, rModifier=[]):
         """
         This functions attempts to obtain the left and right hand sides of a rate reaction 
         function given a MathML tree. It also removes compartments and chemical factors from the function
@@ -334,7 +341,9 @@ class SBML2BNGL:
             rReactant -- a string list of the reactants.
             rProduct -- a string list of the products.
         """
+        removedCompartments = copy(compartmentList)
         math = self.getPrunnedTree(math, compartmentList)
+        removedCompartments = [x for x in removedCompartments if x not in compartmentList]
         if reversible:
             if math.getCharacter() == '-':
                 if math.getNumChildren() > 1:
@@ -346,9 +355,8 @@ class SBML2BNGL:
                                  rReactant, parameterFunctions))
                 else:
                     rateR, rateL, nr, nl = self.analyzeReactionRate(math.getChild(0), compartmentList,
-                                                                    reversible, rProduct, rReactant, reactionID, parameterFunctions)
+                                                                    reversible, rProduct, rReactant, reactionID, parameterFunctions, rModifier)
             elif math.getCharacter() == '+' and math.getNumChildren() > 1:
-
                 if(self.getIsTreeNegative(math.getRightChild())):
                     rateL, nl = (self.removeFactorFromMath(
                     math.getLeftChild().deepCopy(), rReactant, rProduct, parameterFunctions))
@@ -403,6 +411,23 @@ but reaction is marked as reversible'.format(reactionID))
                                                    rReactant, rProduct, parameterFunctions))
 
             rateR, nr = '0', '-1'
+
+        #cBNGL and SBML treat the behavior of compartments in rate laws differently so we have to compensate for that
+        if len(removedCompartments) > 0:
+            #if the species initial conditions were defined as concentrations then correct for it and transform it to absolute counts
+            if len(rReactant) == 2 and not (self.isAmount(rReactant[0][0]) or self.isAmount(rReactant[1][0])):
+                rateL = '({0}) * ({1})'.format(rateL,' * '.join(removedCompartments))
+                nl += 1
+            elif len(rModifier) > 0:
+                rateL = '({0}) / ({1})'.format(rateL,' * '.join(removedCompartments))
+                nl += 1
+
+            if nr != '-1':
+                if len(rProduct) == 2 and len(rReactant) == 1 and not (self.isAmount(rProduct[0][0]) or self.isAmount(rProduct[1][0])):
+                    rateR = '({0}) * {1}'.format(rateR,' * '.join(removedCompartments))
+                    nr += 1
+        #print rateL, nl
+        #print rateR, nr
         return rateL, rateR, nl, nr
 
     def __getRawRules(self, reaction, symmetryFactors, parameterFunctions, translator):
@@ -455,7 +480,7 @@ but reaction is marked as reversible'.format(reactionID))
             # update: apparently the solution was to use copy instead of deepcopy. This is because
             # the underlying swig code in c was causing conflicts when copied. make sure this actually works
             math = copy(kineticLaw.getMath())
-
+            math = math.deepCopy()
             # get a list of compartments so that we can remove them
             compartmentList = []
             for compartment in (self.model.getListOfCompartments()):
@@ -463,7 +488,7 @@ but reaction is marked as reversible'.format(reactionID))
 
             # remove compartments from expression. also separate left hand and right hand side
             rateL, rateR, nl, nr = self.analyzeReactionRate(math, compartmentList,
-                reversible, rReactant, rProduct, reaction.getId(), parameterFunctions)
+                reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers)
             if rateR == '0':
                 reversible = False
             if symmetryFactors[0] > 1:
@@ -661,6 +686,9 @@ but reaction is marked as reversible'.format(reactionID))
         name = compartment.getId()
         size = compartment.getSize()
         dimensions = compartment.getSpatialDimensions()
+        if dimensions == 1:
+            logMess('WARNING:Simulation', '1-D compartments are not supported. Changing for 2-D compartments for {0}. Please verify this does not affect simulation'.format(name))
+            dimensions = 2
         #if size != 1:
         #    print '!',
         #return name,3,size
@@ -758,7 +786,7 @@ but reaction is marked as reversible'.format(reactionID))
                 if rawRules['numbers'][1] > threshold:
                     functionName2 = '%s%dm()' % (functionTitle, index)
                     if self.getReactions.functionFlag:
-                        functions.append(writer.bnglFunction(rawRules['rates'][1], functionName2, rawRules['reactants'],
+                        functions.append(writer.bnglFunction(rawRules['rates'][1], functionName2, rawRules['products'],
                                          compartmentList, parameterDict, self.reactionDictionary))
                     self.reactionDictionary[rawRules['reactionID']] = '({0} - {1})'.format(functionName, functionName2)
                     functionName = '{0},{1}'.format(functionName, functionName2)
