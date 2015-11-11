@@ -10,6 +10,7 @@ import os
 import sys
 import numpy as np
 import pexpect
+from subprocess import call
 
 pathname = os.path.abspath(os.path.dirname(__file__))
 print '---', pathname
@@ -126,14 +127,14 @@ class AtomizationTestCase(ParametrizedTestCase):
             pathname, '..', 'config', 'namingConventions.json')
         outputFile = os.path.join(
             pathname, 'tmp', 'output{0}.bngl'.format(self.param[1]))
-        libsbml2bngl.analyzeFile('{0}/{1}/{1}-sbml-l2v4.xml'.format(self.param[0], self.param[1]), reactionDefinitions,
-                                 False, namingConventions,
-                                 outputFile=outputFile, speciesEquivalence=None, atomize=True, bioGrid=False)
-        settings = self.extractSimulationSettings(
-            '{0}/{1}/{1}-settings.txt'.format(self.param[0], self.param[1]))
+        #libsbml2bngl.analyzeFile('{0}/{1}/{1}-sbml-l2v4.xml'.format(self.param[0], self.param[1]), reactionDefinitions,
+        #                         False, namingConventions,
+        #                         outputFile=outputFile, speciesEquivalence=None, atomize=True, bioGrid=False)
+        call([os.path.join(pathname,'..','dist','sbmlTranslator'),'-i',os.path.join(pathname,self.param[0],self.param[1],'{0}-sbml-l2v4.xml'.format(self.param[1])),
+                           '-o',outputFile,'-a'])
+        settings = self.extractSimulationSettings(os.path.join(pathname,self.param[0],self.param[1],'{0}-settings.txt'.format(self.param[1])))
 
-        bnglValues, atol, validHeaders = bnglExecution(
-            'output{0}'.format(self.param[1]), settings)
+        bnglValues, atol, validHeaders = bnglExecution('output{0}'.format(self.param[1]), settings)
         referenceValues = parseCSV(
             '{0}/{1}/{1}-results.csv'.format(self.param[0], self.param[1]), validHeaders)
         print '---', float(atol), ((bnglValues - referenceValues)**2).mean()
@@ -170,6 +171,7 @@ class TestValid(ParametrizedTestCase):
     dirs = [f for f in os.listdir(os.path.join(pathname, 'semantic'))]
     dirs.sort()
     dirs = [x for x in dirs if x not in xdirs]
+    dirs=['00001']
     #dirs = ['00813', '00834', '00853', '00856', '00859', '00862', '00896', '01034', '01059']
     #dirs = ['01059']
     #dirs = ['00076', '00077', '00603', '00602']
