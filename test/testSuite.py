@@ -171,7 +171,7 @@ class TestValid(ParametrizedTestCase):
     dirs = [f for f in os.listdir(os.path.join(pathname, 'semantic'))]
     dirs.sort()
     dirs = [x for x in dirs if x not in xdirs]
-    dirs=['00001']
+    #dirs=['00001']
     #dirs = ['00813', '00834', '00853', '00856', '00859', '00862', '00896', '01034', '01059']
     #dirs = ['01059']
     #dirs = ['00076', '00077', '00603', '00602']
