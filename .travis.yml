@@ -13,14 +13,18 @@ addons:
     - libxslt-dev
     - lib32z1-dev
     - python-lxml
+    - libyaml-dev
 python:
   - "2.7"
+cache:
+ - pip
 # command to install dependencies
 before_install: 
  - pip install networkx==1.9.1
  - pip install pexpect==3.3
  - pip install lxml
  - pip install python-libsbml
+-  pip install yaml
 # command to run tests
 notifications:
   slack: faederlab:8ABlK9WdYWbm2sc4UAkaRTGB

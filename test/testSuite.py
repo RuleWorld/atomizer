@@ -181,4 +181,6 @@ class TestValid(ParametrizedTestCase):
         suite.addTest(ParametrizedTestCase.parametrize(
             AtomizationTestCase, param=[os.path.join(pathname, 'semantic'), t]))
 
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    result =  unittest.TextTestRunner(verbosity=2).run(suite)
+    ret = not (result.failures or result.errors)
+    sys.exit(ret)    
