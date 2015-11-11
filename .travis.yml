@@ -23,8 +23,8 @@ before_install:
  - pip install networkx==1.9.1
  - pip install pexpect==3.3
  - pip install lxml
+ - pip install pyyaml
  - pip install python-libsbml
- - pip install yaml
 # command to run tests
 notifications:
   slack: faederlab:8ABlK9WdYWbm2sc4UAkaRTGB
