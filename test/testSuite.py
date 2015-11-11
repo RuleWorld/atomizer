@@ -182,5 +182,7 @@ class TestValid(ParametrizedTestCase):
             AtomizationTestCase, param=[os.path.join(pathname, 'semantic'), t]))
 
     result =  unittest.TextTestRunner(verbosity=2).run(suite)
-    ret = (result.failures or result.errors)
+    ret = not (result.failures is [] or result.errors is [])
+    ret = 0 if ret else 1
+    print ret
     sys.exit(ret)    
