@@ -16,8 +16,6 @@ addons:
     - libyaml-dev
 python:
   - "2.7"
-cache:
- - pip
 # command to install dependencies
 before_install: 
  - pip install networkx==1.9.1
