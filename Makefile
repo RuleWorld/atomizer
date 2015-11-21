@@ -20,8 +20,17 @@ else
 endif
 
 
-update:
-	python updateDistribution.py -c;
+install:
+	mkdir -p bin
+ifeq ($(OS),Windows_NT)
+    ifeq ($(shell uname -o),Cygwin)
+	    cp  ${DIST}/sbmlTranslator bin/sbmlTranslator.exe;
+    else
+	    cp  ${DIST}/sbmlTranslator.exe bin/sbmlTranslator.exe;
+    endif
+else
+	cp  ${DIST}/sbmlTranslator bin/sbmlTranslator;
+endif
 
 
 test:
@@ -38,7 +47,8 @@ clean:
 	    rm -rf pyinstaller2 ;          \
 	fi ;	
 	if test -d test/BioNetGen-2.2.6-stable; then \
-		rm -rf test/BioNetGen-2.2.6-stable;
+		rm -rf test/BioNetGen-2.2.6-stable;	\
+	fi
 	find . -name '*.pyc' -delete
 
 	
