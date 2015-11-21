@@ -34,7 +34,7 @@ endif
 
 
 test:
-	cd test; tar xfj bionetgen-2.2.6.tar.bz2; python testSuite.py;
+	cd test; tar xfj bionetgen-2.2.6.tar.bz2; tar xfj testsuite.tar.bz2; python testSuite.py;
 
 clean:
 	if test -d ${BUILD} ; then \
