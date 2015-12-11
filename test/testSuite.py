@@ -130,7 +130,7 @@ class AtomizationTestCase(ParametrizedTestCase):
         #libsbml2bngl.analyzeFile('{0}/{1}/{1}-sbml-l2v4.xml'.format(self.param[0], self.param[1]), reactionDefinitions,
         #                         False, namingConventions,
         #                         outputFile=outputFile, speciesEquivalence=None, atomize=True, bioGrid=False)
-        call([os.path.join(pathname,'..','dist','sbmlTranslator'),'-i',os.path.join(pathname,self.param[0],self.param[1],'{0}-sbml-l2v4.xml'.format(self.param[1])),
+        call([os.path.join(pathname,'..','bin','sbmlTranslator'),'-i',os.path.join(pathname,self.param[0],self.param[1],'{0}-sbml-l2v4.xml'.format(self.param[1])),
                            '-o',outputFile,'-a'])
         settings = self.extractSimulationSettings(os.path.join(pathname,self.param[0],self.param[1],'{0}-settings.txt'.format(self.param[1])))
 

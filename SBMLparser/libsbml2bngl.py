@@ -14,7 +14,7 @@ from optparse import OptionParser
 import atomizer.moleculeCreation as mc
 import sys
 from os import listdir
-import numpy as np
+# import numpy as np
 import re
 import pickle
 from copy import copy
@@ -921,13 +921,15 @@ def flatStatusVector(statusVector):
     if statusVector[0] != '':
         return '!'
     return statusVector[1]
- 
+
+'''
 def xorBox(status1,status2):
     return not(status1 & status2)
-    
+
 def orBox(status1,status2):
     return (status1,status2)
-    
+
+
 def totalEnumerations(pairList):
     xCoordinate = set()
     yCoordinate = set()
@@ -940,9 +942,11 @@ def totalEnumerations(pairList):
     for element in pairList:
         matrix[xCoordinate.index(element[0])][yCoordinate.index(element[1])] = 1
     return np.all(np.all(matrix))
-   
-def getRelationshipDegree(componentPair,statusQueryFunction,comparisonFunction,finalComparison):
-    componentPairRelationshipDict = {}    
+'''
+
+
+def getRelationshipDegree(componentPair, statusQueryFunction, comparisonFunction, finalComparison):
+    componentPairRelationshipDict = {}
     for pair in componentPair:
         stats = []
         for state in componentPair[pair]:
@@ -975,7 +979,7 @@ def createPlot(labelDict):
         plt.savefig('{0}.png'.format(element))
         print '{0}.png'.format(element)
 '''
-
+'''
 def statFiles():
     
     for bioNumber in [19]:
@@ -1001,6 +1005,7 @@ def statFiles():
         #box.append(orBoxDict)
         with open('orBox{0}.dump'.format(bioNumber),'wb') as f:
             pickle.dump(box,f)
+'''
 
 def processDir(directory,atomize=True):
     from os import listdir
