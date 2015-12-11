@@ -1,7 +1,6 @@
 environment:
   CTEST_OUTPUT_ON_FAILURE: 1
   matrix:
-    - generator: "Make"
     - PYTHON: "C:\\Python27"
 
 install:
