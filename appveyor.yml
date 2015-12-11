@@ -1,0 +1,40 @@
+environment:
+  CTEST_OUTPUT_ON_FAILURE: 1
+  matrix:
+    - generator: "Make"
+
+install:
+  - choco install -r -y make
+  - choco sources add -n "msft" -s "https://go.microsoft.com/fwlink/?LinkID=230477"
+  - choco install libxml2
+  - choco install libxslt
+  - ps: if (-not(Test-Path($env:PYTHON))) { & appveyor\install.ps1 }
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "pip install --disable-pip-version-check --user --upgrade pip"
+  - "pip install --user numpy"
+  - "pip install --user networkx==1.9.1"
+  - "pip install --user pexpect==3.3"
+  - "pip install --user lxml"
+  - "pip install --user pyyaml"
+  - "pip install --user python-libsbml"
+
+branches:
+  # whitelist
+  only:
+    - master
+    - release
+    - development
+platform: x64
+
+
+build_script:
+  - make
+  - make install
+  - make test
+
+notifications:
+  - provider: Slack
+    auth_token:
+      secure: jN4Fas2b8/Z1yNInrC6yWZf1sHzA5M7M/wANf+O4nRQLRqNqLsmNFGMNusaS+adFyS0kz3TfGBtLjAEKeh84jw==
+    channel: build-results
+
