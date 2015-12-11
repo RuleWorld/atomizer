@@ -1,11 +1,14 @@
 os:
 - linux
 - osx
-language: python
+language: c++
+python:
+- '2.7'
 sudo: false
 addons:
   apt:
     packages:
+    - python-pip
     - python-dev
     - python-numpy
     - libxml2-dev
@@ -15,8 +18,6 @@ addons:
     - lib32z1-dev
     - python-lxml
     - libyaml-dev
-python:
-- '2.7'
 cache:
 - pip
 before_install:
