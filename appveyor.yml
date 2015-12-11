@@ -2,19 +2,21 @@ environment:
   CTEST_OUTPUT_ON_FAILURE: 1
   matrix:
     - generator: "Make"
+    - PYTHON: "C:\\Python27"
 
 install:
   - choco install -r -y make
   - choco sources add -n "msft" -s "https://go.microsoft.com/fwlink/?LinkID=230477"
   - choco install libxml2
   - choco install libxslt
-  - "pip install --disable-pip-version-check --user --upgrade pip"
-  - "pip install --user numpy"
-  - "pip install --user networkx==1.9.1"
-  - "pip install --user pexpect==3.3"
-  - "pip install --user lxml"
-  - "pip install --user pyyaml"
-  - "pip install --user python-libsbml"
+
+  - "%PYTHON%\\python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
+  - "%PYTHON%\\python.exe -m pip install --user numpy"
+  - "%PYTHON%\\python.exe -m pip install --user networkx==1.9.1"
+  - "%PYTHON%\\python.exe -m pip install --user pexpect==3.3"
+  - "%PYTHON%\\python.exe -m pip install --user lxml"
+  - "%PYTHON%\\python.exe -m pip install --user pyyaml"
+  - "%PYTHON%\\python.exe -m pip install --user python-libsbml"
 
 branches:
   # whitelist
@@ -28,7 +30,6 @@ platform: x64
 build_script:
   - make
   - make install
-  - make test
 
 notifications:
   - provider: Slack
