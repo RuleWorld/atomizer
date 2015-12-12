@@ -24,10 +24,9 @@ cache:
 
 before_install:
 - source osx_install.sh
-- pip install --upgrade pip
 - pip install --user networkx==1.9.1
 - pip install --user pexpect==3.3
-- pip install --user lxml
+- pip install --user lxml --cache-dir $HOME/.pip-cache
 - pip install --user pyyaml
 - pip install --user  python-libsbml --cache-dir $HOME/.pip-cache
 notifications:
