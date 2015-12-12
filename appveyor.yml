@@ -1,16 +1,21 @@
 environment:
   CTEST_OUTPUT_ON_FAILURE: 1
   matrix:
-    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7.x" # currently 2.7.9
+      PYTHON_ARCH: "64"
 
 install:
   - choco install -r -y make
   - choco sources add -n "msft" -s "https://go.microsoft.com/fwlink/?LinkID=230477"
   - choco install libxml2
   - choco install libxslt
-
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "%PYTHON%\\python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
-  - "%PYTHON%\\python.exe -m pip install --user numpy"
+  - "%PYTHON%\\python.exe -m pip install --user wheel"
+  - "powershell ./appveyor/install_numpy.ps1"
+  - %PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
+#  - "%PYTHON%\\python.exe -m pip install --user numpy"
   - "%PYTHON%\\python.exe -m pip install --user networkx==1.9.1"
   - "%PYTHON%\\python.exe -m pip install --user winpexpect"
   - "%PYTHON%\\python.exe -m pip install --user lxml"
@@ -24,7 +29,8 @@ branches:
     - release
     - development
 platform: x64
-
+cache:
+  - C:\tmp -> \appveyor\install_numpy.ps1
 
 build_script:
   - make
