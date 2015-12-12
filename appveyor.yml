@@ -14,7 +14,7 @@ install:
   - "%PYTHON%\\python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
   - "%PYTHON%\\python.exe -m pip install --user wheel"
   - "powershell ./appveyor/install_numpy.ps1"
-  - %PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
+  - "%PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
 #  - "%PYTHON%\\python.exe -m pip install --user numpy"
   - "%PYTHON%\\python.exe -m pip install --user networkx==1.9.1"
   - "%PYTHON%\\python.exe -m pip install --user winpexpect"
