@@ -4,8 +4,12 @@ Created on Mon Sep  2 18:11:35 2013
 
 @author: proto
 """
+import platform
 
-import pexpect
+if platform.system() != 'Windows':
+    import pexpect
+else:
+    import winpexepct
 import subprocess
 import os
 
@@ -24,7 +28,10 @@ def getBngExecutable():
 
 def bngl2xml(bnglFile,timeout=60):
     try:
-        bngconsole = pexpect.spawn('{0} --console'.format(getBngExecutable()),timeout=timeout)
+        if platform.system() != 'Windows':
+            bngconsole = pexpect.spawn('{0} --console'.format(getBngExecutable()),timeout=timeout)
+        else:
+            bngconsole = winpexpect.winspawn('{0} --console'.format(getBngExecutable()),timeout=timeout)
         bngconsole.expect('BNG>')
         bngconsole.sendline('load {0}'.format(bnglFile))
         bngconsole.expect('BNG>')

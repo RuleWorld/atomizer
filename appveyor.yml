@@ -12,7 +12,7 @@ install:
   - "%PYTHON%\\python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
   - "%PYTHON%\\python.exe -m pip install --user numpy"
   - "%PYTHON%\\python.exe -m pip install --user networkx==1.9.1"
-  - "%PYTHON%\\python.exe -m pip install --user pexpect==3.3"
+  - "%PYTHON%\\python.exe -m pip install --user winpexpect"
   - "%PYTHON%\\python.exe -m pip install --user lxml"
   - "%PYTHON%\\python.exe -m pip install --user pyyaml"
   - "%PYTHON%\\python.exe -m pip install --user python-libsbml"
