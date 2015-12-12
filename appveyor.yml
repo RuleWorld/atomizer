@@ -22,7 +22,7 @@ install:
   - ps: (new-object net.webclient).DownloadFile($env:PYWIN32_URL, 'c:\\pywin32.exe')
   - "%PYTHON%\\Scripts\\easy_install.exe c:\\pywin32.exe"
   - "%PYTHON%\\python.exe -m pip install --user winpexpect"
-  - "STATIC_DEPS=true %PYTHON%\\python.exe -m pip install --user lxml"
+  - STATIC_DEPS=true %PYTHON%\\python.exe -m pip install --user lxml
   - "%PYTHON%\\python.exe -m pip install --user pyyaml"
   - "%PYTHON%\\python.exe -m pip install --user python-libsbml"
 
