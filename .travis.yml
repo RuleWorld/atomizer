@@ -26,7 +26,7 @@ cache:
 before_install:
 - source osx_install.sh
 - wget https://bootstrap.pypa.io/get-pip.py
-- python get-pip.py
+- python get-pip.py --user
 #- pip install --user -U pip wheel
 - pip install --user -r requirements.txt  --cache-dir $HOME/.pip-cache 
 notifications:
