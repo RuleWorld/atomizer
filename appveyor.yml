@@ -15,17 +15,17 @@ install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "%PYTHON%\\python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
   - "%PYTHON%\\python.exe -m pip install --user wheel"
-  - "powershell ./appveyor/install_numpy.ps1"
-  - "%PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
 #  - "%PYTHON%\\python.exe -m pip install --user numpy"
   - "%PYTHON%\\python.exe -m pip install --user networkx==1.9.1"
   - ps: (new-object net.webclient).DownloadFile($env:PYWIN32_URL, 'c:\\pywin32.exe')
   - "%PYTHON%\\Scripts\\easy_install.exe c:\\pywin32.exe"
   - "%PYTHON%\\python.exe -m pip install --user winpexpect"
   - ps: (new-object net.webclient).DownloadFile($env:LXML_URL, 'c:\\lxml.whl')
-  - pip install c:\\lxml.whl
+  - pip install --use-wheel --no-index --find-links=c:\\ lxml
   - "%PYTHON%\\python.exe -m pip install --user pyyaml"
   - "%PYTHON%\\python.exe -m pip install --user python-libsbml"
+  - "powershell ./appveyor/install_numpy.ps1"
+  - "%PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
 
 branches:
   # whitelist

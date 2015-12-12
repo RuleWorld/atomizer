@@ -18,14 +18,12 @@ addons:
     - python-lxml
     - libyaml-dev
 
-cache:
-  directories:
-    - $HOME/.cache/pip
+cache: pip
 
 before_install:
 - source osx_install.sh
 - sudo -H pip install -U pip wheel
-- sudo -H pip install -r requirements.txt  --cache-dir $HOME/.pip-cache 
+- sudo -H pip install -r requirements.txt
 notifications:
   slack:
     secure: uUR4a4uFJTuCaGmSR8mOMrHRmzy2T35wN7MhLS4p/AbQekdMxaEAYBdVtqyb0IlVO58GJ+xPJjCh0f2IhECbYDb8Lyz7tAE41NnYcRrf6qCyv9g8BsvYxNjTbExr4A6bnSu5AKHZjbv9blGPE0dHR0Arskgrj4nTRYNhiv9cLCZ0yGZhKQkV9YMMfT6gNjDMHot6fLrbDCMcBZ7XtE1IGhOETWBGFQt1jj8eiOs3ZMWkVwUuLIF/fRpVjwYFkgUnQVAfQ0bke0/1R9cWeh/bIbKqDhYP9SGW4QD8B3GMRZ9kqRNfjy/DmD/Ss5myCVvdnLVlNp8osT0+UCHhfop3EvYwwE8wgcoapsPXMmHohVKiCwRw0FuPX75nm+btX2EQU1aEhpX2vTV/yEl596YhlFAOoKLXNLJQGkAjWmYalmBh8L0ZokRPDI28L/RGqepRYnx6lPdzEZpcCQMQhlB4TA1pAH/CgJaNMruvqsBAIpWa64+T1icT92BpXgoDPPOCkJLwKTfS2pgJfqvJhUeTYtOQbOlJczrPmrsW6zWTMUf0M6lLjlbl2bbR4e4MFG04/HpGFXj/sIFuwwSJhcuwdMJeAzXdFe2e3N2Oj0Y9NfEWLNM1KM97rqme4q1G8JN/uy+ChImNXD0312nkHlbAZc4SWrbfgD5qp3zn73kbARI=
