@@ -5,7 +5,7 @@ environment:
       PYTHON_VERSION: "2.7.x" # currently 2.7.9
       PYTHON_ARCH: "64"
       PYWIN32_URL: "https://downloads.sourceforge.net/project/pywin32/pywin32/Build%20219/pywin32-219.win32-py2.7.exe"
-
+      LXML_URL: "https://dl.dropboxusercontent.com/u/7096948/lxml-3.5.0-cp27-none-win_amd64.whl"
 
 install:
   - choco install -r -y make
@@ -22,7 +22,8 @@ install:
   - ps: (new-object net.webclient).DownloadFile($env:PYWIN32_URL, 'c:\\pywin32.exe')
   - "%PYTHON%\\Scripts\\easy_install.exe c:\\pywin32.exe"
   - "%PYTHON%\\python.exe -m pip install --user winpexpect"
-  - STATIC_DEPS=true %PYTHON%\\python.exe -m pip install --user lxml
+  - ps: (new-object net.webclient).DownloadFile($env:LXML_URL, 'c:\\lxml.whl')
+  - pip install c:\\lxml.whl
   - "%PYTHON%\\python.exe -m pip install --user pyyaml"
   - "%PYTHON%\\python.exe -m pip install --user python-libsbml"
 
