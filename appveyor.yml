@@ -19,6 +19,7 @@ install:
   - "%PYTHON%\\python.exe -m pip install --user networkx==1.9.1"
   - ps: (new-object net.webclient).DownloadFile($env:LIBSBML_URL, 'c:\\libsbml.exe')
   - "%PYTHON%\\Scripts\\easy_install.exe c:\\libsbml.exe"
+  - ps: (new-object net.webclient).DownloadFile($env:PYWIN32_URL, 'c:\\pywin32.exe')
   - "%PYTHON%\\python.exe -m pip install --user winpexpect"
   - "%PYTHON%\\python.exe -m pip install --user pyyaml"
   - "powershell ./appveyor/install_numpy.ps1"
