@@ -24,9 +24,10 @@ install:
   - "%PYTHON%\\Scripts\\easy_install.exe c:\\pywin32.exe"
   - "%PYTHON%\\python.exe -m pip install --user winpexpect"
   - "%PYTHON%\\python.exe -m pip install --user pyyaml"
-  - "powershell ./appveyor/install_numpy.ps1"
-  - "%PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
-
+  #- "powershell ./appveyor/install_numpy.ps1"
+  #- "%PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
+  - "%PYTHON%\\python.exe -m pip install --user numpy"
+  - "%PYTHON%\\python.exe SBMLparser\\sbmlTranslator.py -ai XMLExamples\\BIOMD0000000217.xml"
 branches:
   # whitelist
   only:
