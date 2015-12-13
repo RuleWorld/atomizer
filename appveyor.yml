@@ -43,9 +43,8 @@ cache:
   - C:\tmp -> \appveyor\install_numpy.ps1
 
 build_script:
-  - dir
-  #- make
-  #- make install
+  - make
+  - make install
 
 #notifications:
 #  - provider: Slack
