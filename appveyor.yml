@@ -28,8 +28,8 @@ install:
   #- "powershell ./appveyor/install_numpy.ps1"
   #- "%PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
   # - "%PYTHON%\\python.exe -m pip install --user numpy"
-  - ps: (new-object net.webclient).DownloadFile($env:NUMPY_URL, 'c:\\numpy-1.9.3+mkl-cp34-none-win_amd64.whl')
-  - "%PYTHON%\\python.exe -m pip install --user c:\\numpy-1.9.3+mkl-cp34-none-win_amd64.whl"  
+  - ps: (new-object net.webclient).DownloadFile($env:NUMPY_URL, 'c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl')
+  - "%PYTHON%\\python.exe -m pip install --user c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl"  
 
   - "%PYTHON%\\python.exe SBMLparser\\sbmlTranslator.py -ai XMLExamples\\BIOMD0000000217.xml"
 branches:
