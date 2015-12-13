@@ -25,11 +25,11 @@ install:
   - "%PYTHON%\\Scripts\\easy_install.exe c:\\pywin32.exe"
   - "%PYTHON%\\python.exe -m pip install --user winpexpect"
   - "%PYTHON%\\python.exe -m pip install --user pyyaml"
-  #- "powershell ./appveyor/install_numpy.ps1"
-  #- "%PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
+  - "powershell ./appveyor/install_numpy.ps1"
+  - "%PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
   # - "%PYTHON%\\python.exe -m pip install --user numpy"
-  - ps: (new-object net.webclient).DownloadFile($env:NUMPY_URL, 'c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl')
-  - "%PYTHON%\\python.exe -m pip install --user c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl"  
+  # - ps: (new-object net.webclient).DownloadFile($env:NUMPY_URL, 'c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl')
+  # - "%PYTHON%\\python.exe -m pip install --user c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl"  
 
   - "%PYTHON%\\python.exe SBMLparser\\sbmlTranslator.py -ai XMLExamples\\BIOMD0000000217.xml"
 branches:
@@ -43,8 +43,9 @@ cache:
   - C:\tmp -> \appveyor\install_numpy.ps1
 
 build_script:
-  - make
-  - make install
+  - dir
+  #- make
+  #- make install
 
 notifications:
   - provider: Slack
