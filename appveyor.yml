@@ -7,7 +7,7 @@ environment:
       LXML_URL: "appveyor\\lxml-3.4.4.win-amd64-py2.7.exe"
       PYWIN32_URL: "https://downloads.sourceforge.net/project/pywin32/pywin32/Build%20219/pywin32-219.win-amd64-py2.7.exe"
       LIBSBML_URL: "http://downloads.sourceforge.net/project/sbml/libsbml/5.12.0/stable/Windows/64-bit/python/libSBML-5.12.0-win-py2.7-amd64.exe"
-      NUMPY_URL: "http://sourceforge.net/projects/numpy/files/NumPy/1.10.1/numpy-1.10.1-win32-superpack-python2.7.exe"
+      NUMPY_URL: "https://www.dropbox.com/s/sq1d10lo9z4k7mi/numpy-1.9.3%2Bmkl-cp27-none-win_amd64.whl"
 install:
   - choco install -r -y make
   - choco sources add -n "msft" -s "https://go.microsoft.com/fwlink/?LinkID=230477"
@@ -28,8 +28,8 @@ install:
   #- "powershell ./appveyor/install_numpy.ps1"
   #- "%PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
   # - "%PYTHON%\\python.exe -m pip install --user numpy"
-  - ps: (new-object net.webclient).DownloadFile($env:NUMPY_URL, 'c:\\numpy.exe')
-  - "%PYTHON%\\Scripts\\easy_install.exe c:\\numpy.exe"
+  - ps: (new-object net.webclient).DownloadFile($env:NUMPY_URL, 'c:\\numpy.whl')
+  - "%PYTHON%\\python.exe -m pip install --user c:\\numpy.whl"  
 
   - "%PYTHON%\\python.exe SBMLparser\\sbmlTranslator.py -ai XMLExamples\\BIOMD0000000217.xml"
 branches:
