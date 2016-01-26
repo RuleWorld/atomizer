@@ -5,7 +5,7 @@ Created on Wed Aug  7 21:04:16 2013
 @author: proto
 """
 
-import pygraphviz as pgv
+
 
 import sys
 import operator

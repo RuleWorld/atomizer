@@ -32,6 +32,8 @@ import logging
 from rulifier import postAnalysis
 import pprint
 
+import fnmatch
+
 # returntype for the sbml analyzer translator and helper functions
 AnalysisResults = namedtuple('AnalysisResults', ['rlength', 'slength', 'reval', 'reval2', 'clength', 'rdf', 'finalString', 'speciesDict', 'database', 'annotation'])
 
@@ -43,6 +45,28 @@ def loadBioGrid():
 def handler(signum, frame):
     print "Forever is over!"
     raise Exception("end of time")
+
+
+def getFiles(directory,extension):
+    """
+    Gets a list of bngl files that could be correctly translated in a given 'directory'
+
+    Keyword arguments:
+    directory -- The directory we will recurseviley get files from
+    extension -- A file extension filter
+    """
+    matches = []
+    for root, dirnames, filenames in os.walk(directory):
+        for filename in fnmatch.filter(filenames, '*.{0}'.format(extension)):
+            filepath = os.path.abspath(os.path.join(root, filename))
+            matches.append([filepath,os.path.getsize(os.path.join(root, filename))])
+
+    #sort by size
+    #matches.sort(key=lambda filename: filename[1], reverse=False)
+    
+    matches = [x[0] for x in matches]
+
+    return matches
 
 
 import os.path
@@ -740,8 +764,9 @@ def getAnnotations(annotation):
     annotationDictionary = []
     if annotation == [] or annotation is None:
         return []
-    for index in range(0, annotation.getNumAttributes()):
-        annotationDictionary.append(annotation.getValue(index))
+    for indivAnnotation in annotation:
+        for index in range(0, indivAnnotation.getNumAttributes()):
+            annotationDictionary.append(indivAnnotation.getValue(index))
     return annotationDictionary
 
 def getAnnotationsDict(annotation):
@@ -808,7 +833,8 @@ def main():
     #18,32,87,88,91,109,253,255,268,338,330
     #normal:51,353
     #cycles 18,108,109,255,268,392
-    for bioNumber in range(1,576):
+    sbmlFiles = getFiles('XMLExamples/non_curated', 'xml')
+    for bioNumber in sbmlFiles:
         
         #if bioNumber in [81,151,175,205,212,223,235,255,326,328,347,370,404,428,430,431,443,444,452,453,465,474]:
         #    continue
@@ -826,18 +852,17 @@ def main():
         #                                                    speciesEquivalence=spEquivalence,atomize=True)
 
         try:
+	    fileName = bioNumber.split('/')[-1]
             rlength = reval = reval2 = slength = None
-            analysisResults = analyzeFile('XMLExamples/curated/BIOMD%010i.xml' % bioNumber, resource_path('config/reactionDefinitions.json'),
+            analysisResults = analyzeFile(bioNumber, resource_path('config/reactionDefinitions.json'),
                 False,resource_path('config/namingConventions.json'),
                 #'/dev/null',
-                'complex2/' + 'BIOMD%010i.xml' % bioNumber + '.bngl',
+                'complex2/' + fileName +  '.bngl',
                 speciesEquivalence=None,atomize=True,bioGrid=False)
 
             #rlength, slength,reval, reval2, clength,rdf, _, _ = analysisResults
             #print '++++',bioNumber,rlength,reval,reval2,clength
                                                                 
-        except IOError:
-            continue
         
         except KeyError:
             print 'keyErrorerror--------------',bioNumber
@@ -1079,13 +1104,13 @@ if __name__ == "__main__":
     #processDatabase()
     
     #main2()
-        
+    '''    
     analyzeFile('../XMLExamples/curated/BIOMD0000000007.xml', resource_path('config/reactionDefinitions.json'),
                     False, resource_path('config/namingConventions.json'),
                     'BIOMD0000000027.xml' + '.bngl', 
                     speciesEquivalence=None,atomize=True,bioGrid=False)
-    
-    #main()
+    '''
+    main()
     #processFile3('XMLExamples/noncurated/MODEL2463576061.x5ml')
     #processFile3('XMLExamples/jws/dupreez2.xml')
     #processFile3('XMLExamples/non_curated/MODEL1012220002.xml') 

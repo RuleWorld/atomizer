@@ -8,7 +8,6 @@ Created on Sun Oct 13 20:10:48 2013
 import sys
 import subprocess
 from collections import Counter
-import pygraphviz as pgv
 import progressbar
 import glob
 import shutil
@@ -18,7 +17,6 @@ import matplotlib.patches as mpatches
 from copy import copy, deepcopy
 import scipy.stats
 from scipy import linalg
-import seaborn as sns
 
 import sys
 import os
@@ -1013,7 +1011,7 @@ def reactionBasedAtomizationDistro(directory):
             if len(rules) == 0:
                 ruleslen0 += 1
                 continue
-            syndelArray.append((len(rules) - weight) * 1.0 / len(rules))
+            syndelArray.append(1 - (len(rules) - weight) * 1.0 / len(rules))
             if score == -1:
                 syndel += 1
                 # ratomizationList.append([0,0,len(rules)])
@@ -1047,8 +1045,8 @@ def reactionBasedAtomizationDistro(directory):
         pickle.dump(generalSignature, f)
     ratomization, weights, length = zip(*ratomizationList)
 
-    ratomizationm10, weightsm10, lengthm10 = zip(*ratomizationListm10)
-    ratomizationl10, weightsl10, lengthl10 = zip(*ratomizationListl10)
+    #ratomizationm10, weightsm10, lengthm10 = zip(*ratomizationListm10)
+    #ratomizationl10, weightsl10, lengthl10 = zip(*ratomizationListl10)
 
     constructHistogram(syndelArray, 'syndelHist', 'Fraction of synthesis and degradation reactions', np.ones(
         len(syndelArray)), normed=False)
@@ -1126,7 +1124,7 @@ def reactionBasedAtomizationDistro(directory):
     heatmap = np.log2(heatmap)
 
     plt.clf()
-    plt.hist(length, bins=30 ** np.linspace(np.log10(1), np.log10(1000), 40))
+    plt.hist(length, bins=20 ** np.linspace(np.log10(1), np.log10(1000), 20))
     plt.xscale('log')
     plt.xlabel(
         'Number of reactions ({0} models)'.format(len(length)), fontsize=18)
@@ -1189,18 +1187,18 @@ def reactionBasedAtomizationDistro(directory):
     plt.savefig('scatterreactionsvslevel.png')
 
     ratomization = np.sort(ratomization)
-    ratomizationm10 = np.sort(ratomizationm10)
-    ratomizationl10 = np.sort(ratomizationl10)
+    #ratomizationm10 = np.sort(ratomizationm10)
+    #ratomizationl10 = np.sort(ratomizationl10)
 
     yvals = np.arange(len(ratomization)) / float(len(ratomization))
     plotresults(ratomization, yvals, 'ratomizationw',
                 'Reaction atomization level ({0} models)'.format(len(ratomizationList)))
-    yvals = np.arange(len(ratomizationm10)) / float(len(ratomizationm10))
-    plotresults(ratomizationm10, yvals, 'ratomization_m10w',
-                'Reaction atomization level >10 reactions({0} models)'.format(len(ratomizationListm10)))
-    yvals = np.arange(len(ratomizationl10)) / float(len(ratomizationl10))
-    plotresults(ratomizationl10, yvals, 'ratomization_l10w',
-                'Reaction atomization level <=10 reactions({0} models)'.format(len(ratomizationListl10)))
+    #yvals = np.arange(len(ratomizationm10)) / float(len(ratomizationm10))
+    #plotresults(ratomizationm10, yvals, 'ratomization_m10w',
+    #            'Reaction atomization level >10 reactions({0} models)'.format(len(ratomizationListm10)))
+    #yvals = np.arange(len(ratomizationl10)) / float(len(ratomizationl10))
+    #plotresults(ratomizationl10, yvals, 'ratomization_l10w',
+    #            'Reaction atomization level <=10 reactions({0} models)'.format(len(ratomizationListl10)))
     print 'syndel', syndel
     print '>10 with 0', largeUseless
 
@@ -1438,7 +1436,7 @@ if __name__ == "__main__":
     #print failures
     #spaceCoveredCDF('complex2')
     # modelCompositionCDF('complex2')
-    reactionBasedAtomizationDistro('curated')
+    reactionBasedAtomizationDistro('bnglTest')
     # nonAtomizedSpeciesAnalysis()
     # createGroupingCDF()
     #print reactionBasedAtomizationFile('curated/BIOMD0000000019.xml.xml')
