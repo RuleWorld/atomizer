@@ -833,8 +833,11 @@ def main():
     #18,32,87,88,91,109,253,255,268,338,330
     #normal:51,353
     #cycles 18,108,109,255,268,392
+    import progressbar
+    progress = progressbar.ProgressBar()
     sbmlFiles = getFiles('XMLExamples/non_curated', 'xml')
-    for bioNumber in sbmlFiles:
+    for bioIdx in progress(range(len(sbmlFiles))):
+        bioNumber = sbmlFiles[bioIdx]
         
         #if bioNumber in [81,151,175,205,212,223,235,255,326,328,347,370,404,428,430,431,443,444,452,453,465,474]:
         #    continue
