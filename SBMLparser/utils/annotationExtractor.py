@@ -244,7 +244,8 @@ if __name__ == "__main__":
     namespace = parser.parse_args()
     #input_file = '/home/proto/workspace/bionetgen/parsers/SBMLparser/XMLExamples/curated/BIOMD%010i.xml' % 19
     annotationExtractor = AnnotationExtractor(namespace.input_file)
-    annotationExtractor.getModelAnnotations()
+    modelAnnotations = annotationExtractor.getModelAnnotations()
     #elementalMolecules = [x for x in annotationExtractor.sct if annotationExtractor.sct[x] == []]
-    #print {x:annotationExtractor.getAnnotationSystem()[x] for x in elementalMolecules}
+    complexMolecules = [x for x in annotationExtractor.sct if annotationExtractor.sct[x] != []]
+    print {x:annotationExtractor.getAnnotationSystem()[x] for x in complexMolecules}
 

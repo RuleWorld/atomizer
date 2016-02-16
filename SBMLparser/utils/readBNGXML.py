@@ -363,6 +363,6 @@ if __name__ == "__main__":
     # print [str(x) for x in mol]
     with open('output19.xml','r') as f:
         s = f.read()
-    print parseXMLFromString(s)
+    print parseFullXML('output19.xml')['rules'][0][0].actions[0].action
     #print getNumObservablesXML('output19.xml')
 

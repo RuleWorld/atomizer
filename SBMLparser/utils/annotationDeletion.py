@@ -5,6 +5,8 @@ Created on Fri Nov 14 18:17:20 2014
 @author: proto
 """
 
+import progressbar
+
 import libsbml
 from util import logMess
 from sbml2bngl import SBML2BNGL as  SBML2BNGL
@@ -25,6 +27,28 @@ bioqual = ['BQB_IS', 'BQB_HAS_PART', 'BQB_IS_PART_OF', 'BQB_IS_VERSION_OF',
            'BQB_HAS_PROPERTY', 'BQB_IS_PROPERTY_OF', 'BQB_HAS_TAXON', 'BQB_UNKNOWN']
 
 modqual = ['BQM_IS', 'BQM_IS_DESCRIBED_BY', 'BQM_IS_DERIVED_FROM', 'BQM_IS_INSTANCE_OF', 'BQM_HAS_INSTANCE', 'BQM_UNKNOWN']
+
+import fnmatch
+import argparse
+
+def getFiles(directory, extension):
+    """
+    Gets a list of <*.extension> files. include subdirectories and return the absolute 
+    path. also sorts by size.
+    """
+    matches = []
+    for root, dirnames, filenames in os.walk(directory):
+        for filename in fnmatch.filter(filenames, '*.{0}'.format(extension)):
+            matches.append([os.path.join(os.path.abspath(root), filename),os.path.getsize(os.path.join(root, filename))])
+
+    #sort by size
+    matches.sort(key=lambda filename: filename[1], reverse=False)
+    
+    matches = [x[0] for x in matches]
+
+    return matches
+
+
 
 from collections import defaultdict
 import re
@@ -161,23 +185,7 @@ def buildAnnotationTree(annotationDict,sct,database):
     annotationToSpeciesDict = {}
     for element in database.weights:
         if len(sct[element[0]]) > 0:
-    
-            if len(sct[element[0]][0]) == 1:
-                buildingBlock = sct[element[0]][0][0]
-                if len(annotationDict[element[0]]) == 0:
-                    if len(annotationDict[buildingBlock]) > 0:
-                        updateFromParent(element[0],buildingBlock,annotationDict)
-                if len(annotationDict[buildingBlock]) == 0:
-                    if len(annotationDict[element[0]]) > 0:
-                        updateFromChild(buildingBlock,element[0],annotationDict)
-            elif len(sct[element[0]][0]) > 1:
-                if len(annotationDict[element[0]]) == 0:
-                    updateFromComponents(element[0],sct,annotationDict,annotationToSpeciesDict)
-                else:
-                    if 'BQB_HAS_VERSION' in annotationDict[element[0]] or 'BQB_HAS_PART' in annotationDict[element[0]]:
-                        updateFromComplex(element[0],sct,annotationDict,annotationToSpeciesDict)
-                    else:
-                        updateFromComponents(element[0],sct,annotationDict,annotationToSpeciesDict)
+            annotationDict[element[0]] = {}
             #        annotationdict[element[0]]
             #for buildingBlock in sct[element[0]][0]:
             #    print '\t',buildingBlock,annotationDict[buildingBlock]
@@ -190,10 +198,9 @@ def speciesAnnotationsToSBML(sbmlDocument,annotationDict,speciesNameDict):
     for species in sbmlDocument.getModel().getListOfSpecies():
         transformedName = speciesNameDict[species.getName()]
         if len(annotationDict[transformedName]) == 0:
+            species.unsetCVTerms()
             continue
-        print '----', species.getName()
         for element in annotationDict[transformedName]:
-            print element, annotationDict[transformedName]
             term = libsbml.CVTerm()
             if element.startswith('BQB'):
                 term.setQualifierType(libsbml.BIOLOGICAL_QUALIFIER)
@@ -215,47 +222,6 @@ def speciesAnnotationsToSBML(sbmlDocument,annotationDict,speciesNameDict):
         annotation.addChild(rdfAnnotation)
         species.setAnnotation(annotation)
 
-actionSboDictionary = {
-'StateChange':"http://identifiers.org/biomodels.sbo/SBO:0000464",
-'DeleteBond':"http://identifiers.org/biomodels.sbo/SBO:0000180",
-'AddBond':"http://identifiers.org/biomodels.sbo/SBO:0000342",
-'ChangeCompartment':"http://identifiers.org/biomodels.sbo/SBO:0000185"}
-
-def buildReactionAnnotationDict(rules):
-    sboDict = defaultdict(lambda : defaultdict(list))
-    for rule in rules:
-        actions = [x.action for x in rule[0].actions]
-        if 'Add' not in actions and 'Delete' not in actions:
-            sboDict[rule[0].label]['BQB_IS_VERSION_OF'] = [actionSboDictionary[x] for x in set(actions)]
-    return sboDict
-    
-def reactionAnnotationsToSBML(sbmlDocument,annotationDict):
-    '''
-    Receives a series of annotations associated with their associated species
-    and fills in a corresponding sbmlDocument with this information
-    '''
-    for reaction in sbmlDocument.getModel().getListOfReactions():
-        transformedName = reaction.getName()
-        if len(annotationDict[transformedName]) == 0:
-            continue
-        for element in annotationDict[transformedName]:
-            term = libsbml.CVTerm()
-            if element.startswith('BQB'):
-                term.setQualifierType(libsbml.BIOLOGICAL_QUALIFIER)
-                term.setBiologicalQualifierType(bioqual.index(element))
-            else:
-                term.setQualifierType(libsbml.MODEL_QUALIFIER)
-                term.setModelQualifierType(modqual.index(element))
-            for annotation in annotationDict[transformedName][element]:
-                term.addResource(annotation)
-            reaction.addCVTerm(term)                
-
-        annotation = libsbml.RDFAnnotationParser.createAnnotation()
-        cvterms = libsbml.RDFAnnotationParser.createCVTerms(reaction)
-        rdfAnnotation  = libsbml.RDFAnnotationParser.createRDFAnnotation()
-        rdfAnnotation.addChild(cvterms)
-        annotation.addChild(rdfAnnotation)
-        reaction.setAnnotation(annotation)
 
 def obtainSCT(fileName, reactionDefinitions, useID, namingConventions):
     '''
@@ -284,34 +250,14 @@ def writeSBML(document,fileName):
     writer = libsbml.SBMLWriter()
     writer.writeSBMLToFile(document,fileName)
 
-def createDataStructures(bnglContent):
-    '''
-    create an atomized biomodels in a temporary file to obtain relevant 
-    bng information
-    '''    
-    
-    pointer = tempfile.mkstemp(suffix='.bngl',text=True)
-    with open(pointer[1],'w') as f:
-        f.write(bnglContent)    
-    retval = os.getcwd()
-    os.chdir(tempfile.tempdir)
-    consoleCommands.bngl2xml(pointer[1])
-    xmlfilename = '.'.join(pointer[1].split('.')[0:-1]) + '.xml'
-    os.chdir(retval)
-    return readBNGXML.parseXML(xmlfilename)
 
-def expandAnnotation(fileName,bnglFile):
+def reduceAnnotations(fileName):
 
     sct, database, sbmlDocument = obtainSCT(fileName, 'config/reactionDefinitions.json', False, 'config/namingConventions.json')
     annotationDict, speciesNameDict = buildAnnotationDict(sbmlDocument)
     buildAnnotationTree(annotationDict, sct, database)
     speciesAnnotationsToSBML(sbmlDocument,annotationDict,speciesNameDict)
-    species, rules, par = createDataStructures(bnglFile)
-    reactionAnnotationDict = buildReactionAnnotationDict(rules)
-    reactionAnnotationsToSBML(sbmlDocument,reactionAnnotationDict)
-    #reactionAnnotationsToSBML(sbmlDocument,reactionAnnotation)
     
-    #reactionAnnotationsToSBML(sbmlDocument)
     writer = libsbml.SBMLWriter()
     return writer.writeSBMLToString(sbmlDocument)
 
@@ -321,14 +267,27 @@ def defineConsole():
     parser.add_argument('-o','--output-file',type=str,help='output SBML file',required=True)
     return parser    
 
- 
+def batchDeletionProcess(directory, outputDir):
+    testFiles = getFiles(directory, 'xml')
+    progress = progressbar.ProgressBar()
+
+    for fileIdx in progress(range(len(testFiles))):
+        file = testFiles[fileIdx]
+        sbmlInfo = reduceAnnotations(file)
+        outputFile = os.path.join(outputDir, file.split('/')[-1])
+        
+        with open(outputFile,'w') as f:
+            f.write(sbmlInfo)
+
+
 if __name__ == "__main__":
-    parser = defineConsole()
-    namespace = parser.parse_args()
+    batchDeletionProcess('../XMLExamples/curated','annotationsRemoved')
+    #parser = defineConsole()
+    #namespace = parser.parse_args()
     #input_file = '/home/proto/workspace/bionetgen/parsers/SBMLparser/XMLExamples/curated/BIOMD%010i.xml' % 19
-    expandedString = expandAnnotation(namespace.input_file,'')
-    print 'Writing extended annotation SBML to {0}'.format(namespace.output_file)    
-    with open(namespace.output_file,'w') as f:
-        f.write(expandedString)
+    #expandedString = reduceAnnotations(namespace.input_file)
+    #print 'Writing extended annotation SBML to {0}'.format(namespace.output_file)    
+    #with open(namespace.output_file,'w') as f:
+    #    f.write(expandedString)
     #outputFileName = '.'.join(fileName.split('.')[0:-1]) + '_withAnnotations.xml'
     #writeSBML(sbmlDocument,outputFileName)

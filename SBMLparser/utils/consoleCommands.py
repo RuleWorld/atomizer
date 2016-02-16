@@ -12,7 +12,7 @@ import os
 from os.path import expanduser,join
 home = expanduser("~")
 
-bngExecutable = join(home,'workspace','bionetgen','bng2','BNG2.pl')
+bngExecutable = join(home,'workspace','RuleWorld','bionetgen','bng2','BNG2.pl')
 
 
 def setBngExecutable(executable):
