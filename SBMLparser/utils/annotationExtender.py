@@ -26,6 +26,30 @@ bioqual = ['BQB_IS', 'BQB_HAS_PART', 'BQB_IS_PART_OF', 'BQB_IS_VERSION_OF',
 
 modqual = ['BQM_IS', 'BQM_IS_DESCRIBED_BY', 'BQM_IS_DERIVED_FROM', 'BQM_IS_INSTANCE_OF', 'BQM_HAS_INSTANCE', 'BQM_UNKNOWN']
 
+
+import fnmatch
+import argparse
+
+def getFiles(directory, extension):
+    """
+    Gets a list of <*.extension> files. include subdirectories and return the absolute 
+    path. also sorts by size.
+    """
+    matches = []
+    for root, dirnames, filenames in os.walk(directory):
+        for filename in fnmatch.filter(filenames, '*.{0}'.format(extension)):
+            matches.append([os.path.join(os.path.abspath(root), filename),os.path.getsize(os.path.join(root, filename))])
+
+    #sort by size
+    matches.sort(key=lambda filename: filename[1], reverse=False)
+    
+    matches = [x[0] for x in matches]
+
+    return matches
+
+
+
+
 from collections import defaultdict
 import re
 def standardizeName(name):
@@ -91,9 +115,12 @@ def buildAnnotationDict(document):
 
 def updateFromParent(child,parent,annotationDict):
     for annotationLabel in annotationDict[parent]:
+        print annotationLabel
         if annotationLabel in ['BQB_IS_VERSION_OF','BQB_IS']:
             annotationDict[child]['BQB_IS_VERSION_OF'] =annotationDict[parent][annotationLabel]
-            
+        elif annotationLabel in ['BQB_HAS_PART', 'BQB_HAS_VERSION']:
+            annotationDict[child][annotationLabel] =annotationDict[parent][annotationLabel]
+
 
 def updateFromChild(parent,child,annotationDict):
     for annotationLabel in annotationDict[child]:
@@ -145,6 +172,7 @@ def updateFromComponents(complexMolecule,sct,annotationDict,annotationToSpeciesD
     unmatchedReactants = []
     for constituentElement in sct[complexMolecule][0]:
         flag = False
+        print constituentElement, annotationDict[constituentElement], sct[constituentElement]
         if len(annotationDict[constituentElement]) > 0:
             for annotation in annotationDict[constituentElement]:
                 if annotation in ['BQB_IS_VERSION_OF','BQB_IS','BQB_HAS_VERSION','BQB_HAS_PART']:
@@ -161,12 +189,16 @@ def buildAnnotationTree(annotationDict,sct,database):
     annotationToSpeciesDict = {}
     for element in database.weights:
         if len(sct[element[0]]) > 0:
-    
+            print element,sct[element[0]]
             if len(sct[element[0]][0]) == 1:
                 buildingBlock = sct[element[0]][0][0]
+                print '----', annotationDict[element[0]]
                 if len(annotationDict[element[0]]) == 0:
+                    print '.....'
                     if len(annotationDict[buildingBlock]) > 0:
+                        print '>>>>'
                         updateFromParent(element[0],buildingBlock,annotationDict)
+                        print annotationDict[element[0]]
                 if len(annotationDict[buildingBlock]) == 0:
                     if len(annotationDict[element[0]]) > 0:
                         updateFromChild(buildingBlock,element[0],annotationDict)
@@ -191,9 +223,8 @@ def speciesAnnotationsToSBML(sbmlDocument,annotationDict,speciesNameDict):
         transformedName = speciesNameDict[species.getName()]
         if len(annotationDict[transformedName]) == 0:
             continue
-        print '----', species.getName()
         for element in annotationDict[transformedName]:
-            print element, annotationDict[transformedName]
+
             term = libsbml.CVTerm()
             if element.startswith('BQB'):
                 term.setQualifierType(libsbml.BIOLOGICAL_QUALIFIER)
@@ -315,6 +346,22 @@ def expandAnnotation(fileName,bnglFile):
     writer = libsbml.SBMLWriter()
     return writer.writeSBMLToString(sbmlDocument)
 
+import progressbar 
+
+def batchExtensionProcess(directory, outputDir):
+    testFiles = getFiles(directory, 'xml')
+    progress = progressbar.ProgressBar()
+
+    for fileIdx in progress(range(len(testFiles))):
+        file = testFiles[fileIdx]
+        sbmlInfo = expandAnnotation(file, '')
+        outputFile = os.path.join(outputDir, file.split('/')[-1])
+        
+        with open(outputFile,'w') as f:
+            f.write(sbmlInfo)
+
+
+
 def defineConsole():
     parser = argparse.ArgumentParser(description='SBML to BNGL translator')
     parser.add_argument('-i','--input-file',type=str,help='input SBML file',required=True)
@@ -323,6 +370,8 @@ def defineConsole():
 
  
 if __name__ == "__main__":
+    #batchExtensionProcess('annotationsRemoved', 'annotationsExpanded')
+    
     parser = defineConsole()
     namespace = parser.parse_args()
     #input_file = '/home/proto/workspace/bionetgen/parsers/SBMLparser/XMLExamples/curated/BIOMD%010i.xml' % 19
@@ -332,3 +381,4 @@ if __name__ == "__main__":
         f.write(expandedString)
     #outputFileName = '.'.join(fileName.split('.')[0:-1]) + '_withAnnotations.xml'
     #writeSBML(sbmlDocument,outputFileName)
+    
