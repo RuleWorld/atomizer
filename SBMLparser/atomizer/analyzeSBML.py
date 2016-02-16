@@ -1231,7 +1231,7 @@ class SBMLAnalyzer:
         config file
 
         FIXME:classifiyReactions function is currently the biggest bottleneck in atomizer, taking up
-        to 80% of the time without conting pathwaycommons querying.
+        to 80% of the time without counting pathwaycommons querying.
         '''
         def createArtificialNamingConvention(reaction, fuzzyKey, fuzzyDifference):
             '''
@@ -1296,7 +1296,6 @@ class SBMLAnalyzer:
         #XXX: we should take this function out of processNamingConventions2 and all process that calls it
         tmpTranslator,translationKeys,conventionDict =  detectOntology.analyzeNamingConventions(strippedMolecules,
                                                                               self.userNamingConventions,similarityThreshold=10)
-
         userEquivalenceTranslator, _, _ = self.processNamingConventions2(molecules,onlyUser=True)
         for element in tmpTranslator:
             if element in userEquivalenceTranslator:
@@ -1304,6 +1303,7 @@ class SBMLAnalyzer:
             else:
                 userEquivalenceTranslator[element] = tmpTranslator[element]
         equivalenceTranslator = copy(userEquivalenceTranslator)
+
         newTranslationKeys = []
         adhocLabelDictionary = {}
 

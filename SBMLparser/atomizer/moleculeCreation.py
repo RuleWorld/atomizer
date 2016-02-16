@@ -1268,6 +1268,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
         for dependencyCandidate in database.dependencyGraph[element]:
             for molecule in [x for x in dependencyCandidate if x not in database.dependencyGraph]:
                 database.dependencyGraph[molecule] = []
+
     # user defined transformations
     for key in userEquivalenceTranslator:
         for namingEquivalence in userEquivalenceTranslator[key]:
@@ -1295,6 +1296,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
 
                         addToDependencyGraph(database.dependencyGraph, modElement,
                                              [baseElement])
+
     # include user label information. 
     for element in database.userLabelDictionary:
         if database.userLabelDictionary[element] in [0, [(0,)]]:
@@ -1317,6 +1319,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
          _, adhocLabelDictionary, _, _ =  database.sbmlAnalyzer.classifyReactions(rules, molecules,database.dependencyGraph)
     database.reactionProperties.update(adhocLabelDictionary)
 
+
     #update catalysis equivalences
     #catalysis reactions
     for key in database.eequivalenceTranslator2:
@@ -1332,8 +1335,13 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                     # elif all([baseElement not in x for x in database.dependencyGraph[modElement]]):
                     #    addToDependencyGraph(database.dependencyGraph,baseElement,[modElement])
                     #    continue
-                addToDependencyGraph(database.dependencyGraph, modElement,
-                                     [baseElement])
+                if not [True for x in database.dependencyGraph[modElement] if baseElement in x and len(x)>1]:
+                    addToDependencyGraph(database.dependencyGraph, modElement,
+                                         [baseElement])
+                else:
+                    logMess('WARNING:Atomization', 'Definition conflict between binding information {0} and lexical analyis {1} for molecule {2},\
+choosing binding'.format(database.dependencyGraph[modElement], baseElement,modElement))
+
     # non lexical-analysis catalysis reactions
     if database.forceModificationFlag:
         for reaction, classification in zip(rules, database.classifications):
