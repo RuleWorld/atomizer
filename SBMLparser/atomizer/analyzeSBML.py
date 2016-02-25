@@ -247,6 +247,36 @@ class SBMLAnalyzer:
                 return classificationList
             return None
         return findMatchingModificationHelper(particle,species)
+
+    def greedyModificationMatching(self,speciesString, referenceSpecies):
+        bestMatch = ['', 0]
+        finalMatches = []
+        blacklist = []
+        while(len(blacklist)< len(referenceSpecies)):
+            localReferenceSpecies = [x for x in referenceSpecies if x not in blacklist and len(x) <= len(speciesString)]
+            for species in localReferenceSpecies:
+                if species in speciesString and len(species) > bestMatch[1] and species != speciesString:
+                    bestMatch = [species,len(species)]
+            if bestMatch != ['', 0]:
+                result = self.greedyModificationMatching(speciesString.replace(bestMatch[0],''), referenceSpecies)
+                finalMatches = [bestMatch[0]]
+                if result == -1:
+                    finalMatches = []
+                    blacklist.append(bestMatch[0])
+                    bestMatch = ['',0]
+                    continue
+                elif result != -2:
+                    finalMatches.extend(result)
+                break
+            elif len([x for x in speciesString if x != '_']) > 0:
+                return -1
+            else:
+                return -2
+
+        return finalMatches
+
+
+
         
     def findClosestModification(self,particles,species):
         equivalenceTranslator = {}

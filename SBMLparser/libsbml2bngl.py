@@ -586,7 +586,8 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # finally, adjust parameters and initial concentrations according to whatever  initialassignments say
     param, zparam, initialConditions = parser.getInitialAssignments(translator, param, zparam, molecules, initialConditions)
     # FIXME: this method is a mess, improve handling of assignmentrules since we can actually handle those
-    aParameters, aRules, nonzparam, artificialRules, removeParams, artificialObservables = parser.getAssignmentRules(zparam, param, rawSpecies, observablesDict)
+    aParameters, aRules, nonzparam, artificialRules, removeParams, artificialObservables = parser.getAssignmentRules(zparam, param, rawSpecies, 
+                                                                                                                     observablesDict, translator)
     compartments = parser.getCompartments()
     functions = []
     assigmentRuleDefinedParameters = []

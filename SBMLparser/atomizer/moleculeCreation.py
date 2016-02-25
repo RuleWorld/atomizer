@@ -409,6 +409,12 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                     logMess('INFO:Atomization', 'Used fuzzy string matching from {0} to {1}'.format(reactant, fuzzyCandidateMatch))
                     return [fuzzyCandidateMatch], unevenElements, candidates
                 else:
+                    #map based on greedy matching
+                    greedyMatch = sbmlAnalyzer.greedyModificationMatching(reactant, dependencyGraph.keys())
+                    if greedyMatch not in [-1, -2]:
+                        return selectBestCandidate(reactant, [greedyMatch], dependencyGraph, sbmlAnalyzer)[0], unevenElements, candidates
+
+
                     # last ditch attempt using straighforward lexical analysis
                     tmpDependency, tmpEquivalence = sbmlAnalyzer.findClosestModification([reactant], dependencyGraph.keys())
                     if reactant in tmpDependency and tmpDependency[reactant] in tmpCandidates[0]:
@@ -1335,7 +1341,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                     # elif all([baseElement not in x for x in database.dependencyGraph[modElement]]):
                     #    addToDependencyGraph(database.dependencyGraph,baseElement,[modElement])
                     #    continue
-                if not [True for x in database.dependencyGraph[modElement] if baseElement in x and len(x)>1]:
+                if modElement not in database.dependencyGraph or not [True for x in database.dependencyGraph[modElement] if baseElement in x and len(x)>1]:
                     addToDependencyGraph(database.dependencyGraph, modElement,
                                          [baseElement])
                 else:

@@ -841,13 +841,12 @@ but reaction is marked as reversible'.format(reactionID))
         #print arule.isAssignment(),arule.isRate()
         return variable,[rateL, rateR], arule.isAssignment(), arule.isRate()
         
-    def getAssignmentRules(self, zparams, parameters, molecules, observablesDict):
+    def getAssignmentRules(self, zparams, parameters, molecules, observablesDict, translator):
         '''
         this method obtains an SBML rate rules and assignment rules. They
         require special handling since rules are often both defined as rules 
         and parameters initialized as 0, so they need to be removed from the parameters list
         '''
-
         compartmentList = [['cell',1]]
         compartmentList.extend([[self.__getRawCompartments(x)[0], self.__getRawCompartments(x)[2]] for x in self.model.getListOfCompartments()])
 
@@ -864,6 +863,7 @@ but reaction is marked as reversible'.format(reactionID))
             #newRule = rawArule[1].replace('+',',').strip()
             if rawArule[3] == True:
                 #it is a rate rule
+
                 if rawArule[0] in self.boundaryConditionVariables:
                     logMess('CRITICAL:SIMULATION','rate rules ({0}) \
                     are not properly supported in BioNetGen simulator'.format(rawArule[0]))
@@ -1161,7 +1161,7 @@ but reaction is marked as reversible'.format(reactionID))
             lista = libsbml.CVTermList()
             libsbml.RDFAnnotationParser.parseRDFAnnotation(annotationXML,lista)
             if lista.getSize() == 0:
-                self.speciesAnnotation[rawSpecies['returnID']] =  None
+                self.speciesAnnotation[rawSpecies['returnID']] =  []
             else:
                 for idx in range(lista.getSize()):
                     self.speciesAnnotation[rawSpecies['returnID']].append(lista.get(idx).getResources())
@@ -1179,7 +1179,7 @@ but reaction is marked as reversible'.format(reactionID))
             lista = libsbml.CVTermList()
             libsbml.RDFAnnotationParser.parseRDFAnnotation(annotationXML, lista)
             if lista.getSize() == 0:
-                self.speciesAnnotationDict[rawSpecies['returnID']] = {}
+                continue
             else:
                 for idx in range(lista.getSize()):
                     for idx2 in range(0, lista.get(idx).getResources().getLength()):
