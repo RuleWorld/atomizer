@@ -896,7 +896,6 @@ but reaction is marked as reversible'.format(reactionID))
                             removeParameters.append(element)
             # it is an assigment rule
             elif rawArule[2] is True:
-
                 '''
                  normal species observables references in functions keep the format <speciesName>_<compartment> in function references,
                  and observables dict keeps track of that. however when a species is defined by an assignment function we wish to 
@@ -925,9 +924,11 @@ but reaction is marked as reversible'.format(reactionID))
                             supported in BioNetGen simulator. The variable will be split into two'.format(rawArule[0]))
                             artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
                             continue
+                    elif rawArule[0] in [observablesDict[x] for x in observablesDict]:
+                        artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                        continue
 
                 elif rawArule[0] in molecules:
-
                     if molecules[rawArule[0]]['isBoundary']:
                         artificialObservables[rawArule[0]+'_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
                         continue
