@@ -686,8 +686,8 @@ but reaction is marked as reversible'.format(reactionID))
         name = compartment.getId()
         size = compartment.getSize()
         dimensions = compartment.getSpatialDimensions()
-        if dimensions == 1:
-            logMess('WARNING:Simulation', '1-D compartments are not supported. Changing for 2-D compartments for {0}. Please verify this does not affect simulation'.format(name))
+        if dimensions in [0, 1]:
+            logMess('WARNING:Simulation', '{1}-D compartments are not supported. Changing for 2-D compartments for {0}. Please verify this does not affect simulation'.format(name, dimensions))
             dimensions = 2
         #if size != 1:
         #    print '!',
