@@ -879,8 +879,8 @@ but reaction is marked as reversible'.format(reactionID))
                 rateLaw2 = rawArule[1][1]
                 arules.append(writer.bnglFunction(rateLaw1, 'arRate{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
                 arules.append(writer.bnglFunction(rateLaw2, 'armRate{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
-                moleculeString = str(translator[rawArule[0]]) if rawArule[0] in translator else rawArule[0]
-                artificialReactions.append(writer.bnglReaction([], [[moleculeString,1]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, {}, isCompartments=True, comment = '#rateLaw'))
+                #moleculeString = str(translator[rawArule[0]]) if rawArule[0] in translator else rawArule[0]
+                artificialReactions.append(writer.bnglReaction([], [[rawArule[0],1]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw'))
                 #arules.append(writer.bnglFunction('({0}) - ({1})'.format(rawArule[1][0],rawArule[1][1]), '{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
                 if rawArule[0] in zparams:
                     removeParameters.append('{0} 0'.format(rawArule[0]))
