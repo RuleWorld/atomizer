@@ -100,7 +100,7 @@ def parseAnnotation(annotation):
 
 
 def buildAnnotationDict(document):
-    annotationDict = defaultdict(lambda : defaultdict(list))
+    annotationDict = defaultdict(lambda: defaultdict(list))
     speciesNameDict = {}
     for species in document.getModel().getListOfSpecies():
         annotation = species.getAnnotation()
@@ -109,22 +109,23 @@ def buildAnnotationDict(document):
         speciesNameDict[species.getName()] = transformedName
         if annotation:
             annotationDict[transformedName] = parseAnnotation(annotation)
-    return annotationDict,speciesNameDict
+    return annotationDict, speciesNameDict
         
 
 
-def updateFromParent(child,parent,annotationDict):
+def updateFromParent(child, parent, annotationDict):
     for annotationLabel in annotationDict[parent]:
-        if annotationLabel in ['BQB_IS_VERSION_OF','BQB_IS']:
-            annotationDict[child]['BQB_IS_VERSION_OF'] =annotationDict[parent][annotationLabel]
-        elif annotationLabel in ['BQB_HAS_PART', 'BQB_HAS_VERSION']:
-            annotationDict[child][annotationLabel] =annotationDict[parent][annotationLabel]
+        if annotationLabel in ['BQB_IS_VERSION_OF', 'BQB_IS', 'BQB_IS_HOMOLOG_TO', 'BQB_HAS_VERSION']:
+            annotationDict[child]['BQB_HAS_VERSION'] = annotationDict[parent][annotationLabel]
+        elif annotationLabel in ['BQB_HAS_PART']:
+            annotationDict[child][annotationLabel] = annotationDict[parent][annotationLabel]
 
 
-def updateFromChild(parent,child,annotationDict):
+def updateFromChild(parent, child, annotationDict):
     for annotationLabel in annotationDict[child]:
-        if annotationLabel in ['BQB_IS_VERSION_OF','BQB_IS']:
-            annotationDict[parent]['BQB_HAS_VERSION'] =annotationDict[child][annotationLabel]
+        if annotationLabel in ['BQB_IS_VERSION_OF', 'BQB_IS', "BQB_HAS_VERSION", "BQB_IS_HOMOLOG_TO"]:
+            annotationDict[parent]['BQB_HAS_VERSION'] = annotationDict[child][annotationLabel]
+
 #IS_HOMOLOG_TO
 def updateFromComplex(complexMolecule,sct,annotationDict,annotationToSpeciesDict):
     localSpeciesDict = {}
@@ -134,7 +135,7 @@ def updateFromComplex(complexMolecule,sct,annotationDict,annotationToSpeciesDict
         flag = False
         if len(annotationDict[constituentElement]) > 0:
             for annotation in annotationDict[constituentElement]:
-                if annotation in ['BQB_IS_VERSION_OF','BQB_IS','BQB_HAS_VERSION']:
+                if annotation in ['BQB_IS_VERSION_OF', 'BQB_IS', 'BQB_HAS_VERSION', 'BQB_IS_HOMOLOG_TO']:
                     flag = True
                     for individualAnnotation in annotationDict[constituentElement][annotation]:
                         localSpeciesDict[individualAnnotation] = constituentElement
@@ -166,43 +167,47 @@ def updateFromComplex(complexMolecule,sct,annotationDict,annotationToSpeciesDict
         if element not in annotationToSpeciesDict:
             annotationToSpeciesDict[element] = localSpeciesDict[element]
 
-def updateFromComponents(complexMolecule,sct,annotationDict,annotationToSpeciesDict):
-    localSpeciesDict = defaultdict(list)
+
+def updateFromComponents(complexMolecule, sct, annotationDict, annotationToSpeciesDict):
+    localSpeciesDict = defaultdict(set)
     unmatchedReactants = []
     for constituentElement in sct[complexMolecule][0]:
         flag = False
         if len(annotationDict[constituentElement]) > 0:
             for annotation in annotationDict[constituentElement]:
-                if annotation in ['BQB_IS_VERSION_OF','BQB_IS','BQB_HAS_VERSION','BQB_HAS_PART']:
+                if annotation in ['BQB_IS_VERSION_OF', 'BQB_IS', 'BQB_HAS_VERSION', 'BQB_HAS_PART', 'BQB_IS_HOMOLOG_TO']:
                     for individualAnnotation in annotationDict[constituentElement][annotation]:
                         #localSpeciesDict[individualAnnotation] = constituentElement
-                        localSpeciesDict[constituentElement].append(individualAnnotation)
+                        localSpeciesDict[constituentElement].add(individualAnnotation)
                         flag = True
         if not flag:
             unmatchedReactants.append(constituentElement) 
     for element in localSpeciesDict:
-        annotationDict[complexMolecule]['BQB_HAS_PART'].extend(localSpeciesDict[element])               
+        annotationDict[complexMolecule]['BQB_HAS_PART'].extend(list(localSpeciesDict[element]))
 
-def buildAnnotationTree(annotationDict,sct,database):
+
+
+def buildAnnotationTree(annotationDict, sct, database):
     annotationToSpeciesDict = {}
     for element in database.weights:
+        print element, sct[element[0]]
         if len(sct[element[0]]) > 0:
             if len(sct[element[0]][0]) == 1:
                 buildingBlock = sct[element[0]][0][0]
                 if len(annotationDict[element[0]]) == 0:
                     if len(annotationDict[buildingBlock]) > 0:
-                        updateFromParent(element[0],buildingBlock,annotationDict)
+                        updateFromParent(element[0], buildingBlock, annotationDict)
                 if len(annotationDict[buildingBlock]) == 0:
                     if len(annotationDict[element[0]]) > 0:
-                        updateFromChild(buildingBlock,element[0],annotationDict)
+                        updateFromChild(buildingBlock, element[0], annotationDict)
             elif len(sct[element[0]][0]) > 1:
                 if len(annotationDict[element[0]]) == 0:
-                    updateFromComponents(element[0],sct,annotationDict,annotationToSpeciesDict)
+                    updateFromComponents(element[0], sct, annotationDict, annotationToSpeciesDict)
                 else:
                     if 'BQB_HAS_VERSION' in annotationDict[element[0]] or 'BQB_HAS_PART' in annotationDict[element[0]]:
-                        updateFromComplex(element[0],sct,annotationDict,annotationToSpeciesDict)
+                        updateFromComplex(element[0], sct, annotationDict, annotationToSpeciesDict)
                     else:
-                        updateFromComponents(element[0],sct,annotationDict,annotationToSpeciesDict)
+                        updateFromComponents(element[0], sct, annotationDict, annotationToSpeciesDict)
             #        annotationdict[element[0]]
             #for buildingBlock in sct[element[0]][0]:
             #    print '\t',buildingBlock,annotationDict[buildingBlock]
@@ -353,7 +358,8 @@ def batchExtensionProcess(directory, outputDir):
                     '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000293.xml',
                     '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000472.xml',
                     '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000255.xml',
-                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000424.xml']:
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000424.xml',
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000439.xml']:
             continue
         if '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsExpanded/{0}'.format(file.split('/')[-1]) in targetFiles:
             continue
@@ -362,27 +368,27 @@ def batchExtensionProcess(directory, outputDir):
         outputFile = os.path.join(outputDir, file.split('/')[-1])
         
         with open(outputFile,'w') as f:
-            f.write(sbmlInfo)
+                f.write(sbmlInfo)
 
 
 
 def defineConsole():
     parser = argparse.ArgumentParser(description='SBML to BNGL translator')
-    parser.add_argument('-i','--input-file',type=str,help='input SBML file',required=True)
-    parser.add_argument('-o','--output-file',type=str,help='output SBML file',required=True)
+    parser.add_argument('-i', '--input-file', type=str, help='input SBML file', required=True)
+    parser.add_argument('-o', '--output-file', type=str, help='output SBML file', required=True)
     return parser    
 
  
 if __name__ == "__main__":
-    batchExtensionProcess('annotationsRemoved', 'annotationsExpanded')
+    #batchExtensionProcess('annotationsRemoved', 'annotationsExpanded')
     
-    #parser = defineConsole()
-    #namespace = parser.parse_args()
-    #input_file = '/home/proto/workspace/bionetgen/parsers/SBMLparser/XMLExamples/curated/BIOMD%010i.xml' % 19
-    #expandedString = expandAnnotation(namespace.input_file,'')
+    parser = defineConsole()
+    namespace = parser.parse_args()
+    input_file = '/home/proto/workspace/bionetgen/parsers/SBMLparser/XMLExamples/curated/BIOMD%010i.xml' % 19
+    expandedString = expandAnnotation(namespace.input_file, '')
     #print 'Writing extended annotation SBML to {0}'.format(namespace.output_file)    
-    #with open(namespace.output_file,'w') as f:
-    #    f.write(expandedString)
+    with open(namespace.output_file,'w') as f:
+        f.write(expandedString)
     #outputFileName = '.'.join(fileName.split('.')[0:-1]) + '_withAnnotations.xml'
     #writeSBML(sbmlDocument,outputFileName)
     

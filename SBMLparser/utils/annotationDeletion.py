@@ -9,11 +9,11 @@ import progressbar
 
 import libsbml
 from util import logMess
-from sbml2bngl import SBML2BNGL as  SBML2BNGL
+from sbml2bngl import SBML2BNGL as SBML2BNGL
 import structures
 import atomizer.moleculeCreation as mc
 import os
-from subprocess import call        
+from subprocess import call
 import tempfile
 import sys
 #sys.path.insert(0, '../utils/')
@@ -26,10 +26,12 @@ bioqual = ['BQB_IS', 'BQB_HAS_PART', 'BQB_IS_PART_OF', 'BQB_IS_VERSION_OF',
            'BQB_IS_DESCRIBED_BY', 'BQB_IS_ENCODED_BY', 'BQB_ENCODES', 'BQB_OCCURS_IN',
            'BQB_HAS_PROPERTY', 'BQB_IS_PROPERTY_OF', 'BQB_HAS_TAXON', 'BQB_UNKNOWN']
 
-modqual = ['BQM_IS', 'BQM_IS_DESCRIBED_BY', 'BQM_IS_DERIVED_FROM', 'BQM_IS_INSTANCE_OF', 'BQM_HAS_INSTANCE', 'BQM_UNKNOWN']
+modqual = ['BQM_IS', 'BQM_IS_DESCRIBED_BY', 'BQM_IS_DERIVED_FROM',
+           'BQM_IS_INSTANCE_OF', 'BQM_HAS_INSTANCE', 'BQM_UNKNOWN']
 
 import fnmatch
 import argparse
+
 
 def getFiles(directory, extension):
     """
@@ -39,46 +41,48 @@ def getFiles(directory, extension):
     matches = []
     for root, dirnames, filenames in os.walk(directory):
         for filename in fnmatch.filter(filenames, '*.{0}'.format(extension)):
-            matches.append([os.path.join(os.path.abspath(root), filename),os.path.getsize(os.path.join(root, filename))])
+            matches.append([os.path.join(os.path.abspath(root), filename), os.path.getsize(
+                os.path.join(root, filename))])
 
-    #sort by size
+    # sort by size
     matches.sort(key=lambda filename: filename[1], reverse=False)
-    
+
     matches = [x[0] for x in matches]
 
     return matches
 
 
-
 from collections import defaultdict
 import re
+
+
 def standardizeName(name):
     '''
     Remove stuff not used by bngl
     '''
     name2 = name
-    
-    sbml2BnglTranslationDict = {"^":"",
-                                "'":"",
-                                "*":"m"," ":"_",
-                                "#":"sh",
-                                ":":"_",'α':'a',
-                                'β':'b',
-                                'γ':'g',"(":"__",
-                                ")":"__",
-                                " ":"","+":"pl",
-                                "/":"_",":":"_",
-                                "-":"_",
-                                ".":"_",
-                                '?':"unkn",
-                                ',':'_',
-                                '[':'__',
-                                  ']':'__',
-                                  '>':'_',
-                                  '<':'_'}
-                                
+
+    sbml2BnglTranslationDict = {"^": "",
+                                "'": "",
+                                "*": "m", " ": "_",
+                                "#": "sh",
+                                ":": "_", 'α': 'a',
+                                'β': 'b',
+                                'γ': 'g', "(": "__",
+                                ")": "__",
+                                " ": "", "+": "pl",
+                                "/": "_", ":": "_",
+                                "-": "_",
+                                ".": "_",
+                                '?': "unkn",
+                                ',': '_',
+                                '[': '__',
+                                ']': '__',
+                                '>': '_',
+                                '<': '_'}
+
     for element in sbml2BnglTranslationDict:
-        name = name.replace(element,sbml2BnglTranslationDict[element])
+        name = name.replace(element, sbml2BnglTranslationDict[element])
     name = re.sub('[\W]', '', name)
     return name
 
@@ -86,21 +90,20 @@ def standardizeName(name):
 def parseAnnotation(annotation):
     speciesAnnotationDict = defaultdict(list)
     lista = libsbml.CVTermList()
-    libsbml.RDFAnnotationParser.parseRDFAnnotation(annotation,lista)
-    for idx in range(0,lista.getSize()):
-      for idx2 in range(0, lista.get(idx).getResources().getLength()):
-          resource = lista.get(idx).getResources().getValue(idx2)
+    libsbml.RDFAnnotationParser.parseRDFAnnotation(annotation, lista)
+    for idx in range(0, lista.getSize()):
+        for idx2 in range(0, lista.get(idx).getResources().getLength()):
+            resource = lista.get(idx).getResources().getValue(idx2)
 
-          qualifierType = lista.get(idx).getQualifierType()
-          qualifierDescription= bioqual[lista.get(idx).getBiologicalQualifierType()] if qualifierType \
-                                 else modqual[lista.get(idx).getModelQualifierType()]
-          speciesAnnotationDict[qualifierDescription].append(resource)
+            qualifierType = lista.get(idx).getQualifierType()
+            qualifierDescription = bioqual[lista.get(idx).getBiologicalQualifierType()] if qualifierType \
+                else modqual[lista.get(idx).getModelQualifierType()]
+            speciesAnnotationDict[qualifierDescription].append(resource)
     return speciesAnnotationDict
-    
 
 
 def buildAnnotationDict(document):
-    annotationDict = defaultdict(lambda : defaultdict(list))
+    annotationDict = defaultdict(lambda: defaultdict(list))
     speciesNameDict = {}
     for species in document.getModel().getListOfSpecies():
         annotation = species.getAnnotation()
@@ -109,22 +112,24 @@ def buildAnnotationDict(document):
         speciesNameDict[species.getName()] = transformedName
         if annotation:
             annotationDict[transformedName] = parseAnnotation(annotation)
-    return annotationDict,speciesNameDict
-        
+    return annotationDict, speciesNameDict
 
 
-def updateFromParent(child,parent,annotationDict):
+def updateFromParent(child, parent, annotationDict):
     for annotationLabel in annotationDict[parent]:
-        if annotationLabel in ['BQB_IS_VERSION_OF','BQB_IS']:
-            annotationDict[child]['BQB_IS_VERSION_OF'] =annotationDict[parent][annotationLabel]
-            
+        if annotationLabel in ['BQB_IS_VERSION_OF', 'BQB_IS']:
+            annotationDict[child]['BQB_IS_VERSION_OF'] = annotationDict[
+                parent][annotationLabel]
 
-def updateFromChild(parent,child,annotationDict):
+
+def updateFromChild(parent, child, annotationDict):
     for annotationLabel in annotationDict[child]:
-        if annotationLabel in ['BQB_IS_VERSION_OF','BQB_IS']:
-            annotationDict[parent]['BQB_HAS_VERSION'] =annotationDict[child][annotationLabel]
+        if annotationLabel in ['BQB_IS_VERSION_OF', 'BQB_IS']:
+            annotationDict[parent]['BQB_HAS_VERSION'] = annotationDict[
+                child][annotationLabel]
 
-def updateFromComplex(complexMolecule,sct,annotationDict,annotationToSpeciesDict):
+
+def updateFromComplex(complexMolecule, sct, annotationDict, annotationToSpeciesDict):
     localSpeciesDict = {}
     unmatchedReactants = []
     unmatchedAnnotations = []
@@ -132,65 +137,79 @@ def updateFromComplex(complexMolecule,sct,annotationDict,annotationToSpeciesDict
         flag = False
         if len(annotationDict[constituentElement]) > 0:
             for annotation in annotationDict[constituentElement]:
-                if annotation in ['BQB_IS_VERSION_OF','BQB_IS','BQB_HAS_VERSION']:
+                if annotation in ['BQB_IS_VERSION_OF', 'BQB_IS', 'BQB_HAS_VERSION']:
                     flag = True
                     for individualAnnotation in annotationDict[constituentElement][annotation]:
-                        localSpeciesDict[individualAnnotation] = constituentElement
-                        localSpeciesDict[constituentElement] = individualAnnotation
+                        localSpeciesDict[
+                            individualAnnotation] = constituentElement
+                        localSpeciesDict[
+                            constituentElement] = individualAnnotation
             if flag:
                 continue
-            
+
         if constituentElement in annotationToSpeciesDict:
-            localSpeciesDict[constituentElement] = annotationToSpeciesDict[constituentElement]
-            localSpeciesDict[annotationToSpeciesDict[constituentElement]] = constituentElement
+            localSpeciesDict[constituentElement] = annotationToSpeciesDict[
+                constituentElement]
+            localSpeciesDict[
+                annotationToSpeciesDict[constituentElement]] = constituentElement
         else:
             unmatchedReactants.append(constituentElement)
-            
+
     for annotationType in annotationDict[complexMolecule]:
-        if annotationType in ['BQB_HAS_VERSION','BQB_HAS_PART']:
+        if annotationType in ['BQB_HAS_VERSION', 'BQB_HAS_PART']:
             for constituentAnnotation in annotationDict[complexMolecule][annotationType]:
                 if constituentAnnotation not in localSpeciesDict:
                     unmatchedAnnotations.append(constituentAnnotation)
     if len(set(unmatchedReactants)) == 1 and len(set(unmatchedAnnotations)) == 1:
         localSpeciesDict[unmatchedReactants[0]] = unmatchedAnnotations[0]
         localSpeciesDict[unmatchedAnnotations[0]] = unmatchedReactants[0]
-        annotationDict[unmatchedReactants[0]]['BQB_IS_VERSION_OF'] = [unmatchedAnnotations[0]]
+        annotationDict[unmatchedReactants[0]][
+            'BQB_IS_VERSION_OF'] = [unmatchedAnnotations[0]]
 
     elif len(unmatchedReactants) > 0 or len(unmatchedAnnotations) > 0:
-        #annotate from database names
-        print '**//',complexMolecule,unmatchedReactants,unmatchedAnnotations
-        
+        # annotate from database names
+        print '**//', complexMolecule, unmatchedReactants, unmatchedAnnotations
+
     for element in localSpeciesDict:
         if element not in annotationToSpeciesDict:
             annotationToSpeciesDict[element] = localSpeciesDict[element]
 
-def updateFromComponents(complexMolecule,sct,annotationDict,annotationToSpeciesDict):
+
+def updateFromComponents(complexMolecule, sct, annotationDict, annotationToSpeciesDict):
     localSpeciesDict = {}
     unmatchedReactants = []
     for constituentElement in sct[complexMolecule][0]:
         flag = False
         if len(annotationDict[constituentElement]) > 0:
             for annotation in annotationDict[constituentElement]:
-                if annotation in ['BQB_IS_VERSION_OF','BQB_IS','BQB_HAS_VERSION','BQB_HAS_PART']:
+                if annotation in ['BQB_IS_VERSION_OF', 'BQB_IS', 'BQB_HAS_VERSION', 'BQB_HAS_PART']:
                     for individualAnnotation in annotationDict[constituentElement][annotation]:
                         #localSpeciesDict[individualAnnotation] = constituentElement
-                        localSpeciesDict[constituentElement] = individualAnnotation
+                        localSpeciesDict[
+                            constituentElement] = individualAnnotation
                         flag = True
         if not flag:
-            unmatchedReactants.append(constituentElement) 
+            unmatchedReactants.append(constituentElement)
     for element in localSpeciesDict:
-        annotationDict[complexMolecule]['BQB_HAS_PART'].append(localSpeciesDict[element])               
+        annotationDict[complexMolecule]['BQB_HAS_PART'].append(localSpeciesDict[element])
 
-def buildAnnotationTree(annotationDict,sct,database):
-    annotationToSpeciesDict = {}
-    for element in database.weights:
+
+def buildAnnotationTree(annotationDict, sct, database):
+    '''
+    Deletes annotations from elements that are not molecule types
+    does not remove annotations from elements that are child that did not exist in the original sbml model
+    '''
+    for element in reversed(database.weights):
         if len(sct[element[0]]) > 0:
+            if len(sct[element[0]][0]) == 1:
+                if sct[element[0]][0][0] not in annotationDict:
+                    continue
+                if len(annotationDict[sct[element[0]][0][0]]) == 0:
+                    continue
             annotationDict[element[0]] = {}
-            #        annotationdict[element[0]]
-            #for buildingBlock in sct[element[0]][0]:
-            #    print '\t',buildingBlock,annotationDict[buildingBlock]
 
-def speciesAnnotationsToSBML(sbmlDocument,annotationDict,speciesNameDict):
+
+def speciesAnnotationsToSBML(sbmlDocument, annotationDict, speciesNameDict):
     '''
     Receives a series of annotations associated with their associated species
     and fills in a corresponding sbmlDocument with this information
@@ -210,11 +229,11 @@ def speciesAnnotationsToSBML(sbmlDocument,annotationDict,speciesNameDict):
                 term.setModelQualifierType(modqual.index(element))
             for annotation in annotationDict[transformedName][element]:
                 term.addResource(annotation)
-            species.addCVTerm(term)                
+            species.addCVTerm(term)
 
         annotation = libsbml.RDFAnnotationParser.createAnnotation()
         cvterms = libsbml.RDFAnnotationParser.createCVTerms(species)
-        rdfAnnotation  = libsbml.RDFAnnotationParser.createRDFAnnotation()
+        rdfAnnotation = libsbml.RDFAnnotationParser.createRDFAnnotation()
         if cvterms:
             rdfAnnotation.addChild(cvterms)
         else:
@@ -233,39 +252,43 @@ def obtainSCT(fileName, reactionDefinitions, useID, namingConventions):
     logMess.counter = -1
     reader = libsbml.SBMLReader()
     document = reader.readSBMLFromFile(fileName)
-    
-    parser =SBML2BNGL(document.getModel(),useID)
+
+    parser = SBML2BNGL(document.getModel(), useID)
     database = structures.Databases()
     database.forceModificationFlag = True
-    database = mc.createSpeciesCompositionGraph(parser, database, reactionDefinitions,namingConventions,
-                       speciesEquivalences=None,bioGridFlag=False)
-                       
-    return database.prunnedDependencyGraph,database,document
+    database = mc.createSpeciesCompositionGraph(parser, database, reactionDefinitions, namingConventions,
+                                                speciesEquivalences=None, bioGridFlag=False)
+
+    return database.prunnedDependencyGraph, database, document
 
 import tempfile
 
-    
-    
-def writeSBML(document,fileName):
+
+def writeSBML(document, fileName):
     writer = libsbml.SBMLWriter()
-    writer.writeSBMLToFile(document,fileName)
+    writer.writeSBMLToFile(document, fileName)
 
 
 def reduceAnnotations(fileName):
 
-    sct, database, sbmlDocument = obtainSCT(fileName, 'config/reactionDefinitions.json', False, 'config/namingConventions.json')
+    sct, database, sbmlDocument = obtainSCT(
+        fileName, 'config/reactionDefinitions.json', False, 'config/namingConventions.json')
     annotationDict, speciesNameDict = buildAnnotationDict(sbmlDocument)
     buildAnnotationTree(annotationDict, sct, database)
-    speciesAnnotationsToSBML(sbmlDocument,annotationDict,speciesNameDict)
-    
+    speciesAnnotationsToSBML(sbmlDocument, annotationDict, speciesNameDict)
+
     writer = libsbml.SBMLWriter()
     return writer.writeSBMLToString(sbmlDocument)
 
+
 def defineConsole():
     parser = argparse.ArgumentParser(description='SBML to BNGL translator')
-    parser.add_argument('-i','--input-file',type=str,help='input SBML file',required=True)
-    parser.add_argument('-o','--output-file',type=str,help='output SBML file',required=True)
-    return parser    
+    parser.add_argument(
+        '-i', '--input-file', type=str, help='input SBML file', required=True)
+    parser.add_argument(
+        '-o', '--output-file', type=str, help='output SBML file', required=True)
+    return parser
+
 
 def batchDeletionProcess(directory, outputDir):
     testFiles = getFiles(directory, 'xml')
@@ -273,21 +296,28 @@ def batchDeletionProcess(directory, outputDir):
 
     for fileIdx in progress(range(len(testFiles))):
         file = testFiles[fileIdx]
+        print file
+        if file in ['/home/proto/workspace/RuleWorld/atomizer/XMLExamples/curated/BIOMD0000000255.xml']:
+            continue
         sbmlInfo = reduceAnnotations(file)
         outputFile = os.path.join(outputDir, file.split('/')[-1])
-        
-        with open(outputFile,'w') as f:
+
+        with open(outputFile, 'w') as f:
             f.write(sbmlInfo)
 
 
 if __name__ == "__main__":
-    batchDeletionProcess('../XMLExamples/curated','annotationsRemoved')
+    #sbmlInfo = reduceAnnotations('../XMLExamples/curated/BIOMD0000000412.xml')
+    # with open('annotationsRemoved/BIOMD0000000074.xml','w') as f:
+    #    f.write(sbmlInfo)
+
+    batchDeletionProcess('../XMLExamples/curated', 'annotationsRemoved')
     #parser = defineConsole()
     #namespace = parser.parse_args()
     #input_file = '/home/proto/workspace/bionetgen/parsers/SBMLparser/XMLExamples/curated/BIOMD%010i.xml' % 19
     #expandedString = reduceAnnotations(namespace.input_file)
-    #print 'Writing extended annotation SBML to {0}'.format(namespace.output_file)    
-    #with open(namespace.output_file,'w') as f:
+    # print 'Writing extended annotation SBML to {0}'.format(namespace.output_file)
+    # with open(namespace.output_file,'w') as f:
     #    f.write(expandedString)
     #outputFileName = '.'.join(fileName.split('.')[0:-1]) + '_withAnnotations.xml'
-    #writeSBML(sbmlDocument,outputFileName)
+    # writeSBML(sbmlDocument,outputFileName)
