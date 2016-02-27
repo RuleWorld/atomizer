@@ -161,9 +161,13 @@ class SBML2BNGL:
         # two species cannot have the same name. Ids are unique but less informative, however typically species can be differentiated
         # by compartment
         if logEntries:
+
             if standardizedName in self.speciesMemory:
+                
                 if len(list(self.model.getListOfCompartments())) == 1:
                     standardizedName += '_' + species.getId()
+                else:
+                    standardizedName += '_' + compartment
             self.speciesMemory.append(standardizedName)
 
         if boundaryCondition:
@@ -1112,7 +1116,9 @@ but reaction is marked as reversible'.format(reactionID))
             pparam[element] = (0,None)
         for species in self.model.getListOfSpecies():
             tmp = self.getRawSpecies(species)
-            name = species.getName() if species.isSetName() else species.getId()
+
+            #name = species.getName() if species.isSetName() else species.getId()
+            name = tmp['returnID']
             constant = '$' if species.getConstant() or species.getBoundaryCondition() else ''
             if name in  translator:
                 extendedStr = '@{0}:{2}{1}'.format(species.getCompartment(),translator[name],constant)
@@ -1129,8 +1135,10 @@ but reaction is marked as reversible'.format(reactionID))
                 if element in math:
                     math = re.sub(r'(\W|^)({0})(\W|$)'.format(element),
                     r'\1({0})\3'.format(pparam[element][0]),math)
+
             param2 = [x for x in param if '{0} '.format(symbol) not in x]
-            zparam2 = [x for x in zparam if '{0}'.format(symbol) not in x]
+
+            zparam2 = [x for x in zparam if symbol != x]
             '''
             if (len(param2) != len(param)) or (len(zparam) != len(zparam2)):
                 param2.append('{0} {1}'.format(symbol,math))
@@ -1149,6 +1157,7 @@ but reaction is marked as reversible'.format(reactionID))
                     initialConditions = initialConditions2
             except:
                 continue
+
         return param,zparam,initialConditions
             
             
