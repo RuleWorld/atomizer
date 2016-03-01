@@ -416,7 +416,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
 
 
                     # last ditch attempt using straighforward lexical analysis
-                    tmpDependency, tmpEquivalence = sbmlAnalyzer.findClosestModification([reactant], dependencyGraph.keys())
+                    tmpDependency, tmpEquivalence = sbmlAnalyzer.findClosestModification([reactant], dependencyGraph.keys(), database)
                     if reactant in tmpDependency and tmpDependency[reactant] in tmpCandidates[0]:
                         for element in tmpDependency:
                             if element not in dependencyGraph:
@@ -1313,15 +1313,14 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                         if baseElement in database.annotationDict and modElement in database.annotationDict:
                             baseSet = set([y  for x in database.annotationDict[baseElement] for y in database.annotationDict[baseElement][x]])
                             modSet = set([y  for x in database.annotationDict[modElement] for y in database.annotationDict[modElement][x]])
-                            if len(baseSet.intersection(modSet)) > 0:
+                            if len(baseSet.intersection(modSet)) > 0 or len(baseSet) == 0 or len(modSet) == 0:
                                 addToDependencyGraph(database.dependencyGraph, modElement,
                                              [baseElement])
                             else:
-                                logMess("WARNING:Atomization", "{0} and {1} have a direct correspondence according to reaction information however their annotations are completely different.")
+                                logMess("WARNING:Atomization", "{0} and {1} have a direct correspondence according to reaction information however their annotations are completely different.".format(baseElement, modElement))
                         else:
                             addToDependencyGraph(database.dependencyGraph, modElement,
                                      [baseElement])
-
 
     # include user label information. 
     for element in database.userLabelDictionary:
@@ -1363,14 +1362,14 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                     #    continue
                 if modElement not in database.dependencyGraph or not [True for x in database.dependencyGraph[modElement] if baseElement in x and len(x)>1]:
                     if baseElement in database.annotationDict and modElement in database.annotationDict:
-
                         baseSet = set([y  for x in database.annotationDict[baseElement] for y in database.annotationDict[baseElement][x]])
                         modSet = set([y  for x in database.annotationDict[modElement] for y in database.annotationDict[modElement][x]])
-                        if baseSet.intersection(modSet) > 0:
+                        if len(baseSet.intersection(modSet)) > 0 or len(baseSet) == 0 or len(modSet) == 0:
                             addToDependencyGraph(database.dependencyGraph, modElement, [baseElement])
                         else:
+
                             logMess("WARNING:Atomization", "{0} and {1} have a direct correspondence according to reaction \
-information however their annotations are completely different.")
+information however their annotations are completely different.".format(baseElement,modElement))
                     else:
                         addToDependencyGraph(database.dependencyGraph, modElement,
                                              [baseElement])
@@ -1405,10 +1404,9 @@ choosing binding'.format(database.dependencyGraph[modElement], baseElement,modEl
                     if base in database.annotationDict and mod in database.annotationDict:
                         baseSet = set([y  for x in database.annotationDict[base] for y in database.annotationDict[base][x]])
                         modSet = set([y  for x in database.annotationDict[mod] for y in database.annotationDict[mod][x]])
-
-                        if(len(baseSet.intersection(modSet))) == 0:
+                        if(len(baseSet.intersection(modSet))) == 0 and len(baseSet) > 0 and len(modSet) > 0:
                             logMess("WARNING:Atomization", "{0} and {1} have a direct correspondence according to reaction \
-information however their annotations are completely different.")                            
+information however their annotations are completely different.".format(base, mod))
                             continue
                     database.dependencyGraph[mod] = [[base]]
 
@@ -1482,8 +1480,9 @@ tmp,removedElement,tmp3))
 
 
     # Fill SCT with annotations for those species that still dont have any mapping
-    annotationDependencyGraph, _ = fillSCTwithAnnotationInformation(orphanedSpecies, database.annotationDict, database)
-    #annotationDependencyGraph = {}
+    #annotationDependencyGraph, _ = fillSCTwithAnnotationInformation(orphanedSpecies, database.annotationDict, database)
+    # use an empty dictionary if we wish to turn off annotation information in atomization
+    annotationDependencyGraph = {}
 
     for annotatedSpecies in annotationDependencyGraph:
         if len(annotationDependencyGraph[annotatedSpecies]) > 0 and annotatedSpecies not in database.userLabelDictionary:
@@ -1499,7 +1498,7 @@ tmp,removedElement,tmp3))
     #completeAnnotationDependencyGraph, completePartialMatches = fillSCTwithAnnotationInformation(strippedMolecules, annotationDict, database, False)
 
     # pure lexical analysis for the remaining orphaned molecules
-    tmpDependency, database.tmpEquivalence = database.sbmlAnalyzer.findClosestModification(orphanedSpecies, strippedMolecules)
+    tmpDependency, database.tmpEquivalence = database.sbmlAnalyzer.findClosestModification(orphanedSpecies, strippedMolecules, database)
     for species in tmpDependency:
         if species not in database.userLabelDictionary:
             if tmpDependency[species] == []:

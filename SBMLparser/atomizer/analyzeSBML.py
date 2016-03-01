@@ -43,6 +43,14 @@ def memoize(obj):
 def get_close_matches(match, dataset, cutoff=0.6):
     return difflib.get_close_matches(match, dataset, cutoff=cutoff)
 
+@memoize
+def sequenceMatcher(a,b):
+    '''
+    compares two strings ignoring underscores
+    '''
+    return difflib.SequenceMatcher(lambda x:x == '_',a,b).ratio()
+
+
 name = Word(alphanums + '_-') + ':'
 species = (Word(alphanums + "_" + ":#-")
            + Suppress('()') + Optional(Suppress('@' + Word(alphanums + '_-')))) + ZeroOrMore(Suppress('+') + Word(alphanums + "_" + ":#-")
@@ -278,7 +286,7 @@ class SBMLAnalyzer:
 
 
         
-    def findClosestModification(self,particles,species):
+    def findClosestModification(self, particles, species, database):
         equivalenceTranslator = {}
         dependencyGraph = {}
         localSpeciesDict = defaultdict(lambda : defaultdict(list))
@@ -423,8 +431,14 @@ class SBMLAnalyzer:
                     if comparisonParticle in particle:
                         fuzzyList = self.processAdHocNamingConventions(particle,comparisonParticle,localSpeciesDict, False, species)
                         if self.testAgainstExistingConventions(fuzzyList[0][1],self.namingConventions['modificationList']):
+                            if particle in database.annotationDict and comparisonParticle in database.annotationDict:
+                                baseSet = set([y  for x in database.annotationDict[particle] for y in database.annotationDict[particle][x]])
+                                modSet = set([y  for x in database.annotationDict[comparisonParticle] for y in database.annotationDict[comparisonParticle][x]])
+                                if len(baseSet.intersection(modSet)) == 0:
+                                    logMess('WARNING:Atomization', '{0} can be mapped to {1} through naming conventions but the annotation information does not match'.format(particle,comparisonParticle))
+                                    break
                             addToDependencyGraph(dependencyGraph,particle,[comparisonParticle])
-                            logMess('INFO:Atomization', '{0} can be mapped to {1} through existing naming conventions'.format(particle, [comparisonParticle]))
+                            logMess('INFO:Atomization', '{0} can be mapped to {1} through existing naming conventions-'.format(particle, [comparisonParticle]))
                             break           
                             
         #if len(additionalHandling) > 0:
@@ -706,10 +720,13 @@ class SBMLAnalyzer:
                 #        return None,[close]
                 return None,[reactant]
 
+
+
     def growString(self, reactant, product, rp, pp, idx, strippedMolecules,continuityFlag):
         '''
         currently this is the slowest method in the system because of all those calls to difflib
         '''
+
         idx2 = 2
         treactant = [rp]
         tproduct = pp
@@ -725,8 +742,8 @@ class SBMLAnalyzer:
                     tailDifferences = get_close_matches(treactant2[-1], strippedMolecules)
                     if len(tailDifferences) > 0:
 
-                        tdr = max([0] + [difflib.SequenceMatcher(None, '_'.join(treactant2), x).ratio() for x in tailDifferences])
-                        hdr = max([0] + [difflib.SequenceMatcher(None, '_'.join(reactant[idx + idx2 - 1:idx + idx2 + 1]), x).ratio() for x in tailDifferences])
+                        tdr = max([0] + [sequenceMatcher('_'.join(treactant2), x) for x in tailDifferences])
+                        hdr = max([0] + [sequenceMatcher('_'.join(reactant[idx + idx2 - 1:idx + idx2 + 1]), x) for x in tailDifferences])
                         if tdr > hdr and tdr > 0.8:
                             treactant = treactant2
                     else:
@@ -741,7 +758,7 @@ class SBMLAnalyzer:
                     tailDifferences = get_close_matches('_'.join(treactant2), strippedMolecules)
                     if len(tailDifferences) > 0:
 
-                        tdr = max([0] + [difflib.SequenceMatcher(None, '_'.join(treactant2), x).ratio() for x in tailDifferences])
+                        tdr = max([0] + [sequenceMatcher('_'.join(treactant2), x) for x in tailDifferences])
                         if tdr > 0.8:
                             treactant = treactant2
                         else:
@@ -763,8 +780,8 @@ class SBMLAnalyzer:
                 if len(product) > pidx + idx2:
                     tailDifferences = get_close_matches(tproduct2[-1], strippedMolecules)
                     if len(tailDifferences) > 0:
-                        tdr = max([0] + [difflib.SequenceMatcher(None, '_'.join(tproduct2), x).ratio() for x in tailDifferences])
-                        hdr = max([0] + [difflib.SequenceMatcher(None, '_'.join(product[pidx + idx2 - 1:pidx + idx2 + 1]), x).ratio() for x in tailDifferences])
+                        tdr = max([0] + [sequenceMatcher('_'.join(tproduct2), x) for x in tailDifferences])
+                        hdr = max([0] + [sequenceMatcher('_'.join(product[pidx + idx2 - 1:pidx + idx2 + 1]), x) for x in tailDifferences])
                         if tdr > hdr and tdr > 0.8:
                             tproduct = tproduct2
                     else:
@@ -779,7 +796,7 @@ class SBMLAnalyzer:
                     tailDifferences = get_close_matches('_'.join(tproduct2), strippedMolecules)
                     if len(tailDifferences) > 0:
 
-                        tdr = max([0] + [difflib.SequenceMatcher(None, '_'.join(tproduct2), x).ratio() for x in tailDifferences])
+                        tdr = max([0] + [sequenceMatcher('_'.join(tproduct2), x) for x in tailDifferences])
                         if tdr > 0.8:
                             tproduct = tproduct2
                         else:
@@ -831,8 +848,26 @@ class SBMLAnalyzer:
                     elif rp:
                         treactant, tproduct = self.growString(reactant, product,
                                                              rp, pp, idx, strippedMolecules,continuityFlag=True)
-                        pairedMolecules[stoch2].append(('_'.join(treactant), '_'.join(tproduct)))
-                        pairedMolecules2[stoch].append(('_'.join(tproduct), '_'.join(treactant)))
+                        if '_'.join(treactant) in strippedMolecules:
+                            finalReactant = '_'.join(treactant)
+                        else:
+                            reactantMatches =  get_close_matches('_'.join(treactant), strippedMolecules)
+                            reactantScore = [sequenceMatcher(''.join(treactant), x.replace('_','')) for x in reactantMatches]
+
+                            finalReactant = reactantMatches[reactantScore.index(max(reactantScore))]
+
+                        if '_'.join(tproduct) in strippedMolecules:
+                            finalProduct = '_'.join(tproduct)
+                        else:
+                            productMatches =  get_close_matches('_'.join(tproduct), strippedMolecules)
+                            productScore = [sequenceMatcher(''.join(tproduct), x.replace('_','')) for x in productMatches]
+
+                            finalProduct = productMatches[productScore.index(max(productScore))]
+
+                        pairedMolecules[stoch2].append((finalReactant, finalProduct))
+                        pairedMolecules2[stoch].append((finalProduct, finalReactant))
+
+
                         for x in treactant:
                             reactant.remove(x)
                         for x in tproduct:
