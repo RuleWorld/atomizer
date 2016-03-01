@@ -88,10 +88,12 @@ def annotationComparison(model1 ,model2,errorList):
         if entry not in annotationDict2:
             continue
         #for label in ['BQB_HAS_PART','BQB_IS_VERSION_OF','BQB_IS','']
-        if not set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x])):
-            error+=1
+        if not set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x])) \
+            and not set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_VERSION'] if 'uniprot' in x])):
+            error += 1
 
-        if not set([x for x in annotationDict2[entry]['BQB_IS_VERSION_OF'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_IS_VERSION_OF'] if 'uniprot' in x])):
+        if not set([x for x in annotationDict2[entry]['BQB_HAS_VERSION'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_VERSION'] if 'uniprot' in x])) \
+            and not set([x for x in annotationDict2[entry]['BQB_HAS_VERSION'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x])):
             error += 1
         
     if error > 0:
@@ -115,19 +117,30 @@ def annotationFileComparison(model1 ,model2):
     #elementalMolecules = [x for x in annotationExtractor.sct if annotationExtractor.sct[x] == []]
     annotationDict2 = annotationExtractor.getAnnotationSystem()
     error = 0
+    totalSet = set()
+
     for entry in  annotationDict1:
-        if not set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x])):
+        if not set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x])) \
+            and not set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_VERSION'] if 'uniprot' in x])):
             print '--------------'
             print entry
-            print set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).difference(set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x]))
+            difference = set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).difference(set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x]))
+            print difference
+            print annotationDict1[entry]
+            print annotationDict2[entry]
+            totalSet = totalSet.union(difference)
             #print set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x])
 
-        if not set([x for x in annotationDict2[entry]['BQB_IS_VERSION_OF'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_IS_VERSION_OF'] if 'uniprot' in x])):
+        if not set([x for x in annotationDict2[entry]['BQB_HAS_VERSION'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_VERSION'] if 'uniprot' in x])) \
+            and not set([x for x in annotationDict2[entry]['BQB_HAS_VERSION'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x])):
             print '--------------'
             print entry
-            print set([x for x in annotationDict2[entry]['BQB_IS_VERSION_OF'] if 'uniprot' in x]).difference(set([x for x in annotationDict1[entry]['BQB_IS_VERSION_OF'] if 'uniprot' in x]))
+            difference = set([x for x in annotationDict2[entry]['BQB_HAS_VERSION'] if 'uniprot' in x]).difference(set([x for x in annotationDict1[entry]['BQB_HAS_VERSION'] if 'uniprot' in x]))
+            print difference
+            totalSet = totalSet.union(difference)
+            
             #print set([x for x in annotationDict1[entry]['BQB_IS_VERSION_OF'] if 'uniprot' in x])
-
+    print totalSet
 
 
 def batchAnnotationComparison(removedAnnotationsDir, referenceDir):
@@ -152,25 +165,26 @@ import pprint
 import characterizeAnnotationLog as cal
 
 
-
 if __name__ == "__main__":
     
-    modelCharacterization = componentAnalysis('../curated')
-    #print modelCharacterization
+    
     significanceTreshold = 0.3
     errorList = batchAnnotationComparison('annotationsExpanded', '../XMLExamples/curated')
-    errorLogDict = {}
-    for fileName in errorList:
-        errorLogDict[fileName] = cal.processLogFile('../curated/{0}.bngl.log'.format(fileName))
-
+   
     print errorList
+    print len(errorList)   
     
-    #errorResults = [(x,errorLogDict[x], modelCharacterization['curated/{0}.xml'.format(x)]) for x in errorList if 'curated/{0}.xml'.format(x) 
+
+    # errorLogDict = {}
+    # for fileName in errorList:
+    #     errorLogDict[fileName] = cal.processLogFile('../curated/{0}.bngl.log'.format(fileName))
+    # modelCharacterization = componentAnalysis('../curated')
+    # errorResults = [(x,errorLogDict[x], modelCharacterization['curated/{0}.xml'.format(x)]) for x in errorList if 'curated/{0}.xml'.format(x) 
     #        in modelCharacterization if 'forcedModification' not in errorLogDict[x] or errorLogDict[x]['forcedModification'] < significanceTreshold]
-    #pprint.pprint(errorResults)
-    #print len(errorResults)
-    #parser = defineConsole()
-    #namespace = parser.parse_args()
+    # pprint.pprint(errorResults)
+    # print len(errorResults)
+    # parser = defineConsole()
+    # namespace = parser.parse_args()
     
-    #annotationFileComparison('annotationsExpanded/BIOMD0000000399.xml','/home/proto/workspace/RuleWorld/atomizer/XMLExamples/curated/BIOMD0000000399.xml')
+    # annotationFileComparison('annotationsExpanded/BIOMD0000000474.xml', '/home/proto/workspace/RuleWorld/atomizer/XMLExamples/curated/BIOMD0000000474.xml')
 

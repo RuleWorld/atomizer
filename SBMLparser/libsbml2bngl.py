@@ -390,7 +390,7 @@ def postAnalyzeFile(outputFile, bngLocation, database):
         if molecule[0] in deleteBonds:
             for bond in deleteBonds[molecule[0]]:
                 database.translator[molecule[1]].deleteBond(bond)
-                logMess('INFO:Atomization', 'Used context information to determine that the bond {0} in species {1} is not likely'.format(bond,molecule[1]))
+                logMess('INFO:CTX002', 'Used context information to determine that the bond {0} in species {1} is not likely'.format(bond,molecule[1]))
 
     returnArray = analyzeHelper(database.document, database.reactionDefinitions, database.useID,
                                 outputFile, database.speciesEquivalence, database.atomize, database.translator)
@@ -406,7 +406,7 @@ def postAnalyzeFile(outputFile, bngLocation, database):
     motifSpecies, motifDefinitions = contextAnalysis.processContextMotifInformation(database.assumptions['lexicalVsstoch'], database)
     #motifSpecies, motifDefinitions = contextAnalysis.processAllContextInformation()
     if len(motifDefinitions) > 0:
-        logMess('WARNING:ContextAnalysis', 'Species with suspect context information were found. Information is being dumped to {0}_context.log'.format(outputFile))
+        logMess('INFO:CTX003', 'Species with suspect context information were found. Information is being dumped to {0}_context.log'.format(outputFile))
         with open('{0}_context.log'.format(outputFile), 'w') as f:
             pprint.pprint(dict(motifSpecies), stream=f)
             pprint.pprint(motifDefinitions, stream=f)
@@ -583,8 +583,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     molecules, initialConditions, observables, speciesDict,\
         observablesDict, annotationInfo = parser.getSpecies(translator, [x.split(' ')[0] for x in param])
+
     # finally, adjust parameters and initial concentrations according to whatever  initialassignments say
     param, zparam, initialConditions = parser.getInitialAssignments(translator, param, zparam, molecules, initialConditions)
+
     # FIXME: this method is a mess, improve handling of assignmentrules since we can actually handle those
     aParameters, aRules, nonzparam, artificialRules, removeParams, artificialObservables = parser.getAssignmentRules(zparam, param, rawSpecies, 
                                                                                                                      observablesDict, translator)
@@ -602,6 +604,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     tags = '@{0}'.format(compartments[0].split(' ')[0]) if len(compartments) == 1 else '@cell'
     molecules.extend([x.split(' ')[0] for x in removeParams])
+
     if len(molecules) == 0:
         compartments = []
     observables.extend('Species {0} {0}'.format(x.split(' ')[0]) for x in removeParams)
@@ -657,7 +660,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     for flag in sorted(deleteMolecules,reverse=True):
         
         if deleteMoleculesFlag:
-            logMess('WARNING:Simulation','{0} reported as function, but usage is ambiguous'.format(molecules[flag]) )
+            logMess('WARNING:SIM101','{0} reported as function, but usage is ambiguous'.format(molecules[flag]) )
             result = validateReactionUsage(molecules[flag], rules)
             if result is not None:
                 logMess('ERROR:Simulation','Pseudo observable {0} in reaction {1}'.format(molecules[flag],result))
@@ -667,7 +670,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             #s = molecules.pop(flag)
             #initialConditions = [x for x in initialConditions if '$' + s not in x]
         else:
-            logMess('WARNING:Simulation','{0} reported as species, but usage is ambiguous.'.format(flag) )
+            logMess('WARNING:SIM101','{0} reported as species, but usage is ambiguous.'.format(flag) )
             artificialObservables.pop(flag)
             
 
@@ -683,6 +686,8 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                 if sbml in sbmlfunctions[sbml2]:
                     sbmlfunctions[sbml2] = writer.extendFunction(sbmlfunctions[sbml2],sbml,sbmlfunctions[sbml])
     functions = reorderFunctions(functions)
+
+
 
     functions = changeNames(functions, aParameters)
     # change reference for observables with compartment name
@@ -700,7 +705,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     
     
     if len(artificialRules) + len(rules) == 0:
-        logMess('ERROR:Simulation','The file contains no reactions')
+        logMess('ERROR:SIM203','The file contains no reactions')
     if useArtificialRules or len(rules) == 0:
         rules =['#{0}'.format(x) for x in rules]
         evaluate =  evaluation(len(observables),translator)
@@ -725,9 +730,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     meta = parser.getMetaInformation(commentDictionary)
 
     
+
     finalString = writer.finalText(meta, param + reactionParameters, molecules, initialConditions, list(OrderedDict.fromkeys(observables)), list(OrderedDict.fromkeys(rules)),functions,compartments,outputFile)
     
-    logMess('INFO:Summary','File contains {0} molecules out of {1} original SBML species'.format(len(molecules), len(observables)))
+    logMess('INFO:SUM001','File contains {0} molecules out of {1} original SBML species'.format(len(molecules), len(observables)))
 
     # rate of each classified rule
     evaluate2 = 0 if len(observables) == 0 else len(molecules)*1.0/len(observables)

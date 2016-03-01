@@ -116,6 +116,16 @@ class SBML2BNGL:
         metaString += '###\n'
         return metaString
 
+
+    def isSameNameDifferentCompartment(self, name):
+        speciesList = []
+        for species in self.model.getListOfSpecies():
+            if species.name == name:
+                speciesList.append(species.getCompartment())
+
+        return len(speciesList) == len(set(speciesList))
+
+
     def getRawSpecies(self, species,parameters=[], logEntries=True):
         '''
         *species* is the element whose SBML information we will extract
@@ -163,11 +173,14 @@ class SBML2BNGL:
         if logEntries:
 
             if standardizedName in self.speciesMemory:
-                
                 if len(list(self.model.getListOfCompartments())) == 1:
                     standardizedName += '_' + species.getId()
                 else:
-                    standardizedName += '_' + compartment
+                    # we can differentiate by compartment tag, no need to attach it to the name
+                    # however an actual check needs to be made to make sure that the modeler is actually 
+                    # changing compartment information. If not, use id to differentiate.
+                    if not self.isSameNameDifferentCompartment(species.getName()):
+                        standardizedName += '_' + species.getId()
             self.speciesMemory.append(standardizedName)
 
         if boundaryCondition:
@@ -320,7 +333,7 @@ class SBML2BNGL:
                 rateR = 'if({0}>0, {1}/{0},0)'.format(element, rateR)
         if np.isinf(highStoichoiMetryFactor):
             rateR = '{0} * 1e20'.format(rateR)
-            logMess('WARNING:SIMULATION','Found usage of "inf" inside function {0}'.format(rateR))
+            logMess('ERROR:SIM204','Found usage of "inf" inside function {0}'.format(rateR))
         elif highStoichoiMetryFactor != 1:
             rateR = '{0} * {1}'.format(rateR, int(highStoichoiMetryFactor))
         return rateR, max(math.getNumChildren(), len(ifStack))
@@ -391,7 +404,7 @@ class SBML2BNGL:
                     if nr == 0 and rateR not in parameterFunctions:
                         rateL = '0'
                         nl = -1
-                        logMess('WARNING:Simulation', 'In reaction {0}, the left hand side has been determined \
+                        logMess('INFO:SIM001', 'In reaction {0}, the left hand side has been determined \
 to never activate and has been to rate 0'.format(reactionID))
                     else:
                         rateL = "if({0} >= 0, {0}, 0)".format(rateL)
@@ -400,13 +413,13 @@ to never activate and has been to rate 0'.format(reactionID))
                     if nl == 0 and rateL not in parameterFunctions:
                         rateR = '0'
                         nr = -1
-                        logMess('WARNING:Simulation', 'In reaction {0}, the right hand side has been determined \
+                        logMess('INFO:SIM002', 'In reaction {0}, the right hand side has been determined \
 to never activate (rate is never negative), setting reaction to unidirectional'.format(reactionID))
                     else:
                         rateR = "if({0} < 0, -({0}), 0)".format(rateR)
                         nr = 1
                 if ((nl == 0 and nr > 0) or (nr == 0 and nl > 0)) and (rateL in parameterFunctions or rateR in parameterFunctions):
-                    logMess('WARNING:Simulation', 'In reaction {0}, rates cannot be divided into left hand side and right hand side \
+                    logMess('WARNING:SIM102', 'In reaction {0}, rates cannot be divided into left hand side and right hand side \
 but reaction is marked as reversible'.format(reactionID))
 
                 #nl, nr = 1,1
@@ -691,7 +704,7 @@ but reaction is marked as reversible'.format(reactionID))
         size = compartment.getSize()
         dimensions = compartment.getSpatialDimensions()
         if dimensions in [0, 1]:
-            logMess('WARNING:Simulation', '{1}-D compartments are not supported. Changing for 2-D compartments for {0}. Please verify this does not affect simulation'.format(name, dimensions))
+            logMess('WARNING:SIM103', '{1}-D compartments are not supported. Changing for 2-D compartments for {0}. Please verify this does not affect simulation'.format(name, dimensions))
             dimensions = 2
         #if size != 1:
         #    print '!',
@@ -749,7 +762,7 @@ but reaction is marked as reversible'.format(reactionID))
         functionTitle = 'functionRate'
         
         if len(self.model.getListOfReactions()) == 0:
-            logMess('ERROR:Simulation', 'Model contains no natural reactions, all reactions are produced by SBML rules')
+            logMess('WARNING:SIM104', 'Model contains no natural reactions, all reactions are produced by SBML rules')
         for index, reaction in enumerate(self.model.getListOfReactions()):
             parameterDict = {}
             # symmetry factors for components with the same name
@@ -782,7 +795,7 @@ but reaction is marked as reversible'.format(reactionID))
                 functionName = finalString
 
             if self.getReactions.functionFlag and 'delay' in rawRules['rates'][0]:
-                logMess('ERROR:Simulation', 'BNG cannot handle delay functions in function %s' % functionName)
+                logMess('ERROR:SIM202', 'BNG cannot handle delay functions in function %s' % functionName)
             if rawRules['reversible']:
                 if rawRules['numbers'][0] > threshold:
                     if self.getReactions.functionFlag:
@@ -870,7 +883,7 @@ but reaction is marked as reversible'.format(reactionID))
                 #it is a rate rule
 
                 if rawArule[0] in self.boundaryConditionVariables:
-                    logMess('CRITICAL:SIMULATION','rate rules ({0}) \
+                    logMess('WARNING:SIM105','rate rules ({0}) \
                     are not properly supported in BioNetGen simulator'.format(rawArule[0]))
 
                     #aParameters[rawArule[0]] = 'arj' + rawArule[0] 
@@ -895,7 +908,7 @@ but reaction is marked as reversible'.format(reactionID))
                         #was defined as a parameter that is not 0
                         #remove it. This might not be exact behavior
                         if re.search('^{0}\s'.format(rawArule[0]), element):
-                            logMess("WARNING:Translation", "Parameter {0} corresponds both as a non zero parameter \
+                            logMess("WARNING:SIM106", "Parameter {0} corresponds both as a non zero parameter \
                             and a rate rule, verify behavior".format(element))
                             removeParameters.append(element)
             # it is an assigment rule
@@ -924,7 +937,7 @@ but reaction is marked as reversible'.format(reactionID))
                             artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
                             continue
                         else:
-                            logMess('ERROR:Simulation', 'Variables that are both changed by an assignment rule and reactions are not \
+                            logMess('ERROR:SIM201', 'Variables that are both changed by an assignment rule and reactions are not \
                             supported in BioNetGen simulator. The variable will be split into two'.format(rawArule[0]))
                             artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
                             continue

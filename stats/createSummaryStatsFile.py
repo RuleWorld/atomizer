@@ -27,11 +27,12 @@ def getFiles(directory,extension):
 def extractStatsFromFile(fileName):
     fileStats = {}
     structures = bxml.parseFullXML(fileName)
-    fileStats['compression'] = len(structures['molecules'])*1.0/len(structures['observables']) \
+    fileStats['compression'] = 1 - len(structures['molecules'])*1.0/len(structures['observables']) \
                                if len(structures['observables']) > 0 else 0
     fileStats['index'] = fileName.split('/')[-1].split('.')[0]
     fileStats['nreactions'] = len(structures['rules'])
     fileStats['nspecies'] = len(structures['observables'])
+    fileStats['atomization'] = len([x for x in structures['rules'] if x[0].actionslen(structures[''])
     return fileStats
 
 if __name__ == "__main__":
