@@ -27,18 +27,22 @@ def getFiles(directory,extension):
 def extractStatsFromFile(fileName):
     fileStats = {}
     structures = bxml.parseFullXML(fileName)
-    fileStats['compression'] = len(structures['molecules'])/len(structures['observables']) \
+    fileStats['compression'] = len(structures['molecules'])*1.0/len(structures['observables']) \
                                if len(structures['observables']) > 0 else 0
     fileStats['index'] = fileName.split('/')[-1].split('.')[0]
-    fileStats['nreactions'] = structures['rules']
-    fileStats['nspecies'] = structures['observables']
+    fileStats['nreactions'] = len(structures['rules'])
+    fileStats['nspecies'] = len(structures['observables'])
     return fileStats
 
 if __name__ == "__main__":
     directory = 'non_curated'
     files = getFiles(directory, 'xml.xml')
     fileStats = []
-    for bfile in files:
+    import progressbar
+    progress = progressbar.ProgressBar()
+
+    for bfileIdx in progress(range(len(files))):
+	bfile = files[bfileIdx]
         fileStats.append(extractStatsFromFile(bfile))
     with open(os.path.join(directory, 'sortedD.dump'), 'wb') as f:
         pickle.dump(fileStats, f)
