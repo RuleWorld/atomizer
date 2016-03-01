@@ -314,7 +314,7 @@ class SBMLAnalyzer:
                                             similarity[1],localSpeciesDict,False,species) 
                             for reaction,tag,modifier in fuzzyList:
                                 if modifier != None and all(['-' not in x for x in modifier]):
-                                    logMess('INFO:Atomization','Lexical relationship inferred between \
+                                    logMess('INFO:LAE001','Lexical relationship inferred between \
                                     {0}, user information confirming it is required'.format(similarity))
                     
                 else:
@@ -405,7 +405,7 @@ class SBMLAnalyzer:
                         difference = difflib.ndiff(match,particle)
                         differenceList = tuple([x for x in difference if '+' in x])
                         if differenceList in self.namingConventions['patterns']:
-                            logMess('INFO:Atomization', 'matching {0}={1}'.format(particle, [match]))
+                            logMess('INFO:LAE005', 'matching {0}={1}'.format(particle, [match]))
                             addToDependencyGraph(dependencyGraph,particle,[match])
                         
                 elif particle not in composingElements and composingElements != [] and all([x in species for x in composingElements]):
@@ -418,10 +418,10 @@ class SBMLAnalyzer:
                 else:
                     for basicElement in basicElements:
                         if basicElement in particle and basicElement != particle:
-                            fuzzyList = self.processAdHocNamingConventions(basicElement,particle,localSpeciesDict,False,species)
-                            if self.testAgainstExistingConventions(fuzzyList[0][1],self.namingConventions['modificationList']):
-                                addToDependencyGraph(dependencyGraph,particle,[basicElement])
-                                logMess('INFO:Atomization', '{0} can be mapped to {1} through existing naming conventions'.format(particle,[basicElement]))
+                            fuzzyList = self.processAdHocNamingConventions(basicElement, particle, localSpeciesDict, False, species)
+                            if self.testAgainstExistingConventions(fuzzyList[0][1], self.namingConventions['modificationList']):
+                                addToDependencyGraph(dependencyGraph, particle, [basicElement])
+                                logMess('INFO:LAE005', '{0} can be mapped to {1} through existing naming conventions'.format(particle, [basicElement]))
                                 break
             else:
                 for comparisonParticle in particles:
@@ -435,10 +435,10 @@ class SBMLAnalyzer:
                                 baseSet = set([y  for x in database.annotationDict[particle] for y in database.annotationDict[particle][x]])
                                 modSet = set([y  for x in database.annotationDict[comparisonParticle] for y in database.annotationDict[comparisonParticle][x]])
                                 if len(baseSet.intersection(modSet)) == 0:
-                                    logMess('WARNING:Atomization', '{0} can be mapped to {1} through naming conventions but the annotation information does not match'.format(particle,comparisonParticle))
+                                    logMess('ERROR:ANN202', '{0} can be mapped to {1} through naming conventions but the annotation information does not match'.format(particle,comparisonParticle))
                                     break
                             addToDependencyGraph(dependencyGraph,particle,[comparisonParticle])
-                            logMess('INFO:Atomization', '{0} can be mapped to {1} through existing naming conventions-'.format(particle, [comparisonParticle]))
+                            logMess('INFO:LAE005', '{0} can be mapped to {1} through existing naming conventions-'.format(particle, [comparisonParticle]))
                             break           
                             
         #if len(additionalHandling) > 0:
@@ -626,7 +626,7 @@ class SBMLAnalyzer:
                     for commonMolecule in mostSimilarRealMolecules:
                         if commonMolecule in reactant and commonMolecule in product:
                             commonRoot = commonMolecule
-                            logMess('INFO:Atomization', 'common root {0}={1}:{2}'.format(commonRoot, reactant, product))
+                            logMess('INFO:LAE003', 'common root {0}={1}:{2}'.format(commonRoot, reactant, product))
                         #if commonMolecule == commonRoot.strip('_'):
                         #    commonRoot= commonMolecule
                         #    break
@@ -851,18 +851,23 @@ class SBMLAnalyzer:
                         if '_'.join(treactant) in strippedMolecules:
                             finalReactant = '_'.join(treactant)
                         else:
-                            reactantMatches =  get_close_matches('_'.join(treactant), strippedMolecules)
-                            reactantScore = [sequenceMatcher(''.join(treactant), x.replace('_','')) for x in reactantMatches]
 
-                            finalReactant = reactantMatches[reactantScore.index(max(reactantScore))]
+                            reactantMatches = get_close_matches('_'.join(treactant), strippedMolecules)
+                            if len(reactantMatches) > 0:
+                                reactantScore = [sequenceMatcher(''.join(treactant), x.replace('_','')) for x in reactantMatches]
+                                finalReactant = reactantMatches[reactantScore.index(max(reactantScore))]
+                            else:
+                                finalReactant = '_'.join(treactant)   
 
                         if '_'.join(tproduct) in strippedMolecules:
                             finalProduct = '_'.join(tproduct)
                         else:
-                            productMatches =  get_close_matches('_'.join(tproduct), strippedMolecules)
-                            productScore = [sequenceMatcher(''.join(tproduct), x.replace('_','')) for x in productMatches]
-
-                            finalProduct = productMatches[productScore.index(max(productScore))]
+                            productMatches = get_close_matches('_'.join(tproduct), strippedMolecules)
+                            if len(productMatches) > 0:
+                                productScore = [sequenceMatcher(''.join(tproduct), x.replace('_', '')) for x in productMatches]
+                                finalProduct = productMatches[productScore.index(max(productScore))]
+                            else:
+                                finalProduct = '_'.join(tproduct)
 
                         pairedMolecules[stoch2].append((finalReactant, finalProduct))
                         pairedMolecules2[stoch].append((finalProduct, finalReactant))
@@ -1311,7 +1316,7 @@ class SBMLAnalyzer:
                     # print '---','{0}'.format(fuzzyKey),equivalenceTranslator.keys()
                     # check if there is a combination of existing keys that deals with this modification without the need of creation a new one
                     if self.testAgainstExistingConventions(fuzzyKey,self.namingConventions['modificationList']):
-                        logMess('DEBUG:Atomization', 'added relationship to existing convention {0}'.format(str(reaction)))
+                        logMess('INFO:LAE005', 'added relationship through existing convention in reaction {0}'.format(str(reaction)))
                         if '{0}'.format(fuzzyKey) not in equivalenceTranslator:
                             equivalenceTranslator['{0}'.format(fuzzyKey)] = []
                         if '{0}'.format(fuzzyKey) not in indirectEquivalenceTranslator:
@@ -1320,7 +1325,7 @@ class SBMLAnalyzer:
                             equivalenceTranslator['{0}'.format(fuzzyKey)].append(tuple(sorted([x[0] for x in reaction],key=len)))
                         return
 
-                    logMess('DEBUG:Atomization', 'added induced naming convention {0}'.format(str(reaction)))
+                    logMess('INFO:LAE004', 'added induced naming convention {0}'.format(str(reaction)))
                     equivalenceTranslator['{0}'.format(fuzzyKey)] = []
                     if fuzzyKey == '0':
                         tmpState = 'ON'
@@ -1430,8 +1435,8 @@ class SBMLAnalyzer:
             if [0] in reactantString or [0] in productString:
                 continue
             matching, matching2 = self.approximateMatching2(reactantString, productString, strippedMolecules, translationKeys)
-            if matching and flagstar:
-                logMess('DEBUG:Atomization', 'inverting order of {0} for lexical analysis'.format([reaction[1], reaction[0]]))
+            #if matching and flagstar:
+            #    logMess('DEBUG:Atomization', 'inverting order of {0} for lexical analysis'.format([reaction[1], reaction[0]]))
      
             flag = True
             
