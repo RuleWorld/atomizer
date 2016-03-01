@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join('.','SBMLparser'))
 home = expanduser("~")
 sbmlTranslator = join(home, 'workspace', 'atomizer', 'SBMLparser', 'sbmlTranslator.py')
 
-bngExecutable = join(home,'workspace','bionetgen','bng2','BNG2.pl')
+bngExecutable = join(home,'workspace','RuleWorld','bionetgen','bng2','BNG2.pl')
 visualizeExecutable = join(home,'workspace','bionetgen','bng2','Perl2','Visualization','visualize.pl')
 graphAnalysis = join(home,'workspace','atomizer','stats','graphAnalysis.py')
 collapsedContact = join(home,'workspace','atomizer','stats','collapsedContactMap.py')
@@ -60,7 +60,7 @@ def callSBMLTranslator(fileName,outputdirectory,options=[]):
                        '-o', os.path.join(outputdirectory, str(fileName.split('/')[-1])) + '.bngl',
                        '-c', '{0}/config/reactionDefinitions.json'.format(sbmlparserhome),
                        '-n', '{0}/config/namingConventions.json'.format(sbmlparserhome),
-                       '-b', '/net/antonin/home/mscbio/jjtapia/workspace/bionetgen/bng2/BNG2.pl'
+                       '-b', bngExecutable
         ],stdout=f)
     return result
 
