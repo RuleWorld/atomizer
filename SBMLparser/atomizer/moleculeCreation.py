@@ -22,6 +22,7 @@ import functools
 import utils.pathwaycommons as pwcm
 from collections import Counter, defaultdict
 import itertools
+from atomizerUtils import BindingException
 
 def memoize(obj):
     cache = obj.cache = {}
@@ -678,18 +679,18 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser):
 
     else:
 
-        mol1 = getBiggestMolecule(totalComplex[0])
-        mol2 = getBiggestMolecule(totalComplex[1])
+        #mol1 = getBiggestMolecule(totalComplex[0])
+        #mol2 = getBiggestMolecule(totalComplex[1])
         if pathwaycommonsFlag:
-            logMess('ERROR:ATO201', "We don't know how {0} and {1} bind together and there's no relevant BioGrid/Pathway commons information. Defaulting to largest pair : {2}-{3}".format(
-        [x.name for x in totalComplex[0]], [x.name for x in totalComplex[1]],mol1.name,mol2.name))
-            addAssumptions('unknownBond',(mol1.name,mol2.name))
+            logMess('ERROR:ATO201', "We don't know how {0} and {1} bind together and there's no relevant BioGrid/Pathway commons information. Not atomizing".format(
+        [x.name for x in totalComplex[0]], [x.name for x in totalComplex[1]]))
+            # addAssumptions('unknownBond',(mol1.name,mol2.name))
         else:
 
-            logMess('ERROR:ATO202', "We don't know how {0} and {1} bind together. Defaulting to largest pair : {2}-{3}".format(
-        [x.name for x in totalComplex[0]], [x.name for x in totalComplex[1]],mol1.name,mol2.name))
-            addAssumptions('unknownBond',(mol1.name,mol2.name))
-
+            logMess('ERROR:ATO202', "We don't know how {0} and {1} bind together. Not atomizing".format(
+        [x.name for x in totalComplex[0]], [x.name for x in totalComplex[1]]))
+            # addAssumptions('unknownBond',(mol1.name,mol2.name))
+        raise BindingException('{0}-{1}'.format([x.name for x in totalComplex[0]],[x.name for x in totalComplex[1]]))
 
     return mol1, mol2
 
@@ -1089,9 +1090,13 @@ def atomize(dependencyGraph, weights, translator, reactionProperties,
                 createCatalysisRBM(dependencyGraph, element, translator, reactionProperties,
                                    equivalenceDictionary, sbmlAnalyzer, database)
             else:
-                createBindingRBM(element, translator, dependencyGraph,
-                                 bioGridFlag, database.pathwaycommons, parser, database)
+                try:
+                    createBindingRBM(element, translator, dependencyGraph,
+                                     bioGridFlag, database.pathwaycommons, parser, database)
 
+                except BindingException:
+                    # there awas an issue during binding, don't atomize
+                    translator[element[0]] = createEmptySpecies(element[0])        
 
 def updateSpecies(species, referenceMolecule):
     flag = False

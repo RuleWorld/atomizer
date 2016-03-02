@@ -29,7 +29,7 @@ def memoize(obj):
         return cache[key]
     return memoizer
 
-
+@memoize
 def levenshtein(s1, s2):
     l1 = len(s1)
     l2 = len(s2)
@@ -43,6 +43,7 @@ def levenshtein(s1, s2):
             z = matrix[zz][sz] if s1[sz] == s2[zz] else matrix[zz][sz] + 1
             matrix[zz + 1][sz + 1] = min(matrix[zz + 1][sz] + 1, matrix[zz][sz + 1] + 1, z)
     return matrix[l2][l1]
+
 
 
 def getDifferences(scoreMatrix, speciesName, threshold):
