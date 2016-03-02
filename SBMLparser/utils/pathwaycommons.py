@@ -43,14 +43,14 @@ def queryBioGridByName(name1, name2, organism=None):
         try:
             response = urllib2.urlopen(url, xparams).read()
         except urllib2.HTTPError:
-            logMess('ERROR:biogrid', 'A connection could not be established to biogrid while testing with taxon {1} and genes {0}'.format('|'.join([name1, name2]), '|'.join(organism)))
+            logMess('ERROR:MSC02', 'A connection could not be established to biogrid while testing with taxon {1} and genes {0}'.format('|'.join([name1, name2]), '|'.join(organism)))
             return -1
     if not response:
         xparams = 'geneList={0}&includeInteractors=false&accesskey=59764eb62ca572de5949062a1ba75e5d&format=json'.format('|'.join([name1,name2]))        
         try:
             response = urllib2.urlopen(url, xparams).read()
         except urllib2.HTTPError:
-            logMess('ERROR:biogrid', 'A connection could not be established to biogrid')
+            logMess('ERROR:MSC02', 'A connection could not be established to biogrid')
             return -1
     results = json.loads(response)
     for result in results:
@@ -82,7 +82,7 @@ def name2uniprot(nameStr, organism):
         try:
             response = urllib2.urlopen(url, xparams).read()
         except urllib2.HTTPError:
-            logMess('ERROR:pathwaycommons', 'A connection could not be established to uniprot')
+            logMess('ERROR:MSC03', 'A connection could not be established to uniprot')
             return None
 
     if response in ['', None]:
