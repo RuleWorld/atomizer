@@ -162,14 +162,20 @@ if __name__ == "__main__":
     elif namespace.type =='bngxml':
         finalfiles = getFiles(inputfolder, "bngl")
         if namespace.resume:
-            bngxmlfiles = getFiles(inputfolder, "xml")
+            bngxmlfiles = getFiles(outputfolder, "xml")
             finalfiles = restart(finalfiles, bngxmlfiles, '.bngl')
 
     elif namespace.type =='graph':
         finalfiles = getFiles(inputfolder, "bngl")
         if namespace.resume:
-            gmlfiles = getFiles(inputfolder,"gml")
+            gmlfiles = getFiles(outputfolder,"_regulatory.gml")
             gmlfiles = [x.replace('_regulatory','') for x in gmlfiles]
+            finalfiles = restart(finalfiles,gmlfiles,'.bngl')
+    elif namespace.type == 'contact':
+        finalfiles = getFiles(inputfolder)
+        if namespace.resume:
+            gmlfiles = getFiles(outputfolder,"_contactmap.gml")
+            gmlfiles = [x.replace('_contactmap','') for x in gmlfiles]
             finalfiles = restart(finalfiles,gmlfiles,'.bngl')
 
     elif namespace.type =='entropy':

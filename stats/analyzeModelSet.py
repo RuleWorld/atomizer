@@ -20,7 +20,7 @@ home = expanduser("~")
 sbmlTranslator = join(home, 'workspace', 'atomizer', 'SBMLparser', 'sbmlTranslator.py')
 
 bngExecutable = join(home,'workspace','RuleWorld','bionetgen','bng2','BNG2.pl')
-visualizeExecutable = join(home,'workspace','bionetgen','bng2','Perl2','Visualization','visualize.pl')
+visualizeExecutable = join(home,'workspace','RuleWorld','bionetgen','bng2','Perl2','Visualization','visualize.pl')
 graphAnalysis = join(home,'workspace','atomizer','stats','graphAnalysis.py')
 collapsedContact = join(home,'workspace','atomizer','stats','collapsedContactMap.py')
 compareModels = join(home, 'workspace', 'atomizer', 'SBMLparser', 'rulifier', 'compareModels.py')    
@@ -100,6 +100,30 @@ def generateGraph(bnglfile,outputdirectory,options):
         os.chdir(retval)
 
     graphname = '.'.join(bnglfile.split('.')[:-1]) + '_regulatory.gml'
+    graphname = graphname.split('/')[-1]
+    return graphname
+
+
+def createContact(bnglfile,outputdirectory,options):
+    """
+    Obtain a contact map of a given BNGL file
+    
+    ----
+    Keyword arguments:
+    bnglfile -- The BNGL  file to be translated
+    outputdirectory -- The directory where the resulting bngl will be placed
+
+    """
+
+    command = [visualizeExecutable,'--bngl',bnglfile,'--type','contactmap']
+    command.extend(options)
+    with open(os.devnull,"w") as f:
+        retval = os.getcwd()
+        os.chdir(outputdirectory)
+        result = call(command,stdout=f)
+        os.chdir(retval)
+
+    graphname = '.'.join(bnglfile.split('.')[:-1]) + '_contactmap.gml'
     graphname = graphname.split('/')[-1]
     return graphname
 
@@ -262,6 +286,8 @@ if __name__ == "__main__":
         generateBNGXML(filenameset,output= outputdirectory)
     elif ttype == 'graph':
         generateGraphs(filenameset,output=outputdirectory,options = options)
+    elif ttype == 'contact':
+        parallelHandling(filenameset, createContact, outputdirectory)
     elif ttype == 'entropy':
         call(['python',graphAnalysis,'-s',namespace.settings,'-o',outputdirectory])
     elif ttype == 'atomizationScore':
