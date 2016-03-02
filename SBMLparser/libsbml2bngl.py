@@ -147,7 +147,7 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
         parser =SBML2BNGL(document.getModel(),useID)
         
         bioGrid = False
-        pathwaycommons = False
+        pathwaycommons = True
         if bioGrid:
             loadBioGrid()
         database = structures.Databases()
