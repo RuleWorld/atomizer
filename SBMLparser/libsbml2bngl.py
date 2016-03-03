@@ -24,7 +24,7 @@ from collections import Counter,namedtuple
 
 import utils.structures as structures
 import atomizer.analyzeRDF
-from utils.util import logMess, setupLog, setupStreamLog
+from utils.util import logMess, setupLog, setupStreamLog, finishStreamLog
 from utils import consoleCommands
 from sbml2bngl import SBML2BNGL
 #from biogrid import loadBioGridDict as loadBioGrid
@@ -141,8 +141,12 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
     one of the library's main entry methods. Process data from a string
     '''
 
+    console = None
     if loggingStream:
-        setupStreamLog(loggingStream, logging.WARNING)
+        console = logging.StreamHandler(loggingStream)
+        console.setLevel(logging.WARNING)
+
+        setupStreamLog(console)
 
     reader = libsbml.SBMLReader()
     document = reader.readSBMLFromString(inputString)
@@ -163,7 +167,10 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
         translator,onlySynDec = mc.transformMolecules(parser,database,reactionDefinitions,namingConventions,speciesEquivalence,bioGrid)
     else:    
         translator={} 
-    
+    #logging.getLogger().flush()
+    if loggingStream:
+        finishStreamLog(console)
+
     return analyzeHelper(document, reactionDefinitions,
                          useID,'', speciesEquivalence, atomize, translator).finalString
 

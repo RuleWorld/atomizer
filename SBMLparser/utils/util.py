@@ -150,7 +150,11 @@ def setupLog(fileName, level):
     logging.basicConfig(filename=fileName, level=level, filemode='w')
 
 
-def setupStreamLog(stream, level):
+def setupStreamLog(console):
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    # tell the handler to use this format
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
 
     # set a format which is simpler for console use
     #formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
@@ -161,7 +165,10 @@ def setupStreamLog(stream, level):
     #logging.getLogger('').addHandler(console)
 
 
-    logging.basicConfig(stream=stream, level=level, filemode='w')
+    #logging.basicConfig(stream=stream, level=level, filemode='w')
+
+def finishStreamLog(console):
+    logging.getLogger('').removeHandler(console)
 
 
 def logMess(logType, logMessage):

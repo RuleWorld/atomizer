@@ -57,16 +57,15 @@ class AtomizerServer(xmlrpc.XMLRPC):
 
     def atomize(self, ticket, xmlFile, atomize):
         reaction = 'config/reactionDefinitions.json'
-        print ticket
         try:
             logStream = StringIO.StringIO()
             result = libsbml2bngl.readFromString(xmlFile,
                                                  reaction, False, None, atomize, logStream)
             self.addToDict(ticket, [result, logStream.getvalue()])
-            print 'success', result
+            print 'success', ticket, result
         except:
             self.addToDict(ticket, -5)
-            print 'failure'
+            print 'failure', ticket
 
     def extractMoleculeTypes(self,ticket,bnglContents, bnglContents2):
 
