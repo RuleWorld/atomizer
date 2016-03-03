@@ -21,6 +21,7 @@ from subprocess import call
 import yaml
 from stats.gml2cyjson import gml2cyjson
 import json
+import StringIO
 
 sys.path.insert(0, 'SBMLparser')
 import SBMLparser.libsbml2bngl as libsbml2bngl
@@ -58,10 +59,11 @@ class AtomizerServer(xmlrpc.XMLRPC):
         reaction = 'config/reactionDefinitions.json'
         print ticket
         try:
+            logStream = StringIO.StringIO()
             result = libsbml2bngl.readFromString(xmlFile,
-                                                 reaction, False, None, atomize)
-            self.addToDict(ticket, result)
-            print 'sucess', result
+                                                 reaction, False, None, atomize, logStream)
+            self.addToDict(ticket, [result, logStream.getvalue()])
+            print 'success', result
         except:
             self.addToDict(ticket, -5)
             print 'failure'

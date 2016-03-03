@@ -24,14 +24,13 @@ from collections import Counter,namedtuple
 
 import utils.structures as structures
 import atomizer.analyzeRDF
-from utils.util import logMess, setupLog
+from utils.util import logMess, setupLog, setupStreamLog
 from utils import consoleCommands
 from sbml2bngl import SBML2BNGL
 #from biogrid import loadBioGridDict as loadBioGrid
 import logging
 from rulifier import postAnalysis
 import pprint
-
 import fnmatch
 
 # returntype for the sbml analyzer translator and helper functions
@@ -137,35 +136,37 @@ def validateReactionUsage(reactant, reactions):
     return None
 
 
-def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None,atomize=False):
+def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None,atomize=False, loggingStream=None):
     '''
     one of the library's main entry methods. Process data from a string
     '''
-    try:
-        reader = libsbml.SBMLReader()
-        document = reader.readSBMLFromString(inputString)
-        parser =SBML2BNGL(document.getModel(),useID)
-        
-        bioGrid = False
-        pathwaycommons = True
-        if bioGrid:
-            loadBioGrid()
-        database = structures.Databases()
-        database.forceModificationFlag = True
-        database.pathwaycommons = False
-        if pathwaycommons:
-            database.pathwaycommons = True
-        namingConventions = resource_path('config/namingConventions.json')
-        
-        if atomize:
-            translator,onlySynDec = mc.transformMolecules(parser,database,reactionDefinitions,namingConventions,speciesEquivalence,bioGrid)
-        else:    
-            translator={} 
-        
-        return analyzeHelper(document, reactionDefinitions,
-                             useID,'', speciesEquivalence, atomize, translator).finalString
-    except:
-        return -5
+
+    if loggingStream:
+        setupStreamLog(loggingStream, logging.WARNING)
+
+    reader = libsbml.SBMLReader()
+    document = reader.readSBMLFromString(inputString)
+    parser =SBML2BNGL(document.getModel(),useID)
+    
+    bioGrid = False
+    pathwaycommons = True
+    if bioGrid:
+        loadBioGrid()
+    database = structures.Databases()
+    database.forceModificationFlag = True
+    database.pathwaycommons = False
+    if pathwaycommons:
+        database.pathwaycommons = True
+    namingConventions = resource_path('config/namingConventions.json')
+    
+    if atomize:
+        translator,onlySynDec = mc.transformMolecules(parser,database,reactionDefinitions,namingConventions,speciesEquivalence,bioGrid)
+    else:    
+        translator={} 
+    
+    return analyzeHelper(document, reactionDefinitions,
+                         useID,'', speciesEquivalence, atomize, translator).finalString
+
 def processFunctions(functions,sbmlfunctions,artificialObservables,tfunc):
     '''
     this method goes through the list of functions and removes all
@@ -939,10 +940,13 @@ def main():
     '''
             
 def main2():
-    with open('../XMLExamples/curated/BIOMD0000000019.xml','r') as f:
+    with open('../XMLExamples/curated/BIOMD0000000048.xml','r') as f:
         st = f.read()
-        print readFromString(st,
-              resource_path('config/reactionDefinitions.json'),False,None,True)        
+        import StringIO
+        stringBuffer = StringIO.StringIO()
+        readFromString(st, resource_path('config/reactionDefinitions.json'),False,None,True,stringBuffer)  
+        print stringBuffer.getvalue()
+
 
 
 
@@ -1113,14 +1117,14 @@ if __name__ == "__main__":
     #identifyNamingConvention()
     #processDatabase()
     
-    #main2()
+    main2()
     '''    
     analyzeFile('../XMLExamples/curated/BIOMD0000000007.xml', resource_path('config/reactionDefinitions.json'),
                     False, resource_path('config/namingConventions.json'),
                     'BIOMD0000000027.xml' + '.bngl', 
                     speciesEquivalence=None,atomize=True,bioGrid=False)
     '''
-    main()
+    #main()
     #processFile3('XMLExamples/noncurated/MODEL2463576061.x5ml')
     #processFile3('XMLExamples/jws/dupreez2.xml')
     #processFile3('XMLExamples/non_curated/MODEL1012220002.xml') 
