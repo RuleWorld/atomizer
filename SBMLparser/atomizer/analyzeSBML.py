@@ -441,8 +441,13 @@ class SBMLAnalyzer:
                             baseSet = set([y  for x in database.annotationDict[particle] for y in database.annotationDict[particle][x]])
                             modSet = set([y  for x in database.annotationDict[comparisonParticle] for y in database.annotationDict[comparisonParticle][x]])
                             if len(baseSet.intersection(modSet)) == 0:
-                                logMess('ERROR:ANN202', '{0} can be mapped to {1} through naming conventions but the annotation information does not match'.format(particle,comparisonParticle))
-                                continue
+                                baseDB = set([x.split('/')[-2] for x in baseSet])
+                                modDB = set([x.split('/')[-2] for x in modSet])
+                                #we stil ahve to check that they both reference the same database
+                                if len(baseDB.intersection(modDB)) > 0:
+
+                                    logMess('ERROR:ANN202', '{0} can be mapped to {1} through naming conventions but the annotation information does not match'.format(particle, comparisonParticle))
+                                    continue
 
                         addToDependencyGraph(dependencyGraph,particle,[comparisonParticle])
                         logMess('INFO:LAE005', '{0} can be mapped to {1} through existing naming conventions'.format(particle, [comparisonParticle]))

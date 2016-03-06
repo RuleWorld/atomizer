@@ -1347,7 +1347,7 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
                 logMess('INFO:ANN002', '{0} was determined to be partially match {1} according to annotation information.'.format(
                     x, intersectionMatches[x]))
     partialMatches = consolidateDependencyGraph(
-        dict(partialMatches), {}, {}, database.sbmlAnalyzer, database)[0]
+        dict(partialMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
 
     if logResults:
         for x in partialMatches:
@@ -1429,7 +1429,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                 # to indicate it is given less priority
                 database.dependencyGraph[molecule] = []
 
-
     # user defined transformations
     for key in userEquivalenceTranslator:
         for namingEquivalence in userEquivalenceTranslator[key]:
@@ -1490,6 +1489,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                 database.dependencyGraph[
                     database.userLabelDictionary[element][0][0]] = []
 
+    
     # add species elements defined by the user into the naming convention
     # definition
     molecules.extend(['{0}()'.format(
@@ -1525,8 +1525,14 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                             addToDependencyGraph(
                                 database.dependencyGraph, modElement, [baseElement])
                         else:
-
-                            logMess("WARNING:ANN201", "{0} and {1} have a direct correspondence according to reaction \
+                            baseDB = set([x.split('/')[-2] for x in baseSet])
+                            modDB = set([x.split('/')[-2] for x in modSet])
+                            # it is still ok if they each refer to different databases
+                            if len(baseDB.intersection(modDB)) == 0:
+                                addToDependencyGraph(
+                                    database.dependencyGraph, modElement, [baseElement])
+                            else:
+                                logMess("WARNING:ANN201", "{0} and {1} have a direct correspondence according to reaction \
 information however their annotations are completely different.".format(baseElement, modElement))
                     else:
                         addToDependencyGraph(database.dependencyGraph, modElement,
@@ -1565,9 +1571,13 @@ choosing binding'.format(database.dependencyGraph[modElement], baseElement, modE
                         modSet = set(
                             [y for x in database.annotationDict[mod] for y in database.annotationDict[mod][x]])
                         if(len(baseSet.intersection(modSet))) == 0 and len(baseSet) > 0 and len(modSet) > 0:
-                            logMess("WARNING:ANN201", "{0} and {1} have a direct correspondence according to reaction \
+                            baseDB = set([x.split('/')[-2] for x in baseSet])
+                            modDB = set([x.split('/')[-2] for x in modSet])
+                            #we stil ahve to check that they both reference the same database
+                            if len(baseDB.intersection(modDB)) > 0:
+                                logMess("WARNING:ANN201", "{0} and {1} have a direct correspondence according to reaction \
 information however their annotations are completely different.".format(base, mod))
-                            continue
+                                continue
                     database.dependencyGraph[mod] = [[base]]
 
 
@@ -1708,6 +1718,7 @@ tmp,removedElement,tmp3))
             database.dependencyGraph[reactant] = [greedyMatch]
             logMess('INFO:LAE006','Mapped {0} to {1} using lexical analysis/greedy matching'.format(reactant, greedyMatch))
 
+    
     # initialize and remove zero elements
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
