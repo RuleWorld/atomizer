@@ -12,7 +12,7 @@ Created on Tue Dec  6 17:42:31 2011
 @author: proto
 """
 from pyparsing import Word, Suppress, Optional, alphanums, Group, ZeroOrMore
-from copy import deepcopy,copy
+from copy import deepcopy, copy
 import analyzeSBML
 import utils.structures as st
 from utils.util import logMess
@@ -23,6 +23,7 @@ import utils.pathwaycommons as pwcm
 from collections import Counter, defaultdict
 import itertools
 from atomizerUtils import BindingException
+
 
 def memoize(obj):
     cache = obj.cache = {}
@@ -37,17 +38,16 @@ def memoize(obj):
 
 
 speciesNameGrammar = (Word(alphanums + "_" + ":#-")
-           + Suppress('()') + Optional(Suppress('@' + Word(alphanums + '_-')))) + ZeroOrMore(Suppress('+') + Word(alphanums + "_" + ":#-")
-                                          + Suppress("()") + Optional(Suppress('@' + Word(alphanums + '_-'))))
+                      + Suppress('()') + Optional(Suppress('@' + Word(alphanums + '_-')))) + ZeroOrMore(Suppress('+') + Word(alphanums + "_" + ":#-")
+                                                                                                        + Suppress("()") + Optional(Suppress('@' + Word(alphanums + '_-'))))
 
 nameGrammar = Word(alphanums + '_-') + ':'
 
 rateGrammar = Word(alphanums + "()")
 
 grammar = Suppress(Optional(nameGrammar)) + ((Group(speciesNameGrammar) | '0') + Suppress(Optional("<") + "->") +
-            (Group(speciesNameGrammar) | '0') + Suppress(rateGrammar)) \
-            ^ (speciesNameGrammar + Suppress(Optional("<") + "->") + Suppress(rateGrammar))
-
+                                             (Group(speciesNameGrammar) | '0') + Suppress(rateGrammar)) \
+    ^ (speciesNameGrammar + Suppress(Optional("<") + "->") + Suppress(rateGrammar))
 
 
 @memoize
@@ -63,7 +63,8 @@ def parseReactions(reaction):
 
 
 def resolveDependencyGraph(dependencyGraph, reactant, withModifications=False):
-    topCandidate = resolveDependencyGraphHelper(dependencyGraph, reactant, [], withModifications)
+    topCandidate = resolveDependencyGraphHelper(
+        dependencyGraph, reactant, [], withModifications)
     return topCandidate
 
 
@@ -75,6 +76,7 @@ def addAssumptions(assumptionType, assumption):
 
 
 class CycleError(Exception):
+
     """Exception raised for errors in the input.
 
     Attributes:
@@ -84,6 +86,7 @@ class CycleError(Exception):
 
     def __init__(self, memory):
         self.memory = memory
+
 
 def getAnnotations(annotation):
     """
@@ -97,9 +100,6 @@ def getAnnotations(annotation):
     return annotationDictionary
 
 
-
-
-
 def getURIFromSBML(moleculeName, parser, filterString=None):
     """
     filters a list of URI's so that we get only filterString  ID's
@@ -111,9 +111,11 @@ def getURIFromSBML(moleculeName, parser, filterString=None):
             for annotation in annotations[moleculeName]:
                 annotationList.extend(getAnnotations(annotation))
     if filterString:
-        annotationList = [x for x in annotationList if any(filterstr in x for filterstr in filterString)]
+        annotationList = [x for x in annotationList if any(
+            filterstr in x for filterstr in filterString)]
 
     return annotationList
+
 
 def isInComplexWith(moleculeSet, parser=None):
     """
@@ -122,66 +124,73 @@ def isInComplexWith(moleculeSet, parser=None):
     """
     validPairs = []
     for element in moleculeSet:
-        #if element[0] == element[1]:
+        # if element[0] == element[1]:
         #    return []
 
         name1 = getURIFromSBML(element[0], parser, ['uniprot', 'go'])
         name2 = getURIFromSBML(element[1], parser, ['uniprot', 'go'])
         modelAnnotation = parser.extractModelAnnotation()
-        modelOrganism = modelAnnotation['BQB_OCCURS_IN'] if 'BQB_OCCURS_IN' in modelAnnotation else None
+        modelOrganism = modelAnnotation[
+            'BQB_OCCURS_IN'] if 'BQB_OCCURS_IN' in modelAnnotation else None
         molecule1 = name1[0].split('/')[-1] if name1 else element[0]
         molecule2 = name2[0].split('/')[-1] if name2 else element[1]
 
-        simpleOrganism = [x.split('/')[-1] for x in modelOrganism] if modelOrganism else None
-        bindingResults = pwcm.queryBioGridByName(molecule1,molecule2,simpleOrganism)
+        simpleOrganism = [x.split('/')[-1]
+                          for x in modelOrganism] if modelOrganism else None
+        bindingResults = pwcm.queryBioGridByName(
+            molecule1, molecule2, simpleOrganism)
         if not bindingResults:
-            bindingResults = pwcm.queryBioGridByName(element[0],element[1],simpleOrganism)
+            bindingResults = pwcm.queryBioGridByName(
+                element[0], element[1], simpleOrganism)
         #bindingResults = None
         #bindingResults = pwcm.isInComplexWith([element[0], name1], [element[1], name2], organism=modelOrganism)
         if bindingResults:
             validPairs.append(element)
-    #use pathway commosn as fallback since its much slower
+    # use pathway commosn as fallback since its much slower
     if not validPairs:
         for element in moleculeSet:
-            #if element[0] == element[1]:
+            # if element[0] == element[1]:
             #    return []
 
             name1 = getURIFromSBML(element[0], parser, ['uniprot', 'go'])
             name2 = getURIFromSBML(element[1], parser, ['uniprot', 'go'])
             modelAnnotation = parser.extractModelAnnotation()
-            modelOrganism = modelAnnotation['BQB_OCCURS_IN'] if 'BQB_OCCURS_IN' in modelAnnotation else None
-            bindingResults = pwcm.isInComplexWith([element[0], name1], [element[1], name2], organism=modelOrganism)
+            modelOrganism = modelAnnotation[
+                'BQB_OCCURS_IN'] if 'BQB_OCCURS_IN' in modelAnnotation else None
+            bindingResults = pwcm.isInComplexWith(
+                [element[0], name1], [element[1], name2], organism=modelOrganism)
             if bindingResults:
                 validPairs.append(element)
 
     return validPairs
 
+
 @memoize
 def resolveDependencyGraphHelper(dependencyGraph, reactant, memory,
                                  withModifications=False):
     result = []
-    #if type(reactant) == tuple:
+    # if type(reactant) == tuple:
     #    return []
     if reactant not in dependencyGraph or dependencyGraph[reactant] == [] or \
-        dependencyGraph[reactant] == [[reactant]]:
+            dependencyGraph[reactant] == [[reactant]]:
         if not withModifications:
             result.append([reactant])
     else:
         for option in dependencyGraph[reactant]:
             tmp = []
-
             for element in option:
                 if element in memory and not withModifications:
                     result.append([element])
                     continue
                 elif element in memory:
-                    logMess('ERROR:SCT201','dependency cycle detected on {0}'.format(element))
+                    #logMess(
+                    #    'ERROR:SCT201', 'dependency cycle detected on {0}'.format(element))
                     raise CycleError(memory)
-                baseElement = resolveDependencyGraphHelper(dependencyGraph,element, 
+                baseElement = resolveDependencyGraphHelper(dependencyGraph, element,
                                                            memory + [element], withModifications)
                 if baseElement is not None:
                     tmp.extend(baseElement)
-            #if not withModifications:
+            # if not withModifications:
             result.extend(tmp)
             if len(option) == 1 and withModifications and option[0] != reactant:
                 result.append((option[0], reactant))
@@ -208,7 +217,6 @@ def bindingReactionsAnalysis(dependencyGraph, reaction, classification):
             elif len(reaction[0]) == 1 and element not in reaction[1]:
                 addToDependencyGraph(dependencyGraph, element, reaction[1])
 
-
 def weightDependencyGraph(dependencyGraph):
     def measureGraph(element, path):
         counter = 1
@@ -234,49 +242,58 @@ def weightDependencyGraph(dependencyGraph):
 
 
 def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
-                               equivalenceDictionary, sbmlAnalyzer, database):
+                               equivalenceDictionary, sbmlAnalyzer, database, loginformation=True):
     equivalenceTranslator = {}
     def selectBestCandidate(reactant, candidates, dependencyGraph, sbmlAnalyzer,
                             equivalenceTranslator=equivalenceTranslator, equivalenceDictionary=equivalenceDictionary):
+        
         tmpCandidates = []
         modifiedElementsPerCandidate = []
         unevenElements = []
         candidateDict = {}
         for individualAnswer in candidates:
-            tmpAnswer = []
-            flag = True
-            if len(individualAnswer) == 1 and individualAnswer[0] == reactant:
-                continue
-            modifiedElements = []
-            for chemical in individualAnswer:
-                
-                # we cannot handle tuple naming conventions for now
-                if type(chemical) == tuple:
-                    flag = False
+            try:
+                tmpAnswer = []
+                flag = True
+                if len(individualAnswer) == 1 and individualAnswer[0] == reactant:
                     continue
-                # associate elements in the candidate description with their modified version
-                rootChemical = resolveDependencyGraph(dependencyGraph, chemical)
-                mod = resolveDependencyGraph(dependencyGraph, chemical, True)
-                if mod != []:
-                    modifiedElements.extend(mod)
-                for element in rootChemical:
-                    if len(element) == 1 and type(element[0]) == tuple:
+                modifiedElements = []
+                for chemical in individualAnswer:
+
+                    # we cannot handle tuple naming conventions for now
+                    if type(chemical) == tuple:
+                        flag = False
                         continue
-                    if element == chemical:
-                        tmpAnswer.append(chemical)
-                    elif type(element) == tuple:
-                        tmpAnswer.append(element)
-                    else:
-                        tmpAnswer.append(element[0])
-            modifiedElementsPerCandidate.append(modifiedElements)
-            if flag:
-                tmpAnswer = sorted(tmpAnswer)
-                tmpCandidates.append(tmpAnswer)
+                    # associate elements in the candidate description with their
+                    # modified version
+                    rootChemical = resolveDependencyGraph(
+                        dependencyGraph, chemical)
+                    mod = resolveDependencyGraph(dependencyGraph, chemical, True)
+                    if mod != []:
+                        modifiedElements.extend(mod)
+                    for element in rootChemical:
+                        if len(element) == 1 and type(element[0]) == tuple:
+                            continue
+                        if element == chemical:
+                            tmpAnswer.append(chemical)
+                        elif type(element) == tuple:
+                            tmpAnswer.append(element)
+                        else:
+                            tmpAnswer.append(element[0])
+                modifiedElementsPerCandidate.append(modifiedElements)
+                if flag:
+                    tmpAnswer = sorted(tmpAnswer)
+                    tmpCandidates.append(tmpAnswer)
+            except CycleError:
+                if loginformation:
+                    logMess('ERROR:SCT221', 'Dependency cycle found when mapping molecule {0} to candidate {1}'.format(reactant, individualAnswer))
+                continue
         # we cannot handle tuple naming conventions for now
         if len(tmpCandidates) == 0:
             # logMess('CRITICAL:Atomization', 'I dont know how to process these candidates and I have no \
-            #     way to make an educated guess. Politely refusing to translate {0}={1}.'.format(reactant, candidates))
-            return None, None,None
+            # way to make an educated guess. Politely refusing to translate
+            # {0}={1}.'.format(reactant, candidates))
+            return None, None, None
         originalTmpCandidates = deepcopy(tmpCandidates)
         # if we have more than one modified element for a single reactant
         # we can try to  choose the one that is most similar to the original
@@ -294,8 +311,8 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                 modifiedElementsCounters[idx][element[0]] += 1
 
         # actually modify elements and store final version in tmpCandidates
-        #if tmpCandidates[1:] == tmpCandidates[:-1] or len(tmpCandidates) == 1:
-
+        # if tmpCandidates[1:] == tmpCandidates[:-1] or len(tmpCandidates) ==
+        # 1:
 
         for tmpCandidate, modifiedElementsCounter in zip(tmpCandidates, modifiedElementsCounters):
             flag = True
@@ -307,9 +324,10 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                         tmpCandidate[idx] = newModifiedElements[chemical]
                         flag = True
                         break
-        candidateDict = {tuple(x):y for x,y in zip(tmpCandidates,candidates)}
+        candidateDict = {
+            tuple(x): y for x, y in zip(tmpCandidates, candidates)}
         bcan = []
-        btmp  = []
+        btmp = []
         borig = []
         # filter out those dependencies to the 0 element
 
@@ -317,7 +335,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
         if len(tmpCandidates) == 1 and tmpCandidates[0] == ['0']:
             return ['0'], None, None
 
-        for candidate,tmpcandidate,originaltmpcandidate in zip(candidates,tmpCandidates,originalTmpCandidates):
+        for candidate, tmpcandidate, originaltmpcandidate in zip(candidates, tmpCandidates, originalTmpCandidates):
             if originaltmpcandidate != ['0']:
                 bcan.append(candidate)
                 btmp.append(tmpcandidate)
@@ -327,10 +345,10 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
         originalTmpCandidates = borig
 
         if len(tmpCandidates) == 0:
-            return None,None,None
+            return None, None, None
 
-
-        # FIXME: I have no idea wtf this is doing so im commenting it out. i think it's old code that is no longer ncessary
+        # FIXME: I have no idea wtf this is doing so im commenting it out. i
+        # think it's old code that is no longer ncessary
         '''
         # update candidate chemical references to their modified version if required
         if len(tmpCandidates) > 1:
@@ -370,25 +388,28 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
 
             # analyze based on standard modifications
             #lexCandidate, translationKeys, tmpequivalenceTranslator = sbmlAnalyzer.analyzeSpeciesModification(candidates[0][0], reactant, originalTmpCandidates[0])
-            #print lexCandidate
-            #print '++++'
-            lexCandidate, translationKeys, tmpequivalenceTranslator = sbmlAnalyzer.analyzeSpeciesModification2(candidates[0][0], reactant, originalTmpCandidates[0])
-            #lexCandidate, translationKeys, tmpequivalenceTranslator = sbmlAnalyzer.analyzeSpeciesModification(candidates[0][0], reactant, tmpCandidates[0])            # FIXME: this is iffy. is it always an append modification? could be prepend
+            # print lexCandidate
+            # print '++++'
+            lexCandidate, translationKeys, tmpequivalenceTranslator = sbmlAnalyzer.analyzeSpeciesModification2(
+                candidates[0][0], reactant, originalTmpCandidates[0])
+            # lexCandidate, translationKeys, tmpequivalenceTranslator = sbmlAnalyzer.analyzeSpeciesModification(candidates[0][0], reactant, tmpCandidates[0])            # FIXME: this is iffy. is it always an append modification? could be prepend
             #lexCandidate = None
             if lexCandidate is not None:
-                lexCandidate = tmpCandidates[0][originalTmpCandidates[0].index(lexCandidate)]
+                lexCandidate = tmpCandidates[0][
+                    originalTmpCandidates[0].index(lexCandidate)]
                 lexCandidateModification = lexCandidate + translationKeys[0]
                 for element in tmpequivalenceTranslator:
                     if element not in equivalenceTranslator:
                         equivalenceTranslator[element] = []
-                equivalenceTranslator[element].append((lexCandidate,lexCandidateModification))
+                equivalenceTranslator[element].append(
+                    (lexCandidate, lexCandidateModification))
 
                 dependencyGraph[lexCandidateModification] = [[lexCandidate]]
                 while lexCandidate in tmpCandidates[0]:
                     tmpCandidates[0].remove(lexCandidate)
                     tmpCandidates[0].append(lexCandidateModification)
                     break
-                return [tmpCandidates[0]], unevenElements,candidates
+                return [tmpCandidates[0]], unevenElements, candidates
 
             else:
                 fuzzyCandidateMatch = None
@@ -410,97 +431,126 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                     # logMess('INFO:Atomization', 'Used fuzzy string matching from {0} to {1}'.format(reactant, fuzzyCandidateMatch))
                     return [fuzzyCandidateMatch], unevenElements, candidates
                 else:
-                    #map based on greedy matching
-                    greedyMatch = sbmlAnalyzer.greedyModificationMatching(reactant, dependencyGraph.keys())
+                    # map based on greedy matching
+                    greedyMatch = sbmlAnalyzer.greedyModificationMatching(
+                        reactant, dependencyGraph.keys())
                     if greedyMatch not in [-1, -2]:
                         return selectBestCandidate(reactant, [greedyMatch], dependencyGraph, sbmlAnalyzer)[0], unevenElements, candidates
 
-
                     # last ditch attempt using straighforward lexical analysis
-                    tmpDependency, tmpEquivalence = sbmlAnalyzer.findClosestModification([reactant], dependencyGraph.keys(), database)
+                    tmpDependency, tmpEquivalence = sbmlAnalyzer.findClosestModification(
+                        [reactant], dependencyGraph.keys(), database)
                     if reactant in tmpDependency and tmpDependency[reactant] in tmpCandidates[0]:
                         for element in tmpDependency:
                             if element not in dependencyGraph:
-                                dependencyGraph[element] = tmpDependency[element]
+                                dependencyGraph[
+                                    element] = tmpDependency[element]
                         for element in tmpEquivalence:
                             if element not in equivalenceDictionary:
                                 equivalenceDictionary[element] = []
                             for equivalence in tmpEquivalence[element]:
                                 if equivalence[0] not in equivalenceDictionary[element]:
-                                    equivalenceDictionary[element].append(equivalence[0])
+                                    equivalenceDictionary[
+                                        element].append(equivalence[0])
                         if len(tmpDependency.keys()) > 0:
                             return tmpDependency[reactant], unevenElements, candidates
                     # XXX: be careful of this change. This basically forces changes to happen
                     # the ive no idea whats going on branch
                     #modificationCandidates = {}
-                    #if modificationCandidates == {}:
+                    # if modificationCandidates == {}:
                     if len(tmpCandidates) != 1:
-                        logMess('ERROR:SCT213', 'I dont know how these are modified and I have no way to make an educated guess. Politely refusing to translate {0}={1}={2}.'.format(reactant,candidates,tmpCandidates))
-                        #print database.userLabelDictionary
-                        return None, None, None
+                        if not database.softConstraints:
+                            if loginformation:
+                                logMess('ERROR:SCT213', 'Atomizer needs user information to determine which element is being modified in species {0}={1}={2}.'.format(
+                                reactant, candidates, tmpCandidates))
+                            # print database.userLabelDictionary
+                            return None, None, None
                     else:
-                        # if theres only one candidate let the modification go through.
-                        # doesnt it screw up 175
-                        #logMess('WARNING:Atomization', 'Introducing a forced change between {0}={1}={2}.'.format(reactant,candidates,tmpCandidates))
-                        logMess('ERROR:SCT212', 'I dont know how this is modified and I have no way to make an educated guess. Politely refusing to translate {0}={1}={2}.'.format(reactant,candidates,tmpCandidates))
-                        return None, None, None
-                        #print database.userLabelDictionary')
-                    #return [tmpCandidates[0]], unevenElements
+                        if not database.softConstraints:
+                            if loginformation:
+                                logMess('ERROR:SCT212', 'Atomizer needs user information to determine which element is being modified in species {0}={1}={2}.'.format(
+                                reactant, candidates, tmpCandidates))
+                            return None, None, None
+                        # print database.userLabelDictionary')
+                    # return [tmpCandidates[0]], unevenElements
+
         elif len(tmpCandidates) > 1:
-            #all candidates are equal/consistent
+            # all candidates are equal/consistent
             if all(sorted(x) == sorted(tmpCandidates[0]) for x in tmpCandidates):
                 tmpCandidates = [tmpCandidates[0]]
             elif reactant in database.alternativeDependencyGraph:
                 # candidates contradict each other
                 if not all(sorted(x) == sorted(originalTmpCandidates[0]) for x in originalTmpCandidates):
-                    logMess('INFO:SCT001', 'Using lexical analysis for species {0} =  {1} since stoichiometry gives non-consistent information {2}'.format(reactant, 
-                        database.alternativeDependencyGraph[reactant][0], tmpCandidates))
+                    if loginformation:
+                        logMess('INFO:SCT001', 'Using lexical analysis for species {0} =  {1} since stoichiometry gives non-consistent information {2}'.format(reactant,
+                                                                                                                                                           database.alternativeDependencyGraph[reactant][0], tmpCandidates))
 
-                #else:
+                # else:
                 #    print database.alternativeDependencyGraph[reactant],tmpCandidates,reactant
-                #    logMess('INFO:Atomization', 'Using lexical analysis for species {0} =  {1} since stoichiometry gave conflicting information {2}'.format(reactant, 
-                #        database.alternativeDependencyGraph[reactant][0], tmpCandidates))
+                #    logMess('INFO:Atomization', 'Using lexical analysis for species {0} =  {1} since stoichiometry gave conflicting information {2}'.format(reactant,
+                # database.alternativeDependencyGraph[reactant][0],
+                # tmpCandidates))
 
                 # fallback to naming conventions
                 candidate = database.alternativeDependencyGraph[reactant]
-                # resolve naming convention candidate to its basic components (molecule types)
-                namingTmpCandidates = selectBestCandidate(reactant, [candidate[0]], dependencyGraph, sbmlAnalyzer)[0]
+                # resolve naming convention candidate to its basic components
+                # (molecule types)
+                namingTmpCandidates = selectBestCandidate(
+                    reactant, [candidate[0]], dependencyGraph, sbmlAnalyzer)[0]
 
                 if not any([sorted(subcandidate) == sorted(namingTmpCandidates[0]) for subcandidate in tmpCandidates]):
-                    logMess('WARNING:SCT112', 'Stoichiometry analysis result in non self-consistent definitions but conflicts with lexical analysis for species {0}: stoichiometry({1})!= naming({2}). Selecting lexical analysis'.format(reactant,
-                            tmpCandidates, namingTmpCandidates))
-                    addAssumptions('lexicalVsstoch', (reactant, ('lexical', str(namingTmpCandidates)),('stoch', str(tmpCandidates)), ('original', str(originalTmpCandidates))))
+                    if loginformation:
+                        logMess('WARNING:SCT112', 'Stoichiometry analysis result in non self-consistent definitions but conflicts with lexical analysis for species {0}: stoichiometry({1})!= naming({2}). Selecting lexical analysis'.format(reactant,
+                                                                                                                                                                                                                                          tmpCandidates, namingTmpCandidates))
+                    addAssumptions('lexicalVsstoch', (reactant, ('lexical', str(
+                        namingTmpCandidates)), ('stoch', str(tmpCandidates)), ('original', str(originalTmpCandidates))))
 
                 tmpCandidates = namingTmpCandidates
                 database.alternativeDependencyGraph[reactant] = tmpCandidates
             elif all(sorted(x) == sorted(originalTmpCandidates[0]) for x in originalTmpCandidates):
-                sortedCandidates = sorted([([y for y in x if y in reactant], i) for i, x in enumerate(tmpCandidates)], key=lambda z: [len(z[0]), sum([len(w) for w in z[0]])], reverse=True)
-                logMess('WARNING:SCT113', 'For species {0}, candidates {1} agree on the basic components but naming conventions cannot determine  specific modifications. Selecting {2} based on longest partial match'.format(reactant, tmpCandidates, tmpCandidates[sortedCandidates[0][1]]))
+                sortedCandidates = sorted([([y for y in x if y in reactant], i) for i, x in enumerate(
+                    tmpCandidates)], key=lambda z: [len(z[0]), sum([len(w) for w in z[0]])], reverse=True)
+                if loginformation:
+                    logMess('WARNING:SCT113', 'For species {0}, candidates {1} agree on the basic components but naming conventions cannot determine  specific modifications. Selecting {2} based on longest partial match'.format(
+                        reactant, tmpCandidates, tmpCandidates[sortedCandidates[0][1]]))
                 replacementCandidate = [tmpCandidates[sortedCandidates[0][1]]]
-                addAssumptions('lexicalVsstoch', (reactant, ('current', str(replacementCandidate)), ('alternatives', str([x for x in tmpCandidates if x != replacementCandidate[0]])), ('original', str(originalTmpCandidates))))
+                addAssumptions('lexicalVsstoch', (reactant, ('current', str(replacementCandidate)), ('alternatives', str(
+                    [x for x in tmpCandidates if x != replacementCandidate[0]])), ('original', str(originalTmpCandidates))))
                 tmpCandidates = replacementCandidate
             else:
-                logMess('ERROR:SCT211', 'Cannot converge to solution for species {0}, conflicting definitions {1}'.format(reactant, tmpCandidates))
+                if loginformation:
+                    logMess('ERROR:SCT211', 'Cannot converge to solution for species {0}, conflicting definitions {1}'.format(
+                    reactant, tmpCandidates))
                 return None, None, None
         elif reactant in database.alternativeDependencyGraph:
-            # there is one stoichionetry candidate but the naming convention and the stoichionetry dotn agree
+            # there is one stoichionetry candidate but the naming convention
+            # and the stoichionetry dotn agree
             if tmpCandidates[0] != database.alternativeDependencyGraph[reactant][0]:
-                # make sure the naming convention is resolved to basic omponents
+                # make sure the naming convention is resolved to basic
+                # omponents
                 candidate = database.alternativeDependencyGraph[reactant]
                 # this is to avoid recursion
                 del database.alternativeDependencyGraph[reactant]
-                namingtmpCandidates = selectBestCandidate(reactant, [candidate[0]], dependencyGraph, sbmlAnalyzer)[0]
-                database.alternativeDependencyGraph[reactant] = namingtmpCandidates
+                namingtmpCandidates = selectBestCandidate(
+                    reactant, [candidate[0]], dependencyGraph, sbmlAnalyzer)[0]
+                database.alternativeDependencyGraph[
+                    reactant] = namingtmpCandidates
                 # if they still disagree print error and use stoichiometry
                 if tmpCandidates[0] != namingtmpCandidates[0]:
-                    logMess('WARNING:SCT111', 'Species {0} has conflicting definitions between stoichiometry ({1}) and naming conventions {2}. Choosing the latter'.format(reactant, tmpCandidates[0], database.alternativeDependencyGraph[reactant]))
+                    if loginformation:
+                        logMess('WARNING:SCT111', 'Species {0} has conflicting definitions between stoichiometry ({1}) and naming conventions {2}. Choosing the latter'.format(
+                        reactant, tmpCandidates[0], database.alternativeDependencyGraph[reactant]))
                     tmpCandidates = namingtmpCandidates
-                    addAssumptions('lexicalVsstoch', (reactant, ('stoch', str(tmpCandidates)), ('lexical', str(namingtmpCandidates)), ('original', str(originalTmpCandidates))))
+                    addAssumptions('lexicalVsstoch', (reactant, ('stoch', str(tmpCandidates)), ('lexical', str(
+                        namingtmpCandidates)), ('original', str(originalTmpCandidates))))
                     for element in tmpCandidates[0]:
                         if element not in prunnedDependencyGraph:
-                            # elemental species that were not used anywhere else but for those entries discovered through naming conventions
+                            # elemental species that were not used anywhere
+                            # else but for those entries discovered through
+                            # naming conventions
                             prunnedDependencyGraph[element] = []
-        originalCandidateName = candidateDict[tuple(tmpCandidates[0])] if tuple(tmpCandidates[0]) in candidateDict else None
+        originalCandidateName = candidateDict[tuple(tmpCandidates[0])] if tuple(
+            tmpCandidates[0]) in candidateDict else None
         return [tmpCandidates[0]], unevenElements, originalCandidateName
 
     prunnedDependencyGraph = deepcopy(dependencyGraph)
@@ -508,22 +558,21 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
     unevenElementDict = {}
     for element in weights:
         candidates = [x for x in prunnedDependencyGraph[element[0]]]
-        #print '-',candidates
         if len(candidates) == 1 and type(candidates[0][0]) == tuple:
             prunnedDependencyGraph[element[0]] = []
         if len(candidates) >= 1:
-            try:
-                candidates, uneven, originalCandidate = selectBestCandidate(element[0], candidates, prunnedDependencyGraph, sbmlAnalyzer)
-            except CycleError:
-
-                candidates = None
-                uneven = []
+            candidates, uneven, originalCandidate = selectBestCandidate(
+                element[0], candidates, prunnedDependencyGraph, sbmlAnalyzer)
+            #except CycleError:
+            #    candidates = None
+            #    uneven = []
             if uneven != []:
                 unevenElementDict[element[0]] = (uneven)
         if candidates is None:
             prunnedDependencyGraph[element[0]] = []
         else:
-            prunnedDependencyGraph[element[0]] = [sorted(x) for x in candidates]
+            prunnedDependencyGraph[element[0]] = [
+                sorted(x) for x in candidates]
     weights = weightDependencyGraph(prunnedDependencyGraph)
     return prunnedDependencyGraph, weights, unevenElementDict, equivalenceTranslator
 
@@ -593,14 +642,14 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser):
 
     '''
     def sortMolecules(array, reverse):
-        return sorted(array, key=lambda molecule: (len(molecule.components), 
-                                                   len([x for x in molecule.components if x.activeState not in [0, '0']]),
+        return sorted(array, key=lambda molecule: (len(molecule.components),
+                                                   len([
+                                                       x for x in molecule.components if x.activeState not in [0, '0']]),
                                                    len(str(molecule)), str(molecule)), reverse=reverse)
 
     def getBiggestMolecule(array):
-        sortedMolecule = sortMolecules(array,reverse=False)
+        sortedMolecule = sortMolecules(array, reverse=False)
 
-        
         #sortedMolecule = sorted(sortedMolecule, key=lambda rule: len(rule.components))
 
         return sortedMolecule[-1]
@@ -628,14 +677,15 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser):
                     element[1].upper() in bioGridDict and element[0] in bioGridDict[element[1].upper()]:
                 #logMess('INFO:ATO001', 'Biogrid info: {0}:{1}'.format(element[0], element[1]))
                 dbPair.add((element[0], element[1]))
-        #elif pathwaycommonsFlag:
+        # elif pathwaycommonsFlag:
         #    if pwcm.isInComplexWith(element[0], element[1]):
         #        dbPair.add((element[0], element[1]))
     dbPair = list(dbPair)
 
     if dbPair != []:
         mol1 = mol2 = None
-        # select the best candidate if there's many ways to bind (in general one that doesn't overlap with an already exising pair)
+        # select the best candidate if there's many ways to bind (in general
+        # one that doesn't overlap with an already exising pair)
         finalDBpair = []
         if len(dbPair) > 1:
 
@@ -655,18 +705,23 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser):
         if len(dbPair) > 1:
 
             # @FIXME: getNamedMolecule should never receive parameters that cause it to return null, but somehow that's what is happening
-            # when you receive a malformed user definition file. The error should be caught way before we reach this point
-            tmpComplexSubset1 = [getNamedMolecule(totalComplex[0], element[0]) for element in dbPair if getNamedMolecule(totalComplex[0], element[0]) is not None]
+            # when you receive a malformed user definition file. The error
+            # should be caught way before we reach this point
+            tmpComplexSubset1 = [getNamedMolecule(totalComplex[0], element[
+                                                  0]) for element in dbPair if getNamedMolecule(totalComplex[0], element[0]) is not None]
             if not tmpComplexSubset1:
-                tmpComplexSubset1 = [getNamedMolecule(totalComplex[0], element[1]) for element in dbPair if getNamedMolecule(totalComplex[0], element[1]) is not None]
-                tmpComplexSubset2 = [getNamedMolecule(totalComplex[1], element[0]) for element in dbPair if getNamedMolecule(totalComplex[1], element[0]) is not None]
+                tmpComplexSubset1 = [getNamedMolecule(totalComplex[0], element[
+                                                      1]) for element in dbPair if getNamedMolecule(totalComplex[0], element[1]) is not None]
+                tmpComplexSubset2 = [getNamedMolecule(totalComplex[1], element[
+                                                      0]) for element in dbPair if getNamedMolecule(totalComplex[1], element[0]) is not None]
             else:
-                tmpComplexSubset2 = [getNamedMolecule(totalComplex[1], element[1]) for element in dbPair if getNamedMolecule(totalComplex[1], element[1]) is not None]
+                tmpComplexSubset2 = [getNamedMolecule(totalComplex[1], element[
+                                                      1]) for element in dbPair if getNamedMolecule(totalComplex[1], element[1]) is not None]
 
             mol1 = getBiggestMolecule(tmpComplexSubset1)
             mol2 = getBiggestMolecule(tmpComplexSubset2)
             logMess('INFO:ATO002', "According to BioGrid/Pathwaycommons there's more than one way to bind {0} and {1} together: {2}. Defaulting to {3}-{4}".format(names1, names2, dbPair,
-                                                                                                                                    mol1.name, mol2.name))
+                                                                                                                                                                   mol1.name, mol2.name))
         else:
             mol1 = getNamedMolecule(totalComplex[0], dbPair[0][0])
             if not mol1:
@@ -675,45 +730,47 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser):
             else:
                 mol2 = getNamedMolecule(totalComplex[1], dbPair[0][1])
 
-            logMess('INFO:ATO001', 'Binding information found in BioGrid/Pathwaycommons for for {0}-{1}'.format(mol1.name, mol2.name))
+            logMess(
+                'INFO:ATO001', 'Binding information found in BioGrid/Pathwaycommons for for {0}-{1}'.format(mol1.name, mol2.name))
 
     else:
 
         #mol1 = getBiggestMolecule(totalComplex[0])
         #mol2 = getBiggestMolecule(totalComplex[1])
+        '''
         if pathwaycommonsFlag:
             logMess('ERROR:ATO201', "We don't know how {0} and {1} bind together and there's no relevant BioGrid/Pathway commons information. Not atomizing".format(
-        [x.name for x in totalComplex[0]], [x.name for x in totalComplex[1]]))
+                [x.name for x in totalComplex[0]], [x.name for x in totalComplex[1]]))
             # addAssumptions('unknownBond',(mol1.name,mol2.name))
         else:
 
             logMess('ERROR:ATO202', "We don't know how {0} and {1} bind together. Not atomizing".format(
-        [x.name for x in totalComplex[0]], [x.name for x in totalComplex[1]]))
+                [x.name for x in totalComplex[0]], [x.name for x in totalComplex[1]]))
             # addAssumptions('unknownBond',(mol1.name,mol2.name))
-        raise BindingException('{0}-{1}'.format([x.name for x in totalComplex[0]],[x.name for x in totalComplex[1]]))
+        '''
+        raise BindingException(
+            '{0}-{1}'.format([x.name for x in totalComplex[0]], [x.name for x in totalComplex[1]]))
 
     return mol1, mol2
 
 
-
-
-
-def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommonsFlag=False, 
+def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommonsFlag=False,
                                parser=None, bondSeeding=[], bondExclusion=[]):
     '''
     method used during the atomization process. It determines how molecules
     in a species bind together
     '''
 
-    def sortMolecules(array,reverse):
-        return sorted(array, key=lambda molecule: (len(molecule.components), 
-                                                   len([x for x in molecule.components if x.activeState not in [0, '0']]),
-                                                   len(str(molecule)),str(molecule)),
+    def sortMolecules(array, reverse):
+        return sorted(array, key=lambda molecule: (len(molecule.components),
+                                                   len([
+                                                       x for x in molecule.components if x.activeState not in [0, '0']]),
+                                                   len(str(molecule)), str(molecule)),
                       reverse=reverse)
-    def getBiggestMolecule(array):
-        sortedMolecule = sortMolecules(array,reverse=False)
 
-        
+    def getBiggestMolecule(array):
+        sortedMolecule = sortMolecules(array, reverse=False)
+
         #sortedMolecule = sorted(sortedMolecule, key=lambda rule: len(rule.components))
 
         return sortedMolecule[-1]
@@ -733,10 +790,11 @@ def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommon
             speciesDict[y.name].append(x)
     # this array wil contain all molecules that dont bind to anything
     orphanedMolecules = [x for x in species.molecules]
-    #seed the list of pairs from the seeds
+    # seed the list of pairs from the seeds
     pairedMolecules = copy(bondSeeding)
     if bondSeeding:
-        orphanedMolecules = [x for x in orphanedMolecules for y in bondSeeding if x not in y]
+        orphanedMolecules = [
+            x for x in orphanedMolecules for y in bondSeeding if x not in y]
 
     # determine how molecules bind together
     redundantBonds = []
@@ -753,7 +811,8 @@ def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommon
                             speciesDict[x.name.lower()].remove(mol)
                             speciesDict[component.name].remove(x)
                             if x not in orphanedMolecules and mol not in orphanedMolecules:
-                                # FIXME: is it necessary to remove double bonds in complexes?
+                                # FIXME: is it necessary to remove double bonds
+                                # in complexes?
                                 redundantBonds.append([x, mol])
                                 lhs = set([])
                                 rhs = set([])
@@ -769,7 +828,7 @@ def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommon
                                 if len(redundantBonds[-1]) < 3:
                                     redundantBonds.pop()
                                 # continue
-                            if [x,mol] not in bondSeeding and [mol,x] not in bondSeeding and [x,mol] not in bondExclusion and [mol,x] not in bondExclusion:
+                            if [x, mol] not in bondSeeding and [mol, x] not in bondSeeding and [x, mol] not in bondExclusion and [mol, x] not in bondExclusion:
                                 pairedMolecules.append([x, mol])
                             if x in orphanedMolecules:
                                 orphanedMolecules.remove(x)
@@ -778,9 +837,12 @@ def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommon
 
     if len(redundantBonds) > 0:
         for x in redundantBonds:
-            addAssumptions('redundantBonds', tuple(sorted([y.name for y in x])))
-            addAssumptions('redundantBondsMolecules', (tuple(sorted([y.name for y in x])), moleculeName))
-            logMess('WARNING:CTX001', 'Redundant bonds detected between molecules {0} in species {1}'.format([y.name for y in x],moleculeName))
+            addAssumptions(
+                'redundantBonds', tuple(sorted([y.name for y in x])))
+            addAssumptions(
+                'redundantBondsMolecules', (tuple(sorted([y.name for y in x])), moleculeName))
+            logMess('WARNING:CTX001', 'Redundant bonds detected between molecules {0} in species {1}'.format(
+                [y.name for y in x], moleculeName))
     totalComplex = [set(x) for x in pairedMolecules]
     isContinuousFlag = True
 
@@ -792,18 +854,21 @@ def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommon
     for element in speciesDict:
         for individualMolecule in speciesDict[element]:
             if individualMolecule in orphanedMolecules:
-                candidatePartner = [x for x in species.molecules if x.name.lower() == element and x != individualMolecule]
+                candidatePartner = [x for x in species.molecules if x.name.lower(
+                ) == element and x != individualMolecule]
                 if len(candidatePartner) == 1:
-                    pairedMolecules.append([candidatePartner[0], individualMolecule])
+                    pairedMolecules.append(
+                        [candidatePartner[0], individualMolecule])
                     orphanedMolecules.remove(individualMolecule)
-    #determine which pairs form a continuous chain
+    # determine which pairs form a continuous chain
 
     while isContinuousFlag:
         isContinuousFlag = False
         for idx in range(0, len(totalComplex) - 1):
             for idx2 in range(idx + 1, len(totalComplex)):
                 if len([x for x in totalComplex[idx] if x in totalComplex[idx2]]) > 0:
-                    totalComplex[idx] = totalComplex[idx].union(totalComplex[idx2])
+                    totalComplex[idx] = totalComplex[
+                        idx].union(totalComplex[idx2])
                     totalComplex.pop(idx2)
                     isContinuousFlag = True
                     break
@@ -824,11 +889,12 @@ def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommon
             mol1 = list(totalComplex[0])[0]
             mol2 = list(totalComplex[1])[0]
         else:
-            mol1, mol2 = solveComplexBinding(totalComplex, pathwaycommonsFlag, parser)
+            mol1, mol2 = solveComplexBinding(
+                totalComplex, pathwaycommonsFlag, parser)
         pairedMolecules.append([mol1, mol2])
         totalComplex[0] = totalComplex[0].union(totalComplex[1])
         totalComplex.pop(1)
-    #totalComplex.extend(orphanedMolecules)
+    # totalComplex.extend(orphanedMolecules)
     return pairedMolecules
 
 
@@ -861,33 +927,37 @@ def createCatalysisRBM(dependencyGraph, element, translator, reactionProperties,
         forceActivationSwitch = False
         while dependencyGraph[tmp] != []:
             # what kind of catalysis are we dealing with
-            #classification = identifyReaction(
+            # classification = identifyReaction(
             #                                  equivalenceDictionary,
             #                                  dependencyGraph[tmp][0][0],tmp)
 
             classifications = None
             if not classifications:
                 classifications = identifyReaction(
-                                                  equivalenceDictionary,
-                                                  dependencyGraph[tmp][0][0], tmp)
+                    equivalenceDictionary,
+                    dependencyGraph[tmp][0][0], tmp)
                 classifications = classifications if classifications in reactionProperties else None
                 if classifications is not None:
                     classifications = [classifications]
             if not classifications:
-                classifications = sbmlAnalyzer.findMatchingModification(tmp, dependencyGraph[tmp][0][0])
-
+                classifications = sbmlAnalyzer.findMatchingModification(
+                    tmp, dependencyGraph[tmp][0][0])
 
             if not classifications:
-                classifications = sbmlAnalyzer.findMatchingModification(element[0], dependencyGraph[tmp][0][0])
+                classifications = sbmlAnalyzer.findMatchingModification(
+                    element[0], dependencyGraph[tmp][0][0])
 
-            # if we know what classification it is then add the corresponding components and states
+            # if we know what classification it is then add the corresponding
+            # components and states
             if classifications is not None:
                 for classification in classifications:
-                    componentStateArray.append(reactionProperties[classification])
-                    #classificationArray.append([classification,
+                    componentStateArray.append(
+                        reactionProperties[classification])
+                    # classificationArray.append([classification,
                     #                            tmp,dependencyGraph[tmp]
                     #                            [0][0]])
-                    existingComponents.append(reactionProperties[classification][0])
+                    existingComponents.append(
+                        reactionProperties[classification][0])
             # if we don't know we can create a force 1:1 modification
             elif database.forceModificationFlag and classifications is None and not forceActivationSwitch:
                 forceActivationSwitch = True
@@ -895,45 +965,54 @@ def createCatalysisRBM(dependencyGraph, element, translator, reactionProperties,
                                       dependencyGraph[element[0]][0][0])
 
                 species = createEmptySpecies(baseName)
-                
+
                 componentStateArray.append(['{0}'.format(tmp), tmp])
-                logMess('WARNING:LAE002', 'adding forced transformation: {0}:{1}:{2}'.format(baseName, dependencyGraph[element[0]], element[0]))
-                #return
+                logMess('WARNING:LAE002', 'adding forced transformation: {0}:{1}:{2}'.format(
+                    baseName, dependencyGraph[element[0]], element[0]))
+                # return
             # bail out if we couldn't figure out what modification it is
             elif classifications is None:
-                logMess('DEBUG:MSC001', 'unregistered modification: {0}:{1}'.format(element[0], dependencyGraph[element[0]]))
+                logMess('DEBUG:MSC001', 'unregistered modification: {0}:{1}'.format(
+                    element[0], dependencyGraph[element[0]]))
             memory.append(tmp)
             tmp = dependencyGraph[tmp][0][0]
             if tmp in memory:
                 raise CycleError
-        baseName = getTrueTag(dependencyGraph, dependencyGraph[element[0]][0][0])
+        baseName = getTrueTag(
+            dependencyGraph, dependencyGraph[element[0]][0][0])
 
         species = createEmptySpecies(baseName)
         # use the already existing structure if its in the
         # translator,otherwise empty
         if baseName in translator:
-             species = translator[baseName]
+            species = translator[baseName]
         #modifiedSpecies = deepcopy(translator[dependencyGraph[element[0]][0][0]])
 
         # modified species needs to start from the base speceis sine componentStateArray should contain the full set of modifications
         # check that this works correctly for double modifications
         modifiedSpecies = deepcopy(translator[baseName])
-        # this counter is here for multi level modification events (e.g. double phosporylation)
-        modificationCounter = {componentState[0]:2 for componentState in componentStateArray}
+        # this counter is here for multi level modification events (e.g. double
+        # phosporylation)
+        modificationCounter = {
+            componentState[0]: 2 for componentState in componentStateArray}
         for componentState in componentStateArray:
             addComponentToMolecule(species, baseName, componentState[0])
-            addComponentToMolecule(modifiedSpecies, baseName, componentState[0])
+            addComponentToMolecule(
+                modifiedSpecies, baseName, componentState[0])
             tmp = addStateToComponent(species, baseName,
                                       componentState[0], componentState[1])
             if tmp == componentState[1]:
                 addStateToComponent(species, baseName, componentState[0],
                                     componentState[1] + componentState[1])
-            # this modification was already activated so create a second modification component
+            # this modification was already activated so create a second
+            # modification component
             if addStateToComponent(modifiedSpecies, baseName,
                                    componentState[0], componentState[1]) == componentState[1]:
-                componentName = '{0}{1}'.format(componentState[0],  modificationCounter[componentState[0]])
+                componentName = '{0}{1}'.format(
+                    componentState[0],  modificationCounter[componentState[0]])
                 modificationCounter[componentState[0]] += 1
-                addComponentToMolecule(modifiedSpecies, baseName, componentName)
+                addComponentToMolecule(
+                    modifiedSpecies, baseName, componentName)
                 addStateToComponent(modifiedSpecies, baseName, componentName,
                                     componentState[1])
             addStateToComponent(species, baseName, componentState[0], '0')
@@ -972,10 +1051,11 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
             mol = st.Molecule(molecule)
             dependencyGraph[molecule] = deepcopy(mol)
             species.addMolecule(mol)
-    
+
     dependencyGraphCounter = Counter(dependencyGraph[element[0]][0])
 
-    # XXX: this wont work for species with more than one molecule with the same name
+    # XXX: this wont work for species with more than one molecule with the
+    # same name
     changeFlag = False
     partialBonds = defaultdict(list)
     for partialUserEntry in database.partialUserLabelDictionary:
@@ -987,7 +1067,7 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
                     if molecule.name == molecule2.name:
                         for component in molecule.components:
                             for bond in component.bonds:
-                                if molecule2.name not in  [x.name for x in partialBonds[bond]]:
+                                if molecule2.name not in [x.name for x in partialBonds[bond]]:
                                     partialBonds[bond].append(molecule2)
                         '''
                         for component in molecule.components:
@@ -1003,9 +1083,10 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
     bondSeeding = [partialBonds[x] for x in partialBonds if x > 0]
     bondExclusion = [partialBonds[x] for x in partialBonds if x < 0]
     # how do things bind together?
-    moleculePairsList = getComplexationComponents2(element[0], species, bioGridFlag, pathwaycommonsFlag, parser, bondSeeding, bondExclusion)
+    moleculePairsList = getComplexationComponents2(
+        element[0], species, bioGridFlag, pathwaycommonsFlag, parser, bondSeeding, bondExclusion)
     #moleculeCount = Counter([y for x in moleculePairsList for y in x])
-    #print moleculeCount
+    # print moleculeCount
     #moleculePairsList = [sorted(x) for x in moleculePairsList]
     #moleculePairsList.sort(key=lambda x: [-moleculeCount[x[0]],(str(x[0]), x[0],str(x[1]),x[1])])
     # TODO: update basic molecules with new components
@@ -1015,18 +1096,21 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
     for molecule in moleculePairsList:
         flag = False
 
-        #create an index on m0 and m1 depending on their name and repeats in the species
+        # create an index on m0 and m1 depending on their name and repeats in
+        # the species
         if molecule[0] not in moleculeCounter[molecule[0].name]:
             moleculeCounter[molecule[0].name].append(molecule[0])
         if molecule[1] not in moleculeCounter[molecule[1].name]:
             moleculeCounter[molecule[1].name].append(molecule[1])
         m0index = moleculeCounter[molecule[0].name].index(molecule[0])
         m1index = moleculeCounter[molecule[1].name].index(molecule[1])
-        bondIdx = getBondNumber('{0}{1}'.format(molecule[0].name, m0index), '{0}{1}'.format(molecule[1].name, m1index))
-        # add bonds where binding components already exist and they are not occupied
-        for component in molecule[0].components: 
+        bondIdx = getBondNumber('{0}{1}'.format(
+            molecule[0].name, m0index), '{0}{1}'.format(molecule[1].name, m1index))
+        # add bonds where binding components already exist and they are not
+        # occupied
+        for component in molecule[0].components:
             if component.name == molecule[1].name.lower() and \
-            len(component.bonds) == 0:
+                    len(component.bonds) == 0:
                 component.bonds.append(bondIdx)
                 flag = True
                 break
@@ -1039,7 +1123,8 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
 
             if newComponent1.name not in [x.name for x in translator[molecule[0].name].molecules[0].
                                           components]:
-                translator[molecule[0].name].molecules[0].components.append(deepcopy(newComponent1))
+                translator[molecule[0].name].molecules[
+                    0].components.append(deepcopy(newComponent1))
 
             molecule[0].components[-1].bonds.append(bondIdx)
         flag = False
@@ -1055,11 +1140,11 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
             if molecule[0].name != molecule[1].name:
                 if newComponent2.name not in [x.name for x in translator[molecule[1].name].molecules[0].
                                               components]:
-                    translator[molecule[1].name].molecules[0].components.append(deepcopy(newComponent2))
+                    translator[molecule[1].name].molecules[
+                        0].components.append(deepcopy(newComponent2))
             molecule[1].components[-1].bonds.append(bondIdx)
 
-
-    #update the translator
+    # update the translator
     translator[element[0]] = species
 
 
@@ -1077,7 +1162,7 @@ def atomize(dependencyGraph, weights, translator, reactionProperties,
             zeroSpecies = st.Species()
             zeroMolecule = st.Molecule('0')
             zeroSpecies.addMolecule(zeroMolecule)
-            translator[element[0]]  = zeroSpecies
+            translator[element[0]] = zeroSpecies
             continue
         # undivisible molecules
 
@@ -1091,20 +1176,27 @@ def atomize(dependencyGraph, weights, translator, reactionProperties,
                                    equivalenceDictionary, sbmlAnalyzer, database)
             else:
                 try:
+
                     createBindingRBM(element, translator, dependencyGraph,
                                      bioGridFlag, database.pathwaycommons, parser, database)
 
-                except BindingException:
+                except BindingException as e:
+                    logMess('ERROR:ATO202', "We don't know how {0} binds together in complex {1}. Not atomizing".format(
+                            e.value, element[0]))
+        
                     # there awas an issue during binding, don't atomize
-                    translator[element[0]] = createEmptySpecies(element[0])        
+                    translator[element[0]] = createEmptySpecies(element[0])
+
 
 def updateSpecies(species, referenceMolecule):
     flag = False
     for moleculeStructure in species.molecules:
         if moleculeStructure.name == referenceMolecule.name:
             for component in referenceMolecule.components:
-                count = [x.name for x in referenceMolecule.components].count(component.name)
-                count -= [x.name for x in moleculeStructure.components].count(component.name)
+                count = [x.name for x in referenceMolecule.components].count(
+                    component.name)
+                count -= [x.name for x in moleculeStructure.components].count(
+                    component.name)
                 newComponent = st.Component(component.name)
                 if len(component.states) > 0:
                     newComponent.addState('0')
@@ -1116,21 +1208,25 @@ def updateSpecies(species, referenceMolecule):
                         referenceMolecule.addComponent(deepcopy(newComponent))
                         flag = True
                 elif count == 0:
-                    localComponents = [x for x in moleculeStructure.components if x.name ==component.name]
-                    referenceComponents = [x for x in referenceMolecule.components if x.name == component.name]
-                    if [x.states for x in localComponents]!=[x.states for x in referenceComponents]:
+                    localComponents = [
+                        x for x in moleculeStructure.components if x.name == component.name]
+                    referenceComponents = [
+                        x for x in referenceMolecule.components if x.name == component.name]
+                    if [x.states for x in localComponents] != [x.states for x in referenceComponents]:
                         for lc in localComponents:
                             for rc in referenceComponents:
                                 for ls in lc.states:
                                     if ls not in rc.states:
-                                        rc.addState(ls,update=False)
+                                        rc.addState(ls, update=False)
                                 for rs in rc.states:
                                     if rs not in lc.states:
-                                        lc.addState(rs,update=False)
-                                        
+                                        lc.addState(rs, update=False)
+
             for component in moleculeStructure.components:
-                count = [x.name for x in referenceMolecule.components].count(component.name)
-                count -= [x.name for x in moleculeStructure.components].count(component.name)
+                count = [x.name for x in referenceMolecule.components].count(
+                    component.name)
+                count -= [x.name for x in moleculeStructure.components].count(
+                    component.name)
                 newComponent = st.Component(component.name)
                 if len(component.states) > 0:
                     newComponent.addState(component.states[0])
@@ -1157,79 +1253,111 @@ def propagateChanges(translator, dependencyGraph):
                 try:
                     if updateSpecies(translator[dependency],
                                      translator[getTrueTag(dependencyGraph,
-                                                          molecule)].molecules[0]):
+                                                           molecule)].molecules[0]):
                         flag = True
                 except:
                     logMess('CRITICAL:Program',
-                    'Species is not being properly propagated')
+                            'Species is not being properly propagated')
                     flag = False
 
 
-def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database,logResults=True):
-        #annotation handling
-        exactMatches = defaultdict(list)
-        partialMatches = defaultdict(list)
-        intersectionMatches = defaultdict(list)
-        #iterate over all pairs of orphaned species
-        for combinationParticle in (itertools.combinations(orphanedSpecies, 2)):
+def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, logResults=True,tentativeFlag=False):
+        # annotation handling
+    exactMatches = defaultdict(list)
+    partialMatches = defaultdict(list)
+    strongIntersectionMatches = defaultdict(list)
+    intersectionMatches = defaultdict(list)
+    # iterate over all pairs of orphaned species
+    for combinationParticle in itertools.combinations(orphanedSpecies, 2):
             # compare annotations
-            if combinationParticle[0] in annotationDict and combinationParticle[1] in annotationDict:
+        if combinationParticle[0] in annotationDict and combinationParticle[1] in annotationDict:
 
-                sortedPair = sorted(list(combinationParticle))
-                # get unary keys
-                unaryAnnotation1 = [y for x in annotationDict[combinationParticle[0]] for y in annotationDict[combinationParticle[0]][x] if x in ['BQM_IS_DESCRIBED_BY', 'BQB_IS_VERSION_OF', 'BQB_IS'] and 'uniprot' in y]
-                unaryAnnotation2 = [y for x in annotationDict[combinationParticle[1]] for y in annotationDict[combinationParticle[1]][x] if x in ['BQM_IS_DESCRIBED_BY', 'BQB_IS_VERSION_OF', 'BQB_IS'] and 'uniprot' in y]
+            sortedPair = sorted(list(combinationParticle), key=len)
+            # get unary keys
+            unaryAnnotation1 = [y for x in annotationDict[combinationParticle[0]] for y in annotationDict[
+                combinationParticle[0]][x] if x in ['BQM_IS_DESCRIBED_BY', 'BQB_IS_VERSION_OF', 'BQB_IS'] and ('uniprot' in y or 'chebi' in y)]
+            unaryAnnotation2 = [y for x in annotationDict[combinationParticle[1]] for y in annotationDict[
+                combinationParticle[1]][x] if x in ['BQM_IS_DESCRIBED_BY', 'BQB_IS_VERSION_OF', 'BQB_IS'] and ('uniprot' in y or 'chebi' in y)]
 
-                # get compositional keys
-                compositionalAnnotation1 = [y for x in annotationDict[combinationParticle[0]] for y in annotationDict[combinationParticle[0]][x] if x in ['BQB_HAS_PART','BQB_HAS_VERSION'] and 'uniprot' in y]
-                compositionalAnnotation2 = [y for x in annotationDict[combinationParticle[1]] for y in annotationDict[combinationParticle[1]][x] if x in ['BQB_HAS_PART','BQB_HAS_VERSION'] and 'uniprot' in y]
+            # get compositional keys
+            compositionalAnnotation1 = [y for x in annotationDict[combinationParticle[0]] for y in annotationDict[
+                combinationParticle[0]][x] if x in ['BQB_HAS_PART', 'BQB_HAS_VERSION'] and ('uniprot' in y or 'chebi' in y)]
+            compositionalAnnotation2 = [y for x in annotationDict[combinationParticle[1]] for y in annotationDict[
+                combinationParticle[1]][x] if x in ['BQB_HAS_PART', 'BQB_HAS_VERSION'] and ('uniprot' in y or 'chebi' in y)]
 
-                # unary keys match
-                if any([x in unaryAnnotation2 for x in unaryAnnotation1]):
+            # unary keys match
+            if any([x in unaryAnnotation2 for x in unaryAnnotation1]):
 
-                    exactMatches[sortedPair[1]].append([sortedPair[0]])
-                # one composes the other
-                elif any([x in compositionalAnnotation1 for x in unaryAnnotation2]):
-                    if combinationParticle[0] not in partialMatches:
-                        partialMatches[combinationParticle[0]].append([])    
-                    partialMatches[combinationParticle[0]][0].extend([combinationParticle[1]])
+                exactMatches[sortedPair[1]].append([sortedPair[0]])
+            # one composes the other
+            elif any([x in compositionalAnnotation1 for x in unaryAnnotation2]):
+                if combinationParticle[0] not in partialMatches:
+                    partialMatches[combinationParticle[0]].append([])
+                partialMatches[combinationParticle[0]][
+                    0].extend([combinationParticle[1]])
 
-                elif any([x in compositionalAnnotation2 for x in unaryAnnotation1]):
-                    if combinationParticle[1] not in partialMatches:
-                        partialMatches[combinationParticle[1]].append([])    
-                    partialMatches[combinationParticle[1]][0].extend([combinationParticle[0]])
+            elif any([x in compositionalAnnotation2 for x in unaryAnnotation1]):
+                if combinationParticle[1] not in partialMatches:
+                    partialMatches[combinationParticle[1]].append([])
+                partialMatches[combinationParticle[1]][
+                    0].extend([combinationParticle[0]])
+            elif set(compositionalAnnotation1) == set(compositionalAnnotation2) and len([x in compositionalAnnotation2 for x in compositionalAnnotation1]) > 0:
+                strongIntersectionMatches[sortedPair[1]].append([sortedPair[0]])
+            # they intersect
+            elif any([x in compositionalAnnotation2 for x in compositionalAnnotation1]):
 
-                # they intersect
-                elif any([x in compositionalAnnotation2 for x in compositionalAnnotation1]):
-                    intersectionMatches[sortedPair[1]].append([sortedPair[0]])
-                    #intersectionMatches[combinationParticle[0]].append(combinationParticle[1])
+                intersectionMatches[sortedPair[1]].append([sortedPair[0]])
+                # intersectionMatches[combinationParticle[0]].append(combinationParticle[1])
+    # create unary groups
+    exactMatches = consolidateDependencyGraph(
+        dict(exactMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
+    if logResults:
+        for x in exactMatches:
+            if not tentativeFlag:
+                logMess('INFO:ANN001', '{0} was determined to be the same as {1} according to annotation information.'.format(
+                    x, exactMatches[x]))
+            else:
+                logMess('WARNING:ANN101', '{0} was determined to be the same as {1} according to annotation information. Please confirm from user information'.format(
+                    x, exactMatches[x]))
 
-        
-        # create unary groups
-        exactMatches = consolidateDependencyGraph(dict(exactMatches), {}, {}, database.sbmlAnalyzer, database)[0]
-        if logResults:
-            for x in exactMatches:
-                logMess('INFO:ANN001', '{0} was determined to be the same as {1} according to annotation information.'.format(x, exactMatches[x]))
+    # create strong intersection groups
 
-        # create partial intersection groups
-        intersectionMatches = {x:intersectionMatches[x] for x in intersectionMatches if x not in partialMatches}
-        intersectionMatches.update(exactMatches)
-        intersectionMatches = consolidateDependencyGraph(dict(intersectionMatches), {}, {}, database.sbmlAnalyzer, database)[0]
-        
-        if logResults:
-            for x in intersectionMatches:
-                if x not in exactMatches:
-                    logMess('INFO:ANN002', '{0} was determined to be partially match {1} according to annotation information.'.format(x, intersectionMatches[x]))
-        
-        partialMatches = consolidateDependencyGraph(dict(partialMatches), {}, {}, database.sbmlAnalyzer, database)[0]
+    strongIntersectionMatches = {x: strongIntersectionMatches[x] for x in strongIntersectionMatches if x not in partialMatches}
+    strongIntersectionMatches.update(exactMatches)
+    strongIntersectionMatches = consolidateDependencyGraph(dict(strongIntersectionMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
 
-        if logResults:
-            for x in partialMatches:
-                logMess('INFO:ANN003', '{0} is thought to be partially composed of reactants {1} according to annotation information. Please verify stoichiometry'.format(x,partialMatches[x]))
+    if logResults:
+        for x in strongIntersectionMatches:
+            if x not in exactMatches:
+                if not tentativeFlag:
+                    logMess('INFO:ANN002', '{0} was determined to exactly match {1} according to annotation information.'.format(
+                        x, strongIntersectionMatches[x]))
+                else:
+                    logMess('WARNING:ANN101', '{0} was determined to exactly match {1} according to annotation information. Please confirm from user information'.format(
+                        x, strongIntersectionMatches[x]))
 
-        #validAnnotationPairs.sort()
+    # create partial intersection groups
+    intersectionMatches = {x: intersectionMatches[x] for x in intersectionMatches if x not in partialMatches and x not in strongIntersectionMatches}
 
-        return intersectionMatches, partialMatches
+    intersectionMatches.update(exactMatches)
+    intersectionMatches = consolidateDependencyGraph(dict(intersectionMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
+    if logResults:
+        for x in intersectionMatches:
+            if x not in exactMatches:
+                logMess('INFO:ANN002', '{0} was determined to be partially match {1} according to annotation information.'.format(
+                    x, intersectionMatches[x]))
+    partialMatches = consolidateDependencyGraph(
+        dict(partialMatches), {}, {}, database.sbmlAnalyzer, database)[0]
+
+    if logResults:
+        for x in partialMatches:
+            logMess('INFO:ANN003', '{0} is thought to be partially composed of reactants {1} according to annotation information. Please verify stoichiometry'.format(
+                x, partialMatches[x]))
+
+    # validAnnotationPairs.sort()
+
+    intersectionMatches.update(strongIntersectionMatches)
+    return intersectionMatches, partialMatches
 
 
 def createSpeciesCompositionGraph(parser, database, configurationFile, namingConventions,
@@ -1242,12 +1370,14 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
     _, rules, _ = parser.getReactions(atomize=True)
     molecules, _, _, _, _, _ = parser.getSpecies()
     database.sbmlAnalyzer = \
-        analyzeSBML.SBMLAnalyzer(parser, configurationFile, namingConventions, speciesEquivalences, conservationOfMass=True)
+        analyzeSBML.SBMLAnalyzer(
+            parser, configurationFile, namingConventions, speciesEquivalences, conservationOfMass=True)
 
     # classify reactions
     database.classifications, equivalenceTranslator, database.eequivalenceTranslator,\
         indirectEquivalenceTranslator, \
-        adhocLabelDictionary, lexicalDependencyGraph, userEquivalenceTranslator = database.sbmlAnalyzer.classifyReactions(rules, molecules, {})
+        adhocLabelDictionary, lexicalDependencyGraph, userEquivalenceTranslator = database.sbmlAnalyzer.classifyReactions(
+            rules, molecules, {})
     database.reactionProperties = database.sbmlAnalyzer.getReactionProperties()
     # user defined and lexical analysis naming conventions are stored here
     database.reactionProperties.update(adhocLabelDictionary)
@@ -1261,36 +1391,44 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
     database.annotationDict = parser.getFullAnnotation()
     #database.annotationDict = {}
 
-
     # ###dependency graph
     # binding reactions
     for reaction, classification in zip(rules, database.classifications):
         bindingReactionsAnalysis(database.dependencyGraph,
                                  list(parseReactions(reaction)), classification)
 
-
     # lexical dependency graph contains lexically induced binding compositions. atomizer gives preference to binding obtained this way as opposed to stoichiometry
-    # stronger bounds on stoichiometry based binding can be defined in reactionDefinitions.json.
+    # stronger bounds on stoichiometry based binding can be defined in
+    # reactionDefinitions.json.
+
     for element in lexicalDependencyGraph:
         if element in database.dependencyGraph and element not in database.userLabelDictionary:
             if len(lexicalDependencyGraph[element]) == 0:
                 continue
+            '''
             oldDependency = database.dependencyGraph[element]
+            
             if sorted(lexicalDependencyGraph[element][0]) in [sorted(x) for x in oldDependency]:
-                #if len(oldDependency) > 1:
+                # if len(oldDependency) > 1:
                 #    logMess('DEBUG:Atomization', 'Species {0} was confirmed to be {1} based on lexical information'.format(element,lexicalDependencyGraph[element]))
-                database.dependencyGraph[element] = lexicalDependencyGraph[element]
+                database.dependencyGraph[
+                    element] = lexicalDependencyGraph[element]
             else:
-                #logMess('INFO:Atomization', 'Species {0} was determined to be {1} instead of {2} based on \
-#lexical information'.format(element, lexicalDependencyGraph[element], oldDependency))
-                database.alternativeDependencyGraph[element] = lexicalDependencyGraph[element]
+                # logMess('INFO:Atomization', 'Species {0} was determined to be {1} instead of {2} based on \
+                # lexical information'.format(element,
+                # lexicalDependencyGraph[element], oldDependency))
+            '''
+            database.alternativeDependencyGraph[element] = lexicalDependencyGraph[element]
         else:
+            database.constructedSpecies.add(element)
             database.dependencyGraph[element] = lexicalDependencyGraph[element]
-
         # Check if I'm using a molecule that hasn't been used yet
         for dependencyCandidate in database.dependencyGraph[element]:
             for molecule in [x for x in dependencyCandidate if x not in database.dependencyGraph]:
+                # this is a species that was not originally in the model. in case theres conflict later this is 
+                # to indicate it is given less priority
                 database.dependencyGraph[molecule] = []
+
 
     # user defined transformations
     for key in userEquivalenceTranslator:
@@ -1302,9 +1440,11 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
             addToDependencyGraph(database.dependencyGraph, modElement,
                                  [baseElement])
 
+
     # database.eequivalence translator contains 1:1 equivalences
     # FIXME: do we need this update step or is it enough with the later one?
     # catalysis reactions
+    '''
     for key in database.eequivalenceTranslator:
         for namingEquivalence in database.eequivalenceTranslator[key]:
             baseElement = min(namingEquivalence, key=len)
@@ -1314,76 +1454,86 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                     if modElement not in database.dependencyGraph or database.dependencyGraph[modElement] == []:
                         database.dependencyGraph[baseElement] = []
                     # do we have a meaningful reverse dependence?
-                    #elif all([baseElement not in x for x in database.dependencyGraph[modElement]]):
+                    # elif all([baseElement not in x for x in database.dependencyGraph[modElement]]):
                     #    addToDependencyGraph(database.dependencyGraph,baseElement,[modElement])
                     #    continue
-                        
+
                         if baseElement in database.annotationDict and modElement in database.annotationDict:
-                            baseSet = set([y  for x in database.annotationDict[baseElement] for y in database.annotationDict[baseElement][x]])
-                            modSet = set([y  for x in database.annotationDict[modElement] for y in database.annotationDict[modElement][x]])
+                            baseSet = set([y for x in database.annotationDict[
+                                          baseElement] for y in database.annotationDict[baseElement][x]])
+                            modSet = set([y for x in database.annotationDict[
+                                         modElement] for y in database.annotationDict[modElement][x]])
                             if len(baseSet.intersection(modSet)) > 0 or len(baseSet) == 0 or len(modSet) == 0:
                                 addToDependencyGraph(database.dependencyGraph, modElement,
-                                             [baseElement])
+                                                     [baseElement])
                             else:
-                                logMess("ERROR:ANN201", "{0} and {1} have a direct correspondence according to reaction information however their annotations are completely different.".format(baseElement, modElement))
+                                logMess("ERROR:ANN201", "{0} and {1} have a direct correspondence according to reaction information however their annotations are completely different.".format(
+                                    baseElement, modElement))
                         else:
                             addToDependencyGraph(database.dependencyGraph, modElement,
-                                     [baseElement])
+                                                 [baseElement])
+    '''
 
-    # include user label information. 
+    # include user label information.
     for element in database.userLabelDictionary:
         if database.userLabelDictionary[element] in [0, [(0,)]]:
             database.dependencyGraph[element] = ['0']
         elif len(database.userLabelDictionary[element][0]) == 0 or element == \
-        database.userLabelDictionary[element][0][0]:
-    
+                database.userLabelDictionary[element][0][0]:
+
             database.dependencyGraph[element] = []
         else:
             database.dependencyGraph[element] = [list(
-            database.userLabelDictionary[element][0])]
+                database.userLabelDictionary[element][0])]
             # If the user is introducing a new molecule term, add it to the SCT
             if database.userLabelDictionary[element][0][0] not in database.dependencyGraph:
-                database.dependencyGraph[database.userLabelDictionary[element][0][0]] = []
+                database.dependencyGraph[
+                    database.userLabelDictionary[element][0][0]] = []
 
-    # add species elements defined by the user into the naming convention definition
-    molecules.extend(['{0}()'.format(x) for x in database.userLabelDictionary if '{0}()'.format(x) not in molecules])
-    # recalculate 1:1 equivalences now with binding information 
+    # add species elements defined by the user into the naming convention
+    # definition
+    molecules.extend(['{0}()'.format(
+        x) for x in database.userLabelDictionary if '{0}()'.format(x) not in molecules])
+    # recalculate 1:1 equivalences now with binding information
     _, _, database.eequivalenceTranslator2,\
-         _, adhocLabelDictionary, _, _ =  database.sbmlAnalyzer.classifyReactions(rules, molecules,database.dependencyGraph)
+        _, adhocLabelDictionary, _, _ = database.sbmlAnalyzer.classifyReactions(
+            rules, molecules, database.dependencyGraph)
     database.reactionProperties.update(adhocLabelDictionary)
-
-
-    #update catalysis equivalences
-    #catalysis reactions
+    # update catalysis equivalences
+    # catalysis reactions
     for key in database.eequivalenceTranslator2:
         for namingEquivalence in database.eequivalenceTranslator2[key]:
             baseElement = min(namingEquivalence, key=len)
             modElement = max(namingEquivalence, key=len)
             # dont overwrite user information
             if key != 'Binding' and modElement not in database.userLabelDictionary:
-                if baseElement not in database.dependencyGraph :
-                    #if modElement not in database.dependencyGraph or database.dependencyGraph[modElement] == []:
+                if baseElement not in database.dependencyGraph:
+                    # if modElement not in database.dependencyGraph or
+                    # database.dependencyGraph[modElement] == []:
+                    database.constructedSpecies.add(baseElement)
                     database.dependencyGraph[baseElement] = []
                     # do we have a meaningful reverse dependence?
                     # elif all([baseElement not in x for x in database.dependencyGraph[modElement]]):
                     #    addToDependencyGraph(database.dependencyGraph,baseElement,[modElement])
                     #    continue
-                if modElement not in database.dependencyGraph or not [True for x in database.dependencyGraph[modElement] if baseElement in x and len(x)>1]:
+                if modElement not in database.dependencyGraph or not [True for x in database.dependencyGraph[modElement] if baseElement in x and len(x) > 1]:
                     if baseElement in database.annotationDict and modElement in database.annotationDict:
-                        baseSet = set([y  for x in database.annotationDict[baseElement] for y in database.annotationDict[baseElement][x]])
-                        modSet = set([y  for x in database.annotationDict[modElement] for y in database.annotationDict[modElement][x]])
+                        baseSet = set([y for x in database.annotationDict[baseElement] for y in database.annotationDict[baseElement][x]])
+                        modSet = set([y for x in database.annotationDict[
+                                      modElement] for y in database.annotationDict[modElement][x]])
                         if len(baseSet.intersection(modSet)) > 0 or len(baseSet) == 0 or len(modSet) == 0:
-                            addToDependencyGraph(database.dependencyGraph, modElement, [baseElement])
+                            addToDependencyGraph(
+                                database.dependencyGraph, modElement, [baseElement])
                         else:
 
                             logMess("WARNING:ANN201", "{0} and {1} have a direct correspondence according to reaction \
-information however their annotations are completely different.".format(baseElement,modElement))
+information however their annotations are completely different.".format(baseElement, modElement))
                     else:
                         addToDependencyGraph(database.dependencyGraph, modElement,
                                              [baseElement])
                 else:
                     logMess('WARNING:ATO114', 'Definition conflict between binding information {0} and lexical analyis {1} for molecule {2},\
-choosing binding'.format(database.dependencyGraph[modElement], baseElement,modElement))
+choosing binding'.format(database.dependencyGraph[modElement], baseElement, modElement))
 
     # non lexical-analysis catalysis reactions
     if database.forceModificationFlag:
@@ -1407,15 +1557,19 @@ choosing binding'.format(database.dependencyGraph[modElement], baseElement,modEl
                         continue
                     if [mod] in database.dependencyGraph[base]:
                         continue
-                    # if the annotations have no overlap whatsoever don't force this modifications
+                    # if the annotations have no overlap whatsoever don't force
+                    # this modifications
                     if base in database.annotationDict and mod in database.annotationDict:
-                        baseSet = set([y  for x in database.annotationDict[base] for y in database.annotationDict[base][x]])
-                        modSet = set([y  for x in database.annotationDict[mod] for y in database.annotationDict[mod][x]])
+                        baseSet = set([y for x in database.annotationDict[
+                                      base] for y in database.annotationDict[base][x]])
+                        modSet = set(
+                            [y for x in database.annotationDict[mod] for y in database.annotationDict[mod][x]])
                         if(len(baseSet.intersection(modSet))) == 0 and len(baseSet) > 0 and len(modSet) > 0:
                             logMess("WARNING:ANN201", "{0} and {1} have a direct correspondence according to reaction \
 information however their annotations are completely different.".format(base, mod))
                             continue
                     database.dependencyGraph[mod] = [[base]]
+
 
 
     '''
@@ -1467,13 +1621,15 @@ tmp,removedElement,tmp3))
 
     # stuff obtained from string similarity analysis
     for element in database.lexicalLabelDictionary:
-        # similarity analysis has less priority than anything we discovered before
+        # similarity analysis has less priority than anything we discovered
+        # before
         if element in database.dependencyGraph and \
                 len(database.dependencyGraph[element]) > 0:
             continue
 
         if len(database.lexicalLabelDictionary[element][0]) == 0 or element == \
                 database.lexicalLabelDictionary[element][0][0]:
+            database.constructedSpecies.add(element)
             addToDependencyGraph(database.dependencyGraph, element, [])
         else:
             # logMess('INFO:Atomization', ' added induced speciesStructure {0}={1}'
@@ -1482,41 +1638,80 @@ tmp,removedElement,tmp3))
                 database.lexicalLabelDictionary[element][0])]
 
     strippedMolecules = [x.strip('()') for x in molecules]
-    orphanedSpecies = [x for x in strippedMolecules if x not in database.dependencyGraph or database.dependencyGraph[x] == []]
-    orphanedSpecies.extend([x for x in database.dependencyGraph if database.dependencyGraph[x] == [] and x not in orphanedSpecies])
+    orphanedSpecies = [
+        x for x in strippedMolecules if x not in database.dependencyGraph or database.dependencyGraph[x] == []]
+    orphanedSpecies.extend([x for x in database.dependencyGraph if database.dependencyGraph[
+                           x] == [] and x not in orphanedSpecies])
 
 
-    # Fill SCT with annotations for those species that still dont have any mapping
-    annotationDependencyGraph, _ = fillSCTwithAnnotationInformation(orphanedSpecies, database.annotationDict, database)
+    # Fill SCT with annotations for those species that still dont have any
+    # mapping
+
+    annotationDependencyGraph, _ = fillSCTwithAnnotationInformation(
+        orphanedSpecies, database.annotationDict, database)
     # use an empty dictionary if we wish to turn off annotation information in atomization
     #annotationDependencyGraph = {}
 
     for annotatedSpecies in annotationDependencyGraph:
         if len(annotationDependencyGraph[annotatedSpecies]) > 0 and annotatedSpecies not in database.userLabelDictionary:
-            addToDependencyGraph(database.dependencyGraph, annotatedSpecies, annotationDependencyGraph[annotatedSpecies][0])
+            addToDependencyGraph(
+                database.dependencyGraph, annotatedSpecies, annotationDependencyGraph[annotatedSpecies][0])
             logMess('INFO:ANN004', 'Added equivalence from annotation information {0}={1}'.format(annotatedSpecies,
-                    annotationDependencyGraph[annotatedSpecies][0]))
+                                                                                                  annotationDependencyGraph[annotatedSpecies][0]))
             for element in annotationDependencyGraph[annotatedSpecies][0]:
-                # in case one of the compositional elements is not yet in the dependency graph
+                # in case one of the compositional elements is not yet in the
+                # dependency graph
                 if element not in database.dependencyGraph:
                     addToDependencyGraph(database.dependencyGraph, element, [])
+
+    nonOrphanedSpecies = [x for x in strippedMolecules if x not in orphanedSpecies]
+
+    annotationDependencyGraph, _ = fillSCTwithAnnotationInformation(
+        nonOrphanedSpecies, database.annotationDict, database,tentativeFlag=True)
+
+
+
+    orphanedSpecies = [
+        x for x in strippedMolecules if x not in database.dependencyGraph or database.dependencyGraph[x] == []]
+    orphanedSpecies.extend([x for x in database.dependencyGraph if database.dependencyGraph[
+                           x] == [] and x not in orphanedSpecies])
 
     # TODO: merge both lists and use them as a tiebreaker for consolidation
     #completeAnnotationDependencyGraph, completePartialMatches = fillSCTwithAnnotationInformation(strippedMolecules, annotationDict, database, False)
 
     # pure lexical analysis for the remaining orphaned molecules
-    tmpDependency, database.tmpEquivalence = database.sbmlAnalyzer.findClosestModification(orphanedSpecies, strippedMolecules, database)
+    tmpDependency, database.tmpEquivalence = database.sbmlAnalyzer.findClosestModification(
+        orphanedSpecies, strippedMolecules, database)
+    
+
     for species in tmpDependency:
         if species not in database.userLabelDictionary:
             if tmpDependency[species] == []:
                 addToDependencyGraph(database.dependencyGraph, species, [])
             for instance in tmpDependency[species]:
-                addToDependencyGraph(database.dependencyGraph, species, instance)
+                addToDependencyGraph(
+                    database.dependencyGraph, species, instance)
+
+
+
+    orphanedSpecies = [
+        x for x in strippedMolecules if x not in database.dependencyGraph or database.dependencyGraph[x] == []]
+    orphanedSpecies.extend([x for x in database.dependencyGraph if database.dependencyGraph[
+                           x] == [] and x not in orphanedSpecies])
+
+    # greedy lexical analysis for the remaining orhpaned species
+    for reactant in orphanedSpecies:
+
+        greedyMatch = database.sbmlAnalyzer.greedyModificationMatching(
+            reactant, database.dependencyGraph.keys())
+        if greedyMatch not in [-1,-2, []]:
+            database.dependencyGraph[reactant] = [greedyMatch]
+            logMess('INFO:LAE006','Mapped {0} to {1} using lexical analysis/greedy matching'.format(reactant, greedyMatch))
 
     # initialize and remove zero elements
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
-        consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator, database.eequivalenceTranslator, database.sbmlAnalyzer, database)
-
+        consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
+                                   database.eequivalenceTranslator, database.sbmlAnalyzer, database)
     return database
 
 
@@ -1556,12 +1751,13 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     '''
 
     database = createSpeciesCompositionGraph(parser, database, configurationFile, namingConventions,
-                                                                     speciesEquivalences=speciesEquivalences, bioGridFlag=bioGridFlag)
+                                             speciesEquivalences=speciesEquivalences, bioGridFlag=bioGridFlag)
 
     for element in database.artificialEquivalenceTranslator:
         if element not in database.eequivalenceTranslator:
             database.eequivalenceTranslator[element] = []
-        database.eequivalenceTranslator[element].extend(database.artificialEquivalenceTranslator[element])
+        database.eequivalenceTranslator[element].extend(
+            database.artificialEquivalenceTranslator[element])
 
     # special handling for double modifications like double phosporylation
     # FIXME: this needs to be done in a cleaner way(e.g. getting them
@@ -1575,11 +1771,14 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
         if element not in database.eequivalenceTranslator:
             database.eequivalenceTranslator[element] = []
 
-        baseElements = [x[0] for x in database.eequivalenceTranslator[doubleModifications[element]]]
-        modifiedElements = [x[1] for x in database.eequivalenceTranslator[doubleModifications[element]]]
+        baseElements = [
+            x[0] for x in database.eequivalenceTranslator[doubleModifications[element]]]
+        modifiedElements = [
+            x[1] for x in database.eequivalenceTranslator[doubleModifications[element]]]
         #deleteEquivalences = [baseElements.index(x) for x in baseElements if x in modifiedElements]
 
-        deleteEquivalences = [(x, modifiedElements[baseElements.index(x)]) for x in baseElements if x in modifiedElements]
+        deleteEquivalences = [(x, modifiedElements[baseElements.index(x)])
+                              for x in baseElements if x in modifiedElements]
 
         for eq in deleteEquivalences:
             if eq not in database.eequivalenceTranslator[element]:
@@ -1588,21 +1787,25 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
         for eq in deleteEquivalences:
 
             if eq in database.eequivalenceTranslator[doubleModifications[element]]:
-                database.eequivalenceTranslator[doubleModifications[element]].remove(eq)
+                database.eequivalenceTranslator[
+                    doubleModifications[element]].remove(eq)
 
     for modification in database.tmpEquivalence:
         for candidates in database.tmpEquivalence[modification]:
             for instance in candidates:
-                addToDependencyGraph(database.eequivalenceTranslator, modification, instance)
+                addToDependencyGraph(
+                    database.eequivalenceTranslator, modification, instance)
 
-    database.weights = sorted(database.weights, key=lambda rule: (rule[1], len(rule[0])))
+    database.weights = sorted(
+        database.weights, key=lambda rule: (rule[1], len(rule[0])))
 
     atomize(database.prunnedDependencyGraph, database.weights, database.translator, database.reactionProperties,
             database.eequivalenceTranslator2, bioGridFlag, database.sbmlAnalyzer, database, parser)
-    onlySynDec = len([x for x in database.classifications if x not in ['Generation', 'Decay']]) == 0
+    onlySynDec = len(
+        [x for x in database.classifications if x not in ['Generation', 'Decay']]) == 0
     propagateChanges(database.translator, database.prunnedDependencyGraph)
 
-    #sanityCheck(database.translator)
+    # sanityCheck(database.translator)
     '''
     pr.disable()
     s = StringIO.StringIO()
@@ -1610,6 +1813,6 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
     ps.print_stats(10)
     print s.getvalue()
-    ''' 
+    '''
     database.assumptions = assumptions
     return database.translator, onlySynDec
