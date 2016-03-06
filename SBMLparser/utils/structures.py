@@ -466,6 +466,8 @@ class Databases:
         self.labelDictionary = {}
         self.synthesisDatabase2 = {}
         self.assumptions = defaultdict(list)
+        self.softConstraints = False
+        self.constructedSpecies = set([])
         
     def getRawDatabase(self):
         return self.rawDatabase
