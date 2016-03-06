@@ -1119,7 +1119,7 @@ but reaction is marked as reversible'.format(reactionID))
         #speciesText.append('$NullSpecies() 1')
 
         self.speciesMemory = []
-        return moleculesText,speciesText,observablesText,speciesTranslationDict, observablesDict, annotationInfo
+        return list(set(moleculesText)),speciesText,observablesText,speciesTranslationDict, observablesDict, annotationInfo
 
     def getInitialAssignments(self, translator, param, zparam, molecules, initialConditions):
         '''
