@@ -182,24 +182,38 @@ def processFunctions(functions,sbmlfunctions,artificialObservables,tfunc):
     
     # reformat time function
     for idx in range(0, len(functions)):
-        for sbml in sbmlfunctions:
-            if sbml in functions[idx]:
-                functions[idx] = writer.extendFunction(functions[idx],sbml,sbmlfunctions[sbml])
-        functions[idx] =re.sub(r'(\W|^)(time)(\W|$)',r'\1time()\3',functions[idx])
-        functions[idx] =re.sub(r'(\W|^)(Time)(\W|$)',r'\1time()\3',functions[idx])
-        functions[idx] =re.sub(r'(\W|^)(t)(\W|$)',r'\1time()\3',functions[idx])
+        '''
+        remove calls to functions inside functions
+        '''
+        modificationFlag = True
+        recursionIndex = 0
+        # remove calls to other sbml functions
+        while modificationFlag and recursionIndex <20:
+            modificationFlag = False
+            for sbml in sbmlfunctions:
+                if sbml in functions[idx]:
+                    temp = writer.extendFunction(functions[idx], sbml, sbmlfunctions[sbml])
+                    if temp != functions[idx]:
+                        functions[idx] = temp
+                        modificationFlag = True
+                        recursionIndex +=1
+                        break
+
+        functions[idx] = re.sub(r'(\W|^)(time)(\W|$)', r'\1time()\3', functions[idx])
+        functions[idx] = re.sub(r'(\W|^)(Time)(\W|$)', r'\1time()\3', functions[idx])
+        functions[idx] = re.sub(r'(\W|^)(t)(\W|$)', r'\1time()\3', functions[idx])
 
         #remove true and false
-        functions[idx] =re.sub(r'(\W|^)(true)(\W|$)',r'\1 1\3',functions[idx])
-        functions[idx] =re.sub(r'(\W|^)(false)(\W|$)',r'\1 0\3',functions[idx])
+        functions[idx] = re.sub(r'(\W|^)(true)(\W|$)', r'\1 1\3', functions[idx])
+        functions[idx] = re.sub(r'(\W|^)(false)(\W|$)', r'\1 0\3', functions[idx])
 
     #functions.extend(sbmlfunctions)
     dependencies2 = {}
-    for idx in range(0,len(functions)):
+    for idx in range(0, len(functions)):
         dependencies2[functions[idx].split(' = ')[0].split('(')[0].strip()] = []
         for key in artificialObservables:
             oldfunc = functions[idx]
-            functions[idx] = (re.sub(r'(\W|^)({0})([^\w(]|$)'.format(key),r'\1\2()\3',functions[idx]))
+            functions[idx] = (re.sub(r'(\W|^)({0})([^\w(]|$)'.format(key), r'\1\2()\3',functions[idx]))
             if oldfunc != functions[idx]:
                 dependencies2[functions[idx].split(' = ')[0].split('(')[0]].append(key)
         for element in sbmlfunctions:
@@ -219,7 +233,7 @@ def processFunctions(functions,sbmlfunctions,artificialObservables,tfunc):
     '''
     fd = []
     for function in functions:
-        #print function,dependencies2[function.split(' = ' )[0].split('(')[0]],function.split(' = ' )[0].split('(')[0],0
+        #print function,'---',dependencies2[function.split(' = ' )[0].split('(')[0]],'---',function.split(' = ' )[0].split('(')[0],0
         fd.append([function,resolveDependencies(dependencies2,function.split(' = ' )[0].split('(')[0],0)])
     fd = sorted(fd,key= lambda rule:rule[1])
     functions = [x[0] for x in fd]
@@ -684,6 +698,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     functions.extend(aRules)
     sbmlfunctions = parser.getSBMLFunctions()
+    #print functions
     processFunctions(functions,sbmlfunctions,artificialObservables,rateFunctions)
 
     for interation in range(0,3):
