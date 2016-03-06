@@ -257,6 +257,9 @@ class SBMLAnalyzer:
         return findMatchingModificationHelper(particle,species)
 
     def greedyModificationMatching(self,speciesString, referenceSpecies):
+        '''
+        recursive function trying to map a given species string to a string permutation of the strings in reference species
+        '''
         bestMatch = ['', 0]
         finalMatches = []
         blacklist = []
@@ -283,9 +286,6 @@ class SBMLAnalyzer:
 
         return finalMatches
 
-
-
-        
     def findClosestModification(self, particles, species, database):
         equivalenceTranslator = {}
         dependencyGraph = {}
@@ -386,10 +386,10 @@ class SBMLAnalyzer:
         additionalHandling = []
 
         #lexical handling
-        for particle in particles:
+        for particle in sorted(particles, key=len):
             composingElements = []
             basicElements = []
-            #break it down into small bites
+            # can you break it down into small bites?
             if '_' in particle:
                 splitparticle = particle.split('_')
                 #print '---',splitparticle
@@ -407,6 +407,8 @@ class SBMLAnalyzer:
                         if differenceList in self.namingConventions['patterns']:
                             logMess('INFO:LAE005', 'matching {0}={1}'.format(particle, [match]))
                             addToDependencyGraph(dependencyGraph,particle,[match])
+                    if len(matches) > 0:
+                        continue
                         
                 elif particle not in composingElements and composingElements != [] and all([x in species for x in composingElements]):
                     addToDependencyGraph(dependencyGraph, particle, composingElements)
@@ -415,6 +417,7 @@ class SBMLAnalyzer:
                             addToDependencyGraph(dependencyGraph, element, [])
                         if element not in particles:
                             additionalHandling.append(element)
+                    continue
                 else:
                     for basicElement in basicElements:
                         if basicElement in particle and basicElement != particle:
@@ -423,24 +426,55 @@ class SBMLAnalyzer:
                                 addToDependencyGraph(dependencyGraph, particle, [basicElement])
                                 logMess('INFO:LAE005', '{0} can be mapped to {1} through existing naming conventions'.format(particle, [basicElement]))
                                 break
-            else:
-                for comparisonParticle in particles:
-                    if particle == comparisonParticle:
-                        continue
-                    # try to map remaining orphaned molecules to each other based on simple, but known modifications
-                    if comparisonParticle in particle:
-                        fuzzyList = self.processAdHocNamingConventions(particle,comparisonParticle,localSpeciesDict, False, species)
-                        if self.testAgainstExistingConventions(fuzzyList[0][1],self.namingConventions['modificationList']):
+                    continue
+            # if bottom up doesn't work try a top down approach
+            for comparisonParticle in particles:
+                if particle == comparisonParticle:
+                    continue
+                
+                # try to map remaining orphaned molecules to each other based on simple, but known modifications
+                if comparisonParticle in particle:
+                    fuzzyList = self.processAdHocNamingConventions(particle,comparisonParticle,localSpeciesDict, False, species)
+                    if self.testAgainstExistingConventions(fuzzyList[0][1],self.namingConventions['modificationList']):
+
+                        if particle in database.annotationDict and comparisonParticle in database.annotationDict:
+                            baseSet = set([y  for x in database.annotationDict[particle] for y in database.annotationDict[particle][x]])
+                            modSet = set([y  for x in database.annotationDict[comparisonParticle] for y in database.annotationDict[comparisonParticle][x]])
+                            if len(baseSet.intersection(modSet)) == 0:
+                                logMess('ERROR:ANN202', '{0} can be mapped to {1} through naming conventions but the annotation information does not match'.format(particle,comparisonParticle))
+                                continue
+
+                        addToDependencyGraph(dependencyGraph,particle,[comparisonParticle])
+                        logMess('INFO:LAE005', '{0} can be mapped to {1} through existing naming conventions'.format(particle, [comparisonParticle]))
+                        break           
+                else:
+                    
+                    common_root =  detectOntology.findLongestSubstring(particle, comparisonParticle)
+                    
+                    # some arbitrary threshold of what makes a good minimum lenght for the common root
+                    if len(common_root) > 0 and common_root not in database.dependencyGraph:
+                        
+                        fuzzyList = self.processAdHocNamingConventions(common_root,comparisonParticle,localSpeciesDict, False, species)
+                        fuzzyList2 = self.processAdHocNamingConventions(common_root,particle,localSpeciesDict, False, species)
+                        
+                        particleMap = self.testAgainstExistingConventions(fuzzyList[0][1], self.namingConventions['modificationList'])
+                        compParticleMap =  fuzzyList2, self.testAgainstExistingConventions(fuzzyList2[0][1], self.namingConventions['modificationList'])
+                        if particleMap and compParticleMap:
                             if particle in database.annotationDict and comparisonParticle in database.annotationDict:
                                 baseSet = set([y  for x in database.annotationDict[particle] for y in database.annotationDict[particle][x]])
                                 modSet = set([y  for x in database.annotationDict[comparisonParticle] for y in database.annotationDict[comparisonParticle][x]])
                                 if len(baseSet.intersection(modSet)) == 0:
                                     logMess('ERROR:ANN202', '{0} can be mapped to {1} through naming conventions but the annotation information does not match'.format(particle,comparisonParticle))
                                     break
-                            addToDependencyGraph(dependencyGraph,particle,[comparisonParticle])
-                            logMess('INFO:LAE005', '{0} can be mapped to {1} through existing naming conventions-'.format(particle, [comparisonParticle]))
-                            break           
-                            
+                            addToDependencyGraph(dependencyGraph, particle, [common_root])
+                            addToDependencyGraph(dependencyGraph, comparisonParticle, [common_root])
+                            addToDependencyGraph(dependencyGraph, common_root, [])
+
+                            logMess('INFO:LAE006', '{0} and {1} can be mapped together through new common molecule {2} by existing naming conventions'.format(particle, comparisonParticle, common_root))
+                            break
+
+
+
         #if len(additionalHandling) > 0:
             #print self.findClosestModification(set(additionalHandling),species)
         return dependencyGraph,equivalenceTranslator
@@ -1435,6 +1469,7 @@ class SBMLAnalyzer:
             if [0] in reactantString or [0] in productString:
                 continue
             matching, matching2 = self.approximateMatching2(reactantString, productString, strippedMolecules, translationKeys)
+            #print reaction, matching
             #if matching and flagstar:
             #    logMess('DEBUG:Atomization', 'inverting order of {0} for lexical analysis'.format([reaction[1], reaction[0]]))
      
