@@ -311,7 +311,6 @@ class SBML2BNGL:
         remainderPatterns = []
         highStoichoiMetryFactor = 1
         processedReactants = self.preProcessStoichiometry(reactants)
-
         for x in processedReactants:
             highStoichoiMetryFactor *= factorial(x[1])
             y = [i[1] for i in products if i[0] == x[0]]
@@ -331,6 +330,7 @@ class SBML2BNGL:
 
         math = self.getPrunnedTree(math, remainderPatterns)
         rateR = libsbml.formulaToString(math)
+
         for element in remainderPatterns:
             ifStack.update([element])
         for element in ifStack:
@@ -338,12 +338,17 @@ class SBML2BNGL:
                 rateR = 'if({0}>0, {1}/({0}^{2}),0)'.format(element, rateR, ifStack[element])
             else:
                 rateR = 'if({0}>0, {1}/{0},0)'.format(element, rateR)
+
+        numFactors = max(math.getNumChildren(), len(ifStack))
         if np.isinf(highStoichoiMetryFactor):
             rateR = '{0} * 1e20'.format(rateR)
             logMess('ERROR:SIM204','Found usage of "inf" inside function {0}'.format(rateR))
         elif highStoichoiMetryFactor != 1:
             rateR = '{0} * {1}'.format(rateR, int(highStoichoiMetryFactor))
-        return rateR, max(math.getNumChildren(), len(ifStack))
+            # we are adding a factor to the rate so we need to account for it when 
+            # we are constructing the bngl equation (we dont want constrant expressions in there)
+            numFactors = max(1, numFactors)
+        return rateR, numFactors
 
     def isAmount(self, reactantName):
         for species in self.model.getListOfSpecies():
@@ -431,11 +436,12 @@ but reaction is marked as reversible'.format(reactionID))
 
                 #nl, nr = 1,1
         else:
+            
             rateL, nl = (self.removeFactorFromMath(math.deepCopy(),
                                                    rReactant, rProduct, parameterFunctions))
 
             rateR, nr = '0', '-1'
-
+            
         #cBNGL and SBML treat the behavior of compartments in rate laws differently so we have to compensate for that
         if len(removedCompartments) > 0:
             #if the species initial conditions were defined as concentrations then correct for it and transform it to absolute counts
@@ -450,8 +456,6 @@ but reaction is marked as reversible'.format(reactionID))
                 if len(rProduct) == 2 and len(rReactant) == 1 and not (self.isAmount(rProduct[0][0]) or self.isAmount(rProduct[1][0])):
                     rateR = '({0}) * {1}'.format(rateR,' * '.join(removedCompartments))
                     nr += 1
-        #print rateL, nl
-        #print rateR, nr
         return rateL, rateR, nl, nr
 
     def __getRawRules(self, reaction, symmetryFactors, parameterFunctions, translator):
@@ -790,7 +794,7 @@ but reaction is marked as reversible'.format(reactionID))
             compartmentList = [['cell', 1]]
             compartmentList.extend([[self.__getRawCompartments(x)[0], self.__getRawCompartments(x)[2]] for x in self.model.getListOfCompartments()])
             threshold = 0
-            if rawRules['numbers'][0] > threshold:
+            if rawRules['numbers'][0] > threshold  or rawRules['rates'][0] in translator:
                 functionName = '%s%d()' % (functionTitle, index)
             else:
                 # append reactionNumbers to parameterNames
@@ -800,14 +804,13 @@ but reaction is marked as reversible'.format(reactionID))
                                          r'\1{0}\3'.format('r{0}_{1}'.format(index + 1, parameter)),
                                          finalString)
                 functionName = finalString
-
             if self.getReactions.functionFlag and 'delay' in rawRules['rates'][0]:
                 logMess('ERROR:SIM202', 'BNG cannot handle delay functions in function %s' % functionName)
             if rawRules['reversible']:
-                if rawRules['numbers'][0] > threshold:
+                if rawRules['numbers'][0] > threshold or rawRules['rates'][0] in translator:
                     if self.getReactions.functionFlag:
                         functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'], compartmentList, parameterDict, self.reactionDictionary))
-                if rawRules['numbers'][1] > threshold:
+                if rawRules['numbers'][1] > threshold  or rawRules['rates'][1] in translator:
                     functionName2 = '%s%dm()' % (functionTitle, index)
                     if self.getReactions.functionFlag:
                         functions.append(writer.bnglFunction(rawRules['rates'][1], functionName2, rawRules['products'],
@@ -822,7 +825,9 @@ but reaction is marked as reversible'.format(reactionID))
                                              finalString)
                     functionName = '{0},{1}'.format(functionName, finalString)
             else:
-                if rawRules['numbers'][0] > threshold:
+
+                if rawRules['numbers'][0] > threshold or rawRules['rates'][0] in translator:
+
                     if self.getReactions.functionFlag:
                         functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'],
                                                              compartmentList, parameterDict, self.reactionDictionary))
