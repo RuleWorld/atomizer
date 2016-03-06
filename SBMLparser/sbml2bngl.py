@@ -161,6 +161,12 @@ class SBML2BNGL:
         boundaryCondition = species.getBoundaryCondition()
         standardizedName = standardizeName(name)
 
+        # if its a species that appends the compartment name remove it, it is not necessary in bionetgen
+        if standardizedName.endswith('_{0}'.format(compartment)):
+            standardizedName = standardizedName.replace('_{0}'.format(compartment), '')
+        
+        #if standardizedName in ['Source','Trash','Sink']:
+        #    standardizedName = '0'
         if standardizedName in parameters:
             standardizedName = 'sp_{0}'.format(standardizedName)
 
@@ -168,9 +174,10 @@ class SBML2BNGL:
         if standardizedName[:1].isdigit():
             standardizedName = 's' + standardizedName
 
+
         # two species cannot have the same name. Ids are unique but less informative, however typically species can be differentiated
         # by compartment
-        if logEntries:
+        if logEntries and standardizedName != '0':
 
             if standardizedName in self.speciesMemory:
                 if len(list(self.model.getListOfCompartments())) == 1:
@@ -451,15 +458,15 @@ but reaction is marked as reversible'.format(reactionID))
         if self.useID:
             reactant = [(reactant.getSpecies(), reactant.getStoichiometry())
                         for reactant in reaction.getListOfReactants() if
-                        reactant.getSpecies() not in ['EmptySet']]
+                        reactant.getSpecies() not in ['EmptySet','Trash','Sink','Source']]
             product = [(product.getSpecies(), product.getStoichiometry())
                        for product in reaction.getListOfProducts() if product.getSpecies()
-                       not in ['EmptySet']]
+                       not in ['EmptySet','Trash','Sink','Source']]
         else:
             reactant = [(self.speciesDictionary[rElement.getSpecies()], rElement.getStoichiometry(), rElement.getSpecies())
-                        for rElement in reaction.getListOfReactants() if rElement.getSpecies() not in ['EmptySet']]
+                        for rElement in reaction.getListOfReactants() if self.speciesDictionary[rElement.getSpecies()] not in ['EmptySet', 'Trash', 'Source', 'Sink']]
             product = [(self.speciesDictionary[rProduct.getSpecies()], rProduct.getStoichiometry(), rProduct.getSpecies())
-                       for rProduct in reaction.getListOfProducts() if rProduct.getSpecies() not in ['EmptySet']]
+                       for rProduct in reaction.getListOfProducts() if self.speciesDictionary[rProduct.getSpecies()] not in ['EmptySet', 'Trash', 'Source', 'Sink']]
         kineticLaw = reaction.getKineticLaw()
         reversible = reaction.getReversible()
 
