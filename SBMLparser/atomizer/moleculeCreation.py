@@ -286,7 +286,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                     tmpCandidates.append(tmpAnswer)
             except CycleError:
                 if loginformation:
-                    logMess('ERROR:SCT221', 'Dependency cycle found when mapping molecule {0} to candidate {1}'.format(reactant, individualAnswer))
+                    logMess('ERROR:SCT221', '{0}:Dependency cycle found when mapping molecule to candidate {1}'.format(reactant, individualAnswer))
                 continue
         # we cannot handle tuple naming conventions for now
         if len(tmpCandidates) == 0:
@@ -461,14 +461,14 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                     if len(tmpCandidates) != 1:
                         if not database.softConstraints:
                             if loginformation:
-                                logMess('ERROR:SCT213', 'Atomizer needs user information to determine which element is being modified in species {0}={1}={2}.'.format(
+                                logMess('ERROR:SCT213', '{0}:Atomizer needs user information to determine which element is being modified among components {1}={2}.'.format(
                                 reactant, candidates, tmpCandidates))
                             # print database.userLabelDictionary
                             return None, None, None
                     else:
                         if not database.softConstraints:
                             if loginformation:
-                                logMess('ERROR:SCT212', 'Atomizer needs user information to determine which element is being modified in species {0}={1}={2}.'.format(
+                                logMess('ERROR:SCT212', '{0} Atomizer needs user information to determine which element is being modified among component species {1}={2}.'.format(
                                 reactant, candidates, tmpCandidates))
                             return None, None, None
                         # print database.userLabelDictionary')
@@ -479,10 +479,10 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
             if all(sorted(x) == sorted(tmpCandidates[0]) for x in tmpCandidates):
                 tmpCandidates = [tmpCandidates[0]]
             elif reactant in database.alternativeDependencyGraph:
-                # candidates contradict each other
+                # candidates contradict each other but we have naming convention information in alternativeDependencyGraph
                 if not all(sorted(x) == sorted(originalTmpCandidates[0]) for x in originalTmpCandidates):
                     if loginformation:
-                        logMess('INFO:SCT001', 'Using lexical analysis for species {0} =  {1} since stoichiometry gives non-consistent information {2}'.format(reactant,
+                        logMess('INFO:SCT001', '{0}:Using lexical analysis since stoichiometry gives non-consistent information naming({1})!=stoichiometry({2})'.format(reactant,
                                                                                                                                                            database.alternativeDependencyGraph[reactant][0], tmpCandidates))
 
                 # else:
@@ -500,7 +500,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
 
                 if not any([sorted(subcandidate) == sorted(namingTmpCandidates[0]) for subcandidate in tmpCandidates]):
                     if loginformation:
-                        logMess('WARNING:SCT112', 'Stoichiometry analysis result in non self-consistent definitions but conflicts with lexical analysis for species {0}: stoichiometry({1})!= naming({2}). Selecting lexical analysis'.format(reactant,
+                        logMess('WARNING:SCT112', '{0}:Stoichiometry analysis result in non self-consistent definitions but conflicts with lexical analysis stoichiometry({1})!= naming({2}). Selecting lexical analysis'.format(reactant,
                                                                                                                                                                                                                                           tmpCandidates, namingTmpCandidates))
                     addAssumptions('lexicalVsstoch', (reactant, ('lexical', str(
                         namingTmpCandidates)), ('stoch', str(tmpCandidates)), ('original', str(originalTmpCandidates))))
@@ -508,10 +508,11 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                 tmpCandidates = namingTmpCandidates
                 database.alternativeDependencyGraph[reactant] = tmpCandidates
             elif all(sorted(x) == sorted(originalTmpCandidates[0]) for x in originalTmpCandidates):
+                #the basic elements are the same but we are having trouble matching modifciations together
                 sortedCandidates = sorted([([y for y in x if y in reactant], i) for i, x in enumerate(
                     tmpCandidates)], key=lambda z: [len(z[0]), sum([len(w) for w in z[0]])], reverse=True)
                 if loginformation:
-                    logMess('WARNING:SCT113', 'For species {0}, candidates {1} agree on the basic components but naming conventions cannot determine  specific modifications. Selecting {2} based on longest partial match'.format(
+                    logMess('WARNING:SCT113', '{0}:candidates {1} agree on the basic components but naming conventions cannot determine  specific modifications. Selecting {2} based on longest partial match'.format(
                         reactant, tmpCandidates, tmpCandidates[sortedCandidates[0][1]]))
                 replacementCandidate = [tmpCandidates[sortedCandidates[0][1]]]
                 addAssumptions('lexicalVsstoch', (reactant, ('current', str(replacementCandidate)), ('alternatives', str(
@@ -519,8 +520,8 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                 tmpCandidates = replacementCandidate
             else:
                 if loginformation:
-                    logMess('ERROR:SCT211', 'Cannot converge to solution for species {0}, conflicting definitions {1}'.format(
-                    reactant, tmpCandidates))
+                    logMess('ERROR:SCT211', '{0}:Cannot converge to solution, conflicting definitions {1}={2}'.format(
+                    reactant, tmpCandidates, originalTmpCandidates))
                 return None, None, None
         elif reactant in database.alternativeDependencyGraph:
             # there is one stoichionetry candidate but the naming convention
@@ -538,7 +539,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                 # if they still disagree print error and use stoichiometry
                 if tmpCandidates[0] != namingtmpCandidates[0]:
                     if loginformation:
-                        logMess('WARNING:SCT111', 'Species {0} has conflicting definitions between stoichiometry ({1}) and naming conventions {2}. Choosing the latter'.format(
+                        logMess('WARNING:SCT111', '{0}:conflicting definitions between stoichiometry ({1}) and naming conventions {2}. Choosing the latter'.format(
                         reactant, tmpCandidates[0], database.alternativeDependencyGraph[reactant]))
                     tmpCandidates = namingtmpCandidates
                     addAssumptions('lexicalVsstoch', (reactant, ('stoch', str(tmpCandidates)), ('lexical', str(
@@ -727,11 +728,14 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser):
             if not mol1:
                 mol1 = getNamedMolecule(totalComplex[1], dbPair[0][0])
                 mol2 = getNamedMolecule(totalComplex[0], dbPair[0][1])
+
             else:
                 mol2 = getNamedMolecule(totalComplex[1], dbPair[0][1])
+                if not mol2:
+                    mol1 = getNamedMolecule(totalComplex[1], dbPair[0][0])
+                    mol2 = getNamedMolecule(totalComplex[0], dbPair[0][1])
 
-            logMess(
-                'INFO:ATO001', 'Binding information found in BioGrid/Pathwaycommons for for {0}-{1}'.format(mol1.name, mol2.name))
+            logMess('INFO:ATO001', 'Binding information found in BioGrid/Pathwaycommons for for {0}-{1}'.format(mol1.name, mol2.name))
 
     else:
 
@@ -1314,10 +1318,11 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
     if logResults:
         for x in exactMatches:
             if not tentativeFlag:
-                logMess('INFO:ANN001', '{0} was determined to be the same as {1} according to annotation information.'.format(
+                logMess('INFO:ANN001', '{0}:was determined to be the same as {1} according to annotation information.'.format(
                     x, exactMatches[x]))
             else:
-                logMess('WARNING:ANN101', '{0} was determined to be the same as {1} according to annotation information. Please confirm from user information'.format(
+                if not (x in database.dependencyGraph and exactMatches[x][0][0] in database.dependencyGraph and database.dependencyGraph[x] == database.dependencyGraph[exactMatches[x][0][0]]):
+                    logMess('WARNING:ANN101', '{0}: was determined to be the same as {1} according to annotation information. Please confirm from user information'.format(
                     x, exactMatches[x]))
 
     # create strong intersection groups
@@ -1330,10 +1335,12 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
         for x in strongIntersectionMatches:
             if x not in exactMatches:
                 if not tentativeFlag:
-                    logMess('INFO:ANN002', '{0} was determined to exactly match {1} according to annotation information.'.format(
+                    logMess('INFO:ANN002', '{0}: was determined to exactly match {1} according to annotation information.'.format(
                         x, strongIntersectionMatches[x]))
                 else:
-                    logMess('WARNING:ANN101', '{0} was determined to exactly match {1} according to annotation information. Please confirm from user information'.format(
+                    if not(x in database.dependencyGraph and strongIntersectionMatches[x][0][0] in database.dependencyGraph and \
+                        database.dependencyGraph[x] == database.dependencyGraph[strongIntersectionMatches[x][0][0]]):
+                        logMess('WARNING:ANN101', '{0}: was determined to exactly match {1} according to annotation information. Please confirm from user information'.format(
                         x, strongIntersectionMatches[x]))
 
     # create partial intersection groups
@@ -1344,14 +1351,14 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
     if logResults:
         for x in intersectionMatches:
             if x not in exactMatches:
-                logMess('INFO:ANN002', '{0} was determined to be partially match {1} according to annotation information.'.format(
+                logMess('INFO:ANN002', '{0}: was determined to be partially match {1} according to annotation information.'.format(
                     x, intersectionMatches[x]))
     partialMatches = consolidateDependencyGraph(
         dict(partialMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
 
     if logResults:
         for x in partialMatches:
-            logMess('INFO:ANN003', '{0} is thought to be partially composed of reactants {1} according to annotation information. Please verify stoichiometry'.format(
+            logMess('INFO:ANN003', '{0}: is thought to be partially composed of reactants {1} according to annotation information. Please verify stoichiometry'.format(
                 x, partialMatches[x]))
 
     # validAnnotationPairs.sort()
@@ -1525,8 +1532,8 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                             addToDependencyGraph(
                                 database.dependencyGraph, modElement, [baseElement])
                         else:
-                            baseDB = set([x.split('/')[-2] for x in baseSet])
-                            modDB = set([x.split('/')[-2] for x in modSet])
+                            baseDB = set([x.split('/')[-2] for x in baseSet if 'identifiers.org' in x])
+                            modDB = set([x.split('/')[-2] for x in modSet if 'identifiers.org' in x])
                             # it is still ok if they each refer to different databases
                             if len(baseDB.intersection(modDB)) == 0:
                                 addToDependencyGraph(
@@ -1571,8 +1578,8 @@ choosing binding'.format(database.dependencyGraph[modElement], baseElement, modE
                         modSet = set(
                             [y for x in database.annotationDict[mod] for y in database.annotationDict[mod][x]])
                         if(len(baseSet.intersection(modSet))) == 0 and len(baseSet) > 0 and len(modSet) > 0:
-                            baseDB = set([x.split('/')[-2] for x in baseSet])
-                            modDB = set([x.split('/')[-2] for x in modSet])
+                            baseDB = set([x.split('/')[-2] for x in baseSet if 'identifiers.org' in x])
+                            modDB = set([x.split('/')[-2] for x in modSet if 'identifiers.org' in x])
                             #we stil ahve to check that they both reference the same database
                             if len(baseDB.intersection(modDB)) > 0:
                                 logMess("WARNING:ANN201", "{0} and {1} have a direct correspondence according to reaction \
@@ -1653,7 +1660,6 @@ tmp,removedElement,tmp3))
     orphanedSpecies.extend([x for x in database.dependencyGraph if database.dependencyGraph[
                            x] == [] and x not in orphanedSpecies])
 
-
     # Fill SCT with annotations for those species that still dont have any
     # mapping
 
@@ -1718,7 +1724,7 @@ tmp,removedElement,tmp3))
             database.dependencyGraph[reactant] = [greedyMatch]
             logMess('INFO:LAE006','Mapped {0} to {1} using lexical analysis/greedy matching'.format(reactant, greedyMatch))
 
-    
+    logMess('WARNING:SCT131','The following species names do not appear in the original model but where created to have more appropiate naming conventions: [{0}]'.format(','.join(database.constructedSpecies)))
     # initialize and remove zero elements
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,

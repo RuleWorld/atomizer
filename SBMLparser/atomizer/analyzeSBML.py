@@ -441,8 +441,8 @@ class SBMLAnalyzer:
                             baseSet = set([y  for x in database.annotationDict[particle] for y in database.annotationDict[particle][x]])
                             modSet = set([y  for x in database.annotationDict[comparisonParticle] for y in database.annotationDict[comparisonParticle][x]])
                             if len(baseSet.intersection(modSet)) == 0:
-                                baseDB = set([x.split('/')[-2] for x in baseSet])
-                                modDB = set([x.split('/')[-2] for x in modSet])
+                                baseDB = set([x.split('/')[-2] for x in baseSet if 'identifiers.org' in x])
+                                modDB = set([x.split('/')[-2] for x in modSet if 'identifiers.org' in x])
                                 #we stil ahve to check that they both reference the same database
                                 if len(baseDB.intersection(modDB)) > 0:
 
@@ -659,25 +659,27 @@ class SBMLAnalyzer:
             # string share a common subset but they contain mutually exclusive appendixes: a_b,a_c
             else:
                 commonRoot = detectOntology.findLongestSubstring(reactant, product)
-
                 if len(commonRoot) > longEnough or commonRoot in moleculeSet:
+                    #find if we can find a commonRoot from existing molecules
                     mostSimilarRealMolecules = get_close_matches(commonRoot, [x for x in moleculeSet if x not in [reactant, product]])
                     for commonMolecule in mostSimilarRealMolecules:
                         if commonMolecule in reactant and commonMolecule in product:
                             commonRoot = commonMolecule
-                            logMess('INFO:LAE003', 'common root {0}={1}:{2}'.format(commonRoot, reactant, product))
+                            logMess('DEBUG:LAE003', 'common root {0}={1}:{2}'.format(commonRoot, reactant, product))
                         #if commonMolecule == commonRoot.strip('_'):
                         #    commonRoot= commonMolecule
                         #    break
                     molecules = [commonRoot, reactant, product]
                     namePairs, differenceList, _ = detectOntology.defineEditDistanceMatrix([commonRoot, reactant], similarityThreshold=10)
+
                     namePairs2, differenceList2, _ = detectOntology.defineEditDistanceMatrix([commonRoot, product], similarityThreshold=10)
                     namePairs.extend(namePairs2)
-
-                    for element in namePairs:
+                    #print namePairs, reactant, product
+                    #XXX: this was just turning the heuristic off
+                    #for element in namePairs:
                         # supposed modification is actually a pre-existing species. if that happens then refuse to proceeed
-                        if element[1] in moleculeSet:
-                            return [[[[reactant],[product]],None,None]]
+                    #    if element[1] in moleculeSet:
+                    #        return [[[[reactant],[product]],None,None]]
 
                     differenceList.extend(differenceList2)
                     # obtain the name of the component from an anagram using the modification letters

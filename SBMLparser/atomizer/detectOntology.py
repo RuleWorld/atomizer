@@ -134,7 +134,7 @@ def defineEditDistanceMatrix3(speciesName, similarityThreshold=4, parallel=False
                 differenceList.append(tuple([x for x in difference if '+' in x]))
     return namePairs, differenceList, ''
 
-
+@memoize
 def defineEditDistanceMatrix(speciesName, similarityThreshold=4, parallel=False):
     '''
     obtains a distance matrix and a pairs of elements that are close
@@ -167,7 +167,9 @@ def defineEditDistanceMatrix(speciesName, similarityThreshold=4, parallel=False)
             scoreMatrix2[idx][idx2] = comparison
             scoreMatrix2[idx2][idx] = scoreMatrix2[idx][idx2]
 
+
     namePairs, differenceList = getDifferences(scoreMatrix2, speciesName, similarityThreshold)
+
     differenceCounter.update(differenceList)
     return namePairs, differenceList, differenceCounter
 
