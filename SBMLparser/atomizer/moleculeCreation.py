@@ -1316,11 +1316,12 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
     exactMatches = consolidateDependencyGraph(
         dict(exactMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
     if logResults:
-        for x in exactMatches:
+        for x in [y for y in exactMatches if len(exactMatches[y]) > 0]:
             if not tentativeFlag:
                 logMess('INFO:ANN001', '{0}:was determined to be the same as {1} according to annotation information.'.format(
                     x, exactMatches[x]))
             else:
+
                 if not (x in database.dependencyGraph and exactMatches[x][0][0] in database.dependencyGraph and database.dependencyGraph[x] == database.dependencyGraph[exactMatches[x][0][0]]):
                     logMess('WARNING:ANN101', '{0}: was determined to be the same as {1} according to annotation information. Please confirm from user information'.format(
                     x, exactMatches[x]))
@@ -1332,7 +1333,7 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
     strongIntersectionMatches = consolidateDependencyGraph(dict(strongIntersectionMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
 
     if logResults:
-        for x in strongIntersectionMatches:
+        for x in [y for y in strongIntersectionMatches if len(strongIntersectionMatches[y]) > 0]:
             if x not in exactMatches:
                 if not tentativeFlag:
                     logMess('INFO:ANN002', '{0}: was determined to exactly match {1} according to annotation information.'.format(
