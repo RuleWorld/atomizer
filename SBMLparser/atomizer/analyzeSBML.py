@@ -1351,7 +1351,7 @@ class SBMLAnalyzer:
             a change was performed
             '''
             #fuzzyKey,fuzzyDifference = self.processAdHocNamingConventions(reaction[0][0],reaction[1][0],localSpeciesDict,compartmentChangeFlag)
-            if fuzzyKey and fuzzyKey.strip('_') not in strippedMolecules:
+            if fuzzyKey and fuzzyKey.strip('_').lower() not in [x.lower() for x in strippedMolecules]:
                 # if our state isnt yet on the dependency graph preliminary data structures
                 if '{0}'.format(fuzzyKey) not in equivalenceTranslator:
                     # print '---','{0}'.format(fuzzyKey),equivalenceTranslator.keys()

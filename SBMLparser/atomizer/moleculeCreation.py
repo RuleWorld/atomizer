@@ -468,7 +468,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                     else:
                         if not database.softConstraints:
                             if loginformation:
-                                logMess('ERROR:SCT212', '{0} Atomizer needs user information to determine which element is being modified among component species {1}={2}.'.format(
+                                logMess('ERROR:SCT212', '{0}:Atomizer needs user information to determine which element is being modified among component species {1}={2}.'.format(
                                 reactant, candidates, tmpCandidates))
                             return None, None, None
                         # print database.userLabelDictionary')
@@ -1724,8 +1724,8 @@ tmp,removedElement,tmp3))
         if greedyMatch not in [-1,-2, []]:
             database.dependencyGraph[reactant] = [greedyMatch]
             logMess('INFO:LAE006','Mapped {0} to {1} using lexical analysis/greedy matching'.format(reactant, greedyMatch))
-
-    logMess('WARNING:SCT131','The following species names do not appear in the original model but where created to have more appropiate naming conventions: [{0}]'.format(','.join(database.constructedSpecies)))
+    if len(database.constructedSpecies) > 0:
+        logMess('WARNING:SCT131','The following species names do not appear in the original model but where created to have more appropiate naming conventions: [{0}]'.format(','.join(database.constructedSpecies)))
     # initialize and remove zero elements
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
