@@ -233,7 +233,7 @@ def processFunctions(functions,sbmlfunctions,artificialObservables,tfunc):
     '''
     fd = []
     for function in functions:
-        #print function,'---',dependencies2[function.split(' = ' )[0].split('(')[0]],'---',function.split(' = ' )[0].split('(')[0],0
+        # print function,'---',dependencies2[function.split(' = ' )[0].split('(')[0]],'---',function.split(' = ' )[0].split('(')[0],0
         fd.append([function,resolveDependencies(dependencies2,function.split(' = ' )[0].split('(')[0],0)])
     fd = sorted(fd,key= lambda rule:rule[1])
     functions = [x[0] for x in fd]
@@ -632,9 +632,11 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     observables.extend('Species {0} {0}'.format(x.split(' ')[0]) for x in removeParams)
     for x in removeParams:
         initialConditions.append(x.split(' ')[0] + tags + ' ' + ' '.join(x.split(' ')[1:]))
+
     ## Comment out those parameters that are defined with assignment rules
     ## TODO: I think this is correct, but it may need to be checked
     tmpParams = []
+
     for idx, parameter in enumerate(param):
         for key in artificialObservables:
             
@@ -644,6 +646,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     tmpParams.extend(removeParams)
     tmpParams = set(tmpParams)
     correctRulesWithParenthesis(rules,tmpParams)
+
     for element in assigmentRuleDefinedParameters:
         param[element] = '#' + param[element]
     
@@ -678,6 +681,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                 flag = idx
         if flag != -1:
             initialConditions[flag] = '#' + initialConditions[flag]
+
 
     for flag in sorted(deleteMolecules,reverse=True):
         

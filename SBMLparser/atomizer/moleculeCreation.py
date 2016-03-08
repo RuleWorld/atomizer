@@ -1318,7 +1318,7 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
     if logResults:
         for x in [y for y in exactMatches if len(exactMatches[y]) > 0]:
             if not tentativeFlag:
-                logMess('INFO:ANN001', '{0}:was determined to be the same as {1} according to annotation information.'.format(
+                logMess('INFO:ANN001', '{0}: can be the same as {1} according to annotation information. No action was taken'.format(
                     x, exactMatches[x]))
             else:
 
@@ -1336,7 +1336,7 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
         for x in [y for y in strongIntersectionMatches if len(strongIntersectionMatches[y]) > 0]:
             if x not in exactMatches:
                 if not tentativeFlag:
-                    logMess('INFO:ANN002', '{0}: was determined to exactly match {1} according to annotation information.'.format(
+                    logMess('INFO:ANN002', '{0}: can exactly match {1} according to annotation information. No action was taken'.format(
                         x, strongIntersectionMatches[x]))
                 else:
                     if not(x in database.dependencyGraph and strongIntersectionMatches[x][0][0] in database.dependencyGraph and \
@@ -1562,6 +1562,9 @@ choosing binding'.format(database.dependencyGraph[modElement], baseElement, modE
                 else:
                     mod = preaction[1][0]
                     base = preaction[0][0]
+
+
+
                 if database.dependencyGraph[mod] == [] and mod not in database.userLabelDictionary:
                     if base in database.userLabelDictionary and \
                             database.userLabelDictionary[base] == 0:
@@ -1571,6 +1574,16 @@ choosing binding'.format(database.dependencyGraph[modElement], baseElement, modE
                         continue
                     if [mod] in database.dependencyGraph[base]:
                         continue
+
+                    # can we just match it up through existing species instead of forcing a modification?
+                    greedyMatch = database.sbmlAnalyzer.greedyModificationMatching(
+                        mod, database.dependencyGraph.keys())
+
+                    if greedyMatch not in [-1,-2, []]:
+                        database.dependencyGraph[mod] = [greedyMatch]
+                        logMess('INFO:LAE006','{0}: Mapped to {1} using lexical analysis/greedy matching'.format(mod, greedyMatch))
+                        continue
+
                     # if the annotations have no overlap whatsoever don't force
                     # this modifications
                     if base in database.annotationDict and mod in database.annotationDict:
@@ -1655,11 +1668,14 @@ tmp,removedElement,tmp3))
             database.dependencyGraph[element] = [list(
                 database.lexicalLabelDictionary[element][0])]
 
+    # Now let's go for annotation analysis and last resort stuff on the remaining orphaned molecules
+
     strippedMolecules = [x.strip('()') for x in molecules]
     orphanedSpecies = [
         x for x in strippedMolecules if x not in database.dependencyGraph or database.dependencyGraph[x] == []]
     orphanedSpecies.extend([x for x in database.dependencyGraph if database.dependencyGraph[
                            x] == [] and x not in orphanedSpecies])
+
 
     # Fill SCT with annotations for those species that still dont have any
     # mapping
