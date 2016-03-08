@@ -246,7 +246,8 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
     equivalenceTranslator = {}
     def selectBestCandidate(reactant, candidates, dependencyGraph, sbmlAnalyzer,
                             equivalenceTranslator=equivalenceTranslator, equivalenceDictionary=equivalenceDictionary):
-        
+
+
         tmpCandidates = []
         modifiedElementsPerCandidate = []
         unevenElements = []
@@ -403,7 +404,6 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                         equivalenceTranslator[element] = []
                 equivalenceTranslator[element].append(
                     (lexCandidate, lexCandidateModification))
-
                 dependencyGraph[lexCandidateModification] = [[lexCandidate]]
                 while lexCandidate in tmpCandidates[0]:
                     tmpCandidates[0].remove(lexCandidate)
@@ -478,7 +478,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
             # all candidates are equal/consistent
             if all(sorted(x) == sorted(tmpCandidates[0]) for x in tmpCandidates):
                 tmpCandidates = [tmpCandidates[0]]
-            elif reactant in database.alternativeDependencyGraph:
+            elif reactant in database.alternativeDependencyGraph and loginformation:
                 # candidates contradict each other but we have naming convention information in alternativeDependencyGraph
                 if not all(sorted(x) == sorted(originalTmpCandidates[0]) for x in originalTmpCandidates):
                     if loginformation:
@@ -497,7 +497,10 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                 # (molecule types)
                 namingTmpCandidates = selectBestCandidate(
                     reactant, [candidate[0]], dependencyGraph, sbmlAnalyzer)[0]
-
+                if not namingTmpCandidates:
+                    logMess('ERROR:SCT211', '{0}:Cannot converge to solution, conflicting definitions {1}={2}'.format(
+                            reactant, tmpCandidates, originalTmpCandidates))                    
+                    return None, None, None
                 if not any([sorted(subcandidate) == sorted(namingTmpCandidates[0]) for subcandidate in tmpCandidates]):
                     if loginformation:
                         logMess('WARNING:SCT112', '{0}:Stoichiometry analysis result in non self-consistent definitions but conflicts with lexical analysis stoichiometry({1})!= naming({2}). Selecting lexical analysis'.format(reactant,
@@ -506,7 +509,8 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                         namingTmpCandidates)), ('stoch', str(tmpCandidates)), ('original', str(originalTmpCandidates))))
 
                 tmpCandidates = namingTmpCandidates
-                database.alternativeDependencyGraph[reactant] = tmpCandidates
+                if loginformation:
+                    database.alternativeDependencyGraph[reactant] = tmpCandidates
             elif all(sorted(x) == sorted(originalTmpCandidates[0]) for x in originalTmpCandidates):
                 #the basic elements are the same but we are having trouble matching modifciations together
                 sortedCandidates = sorted([([y for y in x if y in reactant], i) for i, x in enumerate(
@@ -528,7 +532,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                     logMess('ERROR:SCT211', '{0}:Cannot converge to solution, conflicting definitions {1}={2}'.format(
                     reactant, tmpCandidates, originalTmpCandidates))
                 return None, None, None
-        elif reactant in database.alternativeDependencyGraph:
+        elif reactant in database.alternativeDependencyGraph and loginformation:
             # there is one stoichionetry candidate but the naming convention
             # and the stoichionetry dotn agree
             if tmpCandidates[0] != database.alternativeDependencyGraph[reactant][0]:
@@ -536,16 +540,16 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                 # omponents
                 candidate = database.alternativeDependencyGraph[reactant]
                 # this is to avoid recursion
-                del database.alternativeDependencyGraph[reactant]
+                if loginformation:
+                    del database.alternativeDependencyGraph[reactant]
                 namingtmpCandidates = selectBestCandidate(
                     reactant, [candidate[0]], dependencyGraph, sbmlAnalyzer)[0]
 
-                database.alternativeDependencyGraph[
-                    reactant] = namingtmpCandidates
-
                 # if they still disagree print error and use stoichiometry
                 if namingtmpCandidates and tmpCandidates[0] != namingtmpCandidates[0]:
+
                     if loginformation:
+                        database.alternativeDependencyGraph[reactant] = namingtmpCandidates
                         logMess('WARNING:SCT111', '{0}:conflicting definitions between stoichiometry ({1}) and naming conventions {2}. Choosing the latter'.format(
                         reactant, tmpCandidates[0], database.alternativeDependencyGraph[reactant]))
                     tmpCandidates = namingtmpCandidates
@@ -1320,8 +1324,12 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
                 intersectionMatches[sortedPair[1]].append([sortedPair[0]])
                 # intersectionMatches[combinationParticle[0]].append(combinationParticle[1])
     # create unary groups
+
+
     exactMatches = consolidateDependencyGraph(
         dict(exactMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
+
+
     if logResults:
         for x in [y for y in exactMatches if len(exactMatches[y]) > 0]:
             if not tentativeFlag:
@@ -1353,23 +1361,30 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
     # create partial intersection groups
     intersectionMatches = {x: intersectionMatches[x] for x in intersectionMatches if x not in partialMatches and x not in strongIntersectionMatches}
     intersectionMatches.update(exactMatches)
+
+
     intersectionMatches = consolidateDependencyGraph(dict(intersectionMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
+
     if logResults:
         for x in intersectionMatches:
             if x not in exactMatches:
                 logMess('INFO:ANN002', '{0}: was determined to be partially match {1} according to annotation information.'.format(
                     x, intersectionMatches[x]))
+
     partialMatches = consolidateDependencyGraph(
         dict(partialMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
 
+
     if logResults:
         for x in partialMatches:
-            logMess('INFO:ANN003', '{0}: is thought to be partially composed of reactants {1} according to annotation information. Please verify stoichiometry'.format(
-                x, partialMatches[x]))
+            if partialMatches[x] != []:
+                logMess('INFO:ANN003', '{0}: is thought to be partially composed of reactants {1} according to annotation information. Please verify stoichiometry'.format(
+                    x, partialMatches[x]))
 
     # validAnnotationPairs.sort()
 
     intersectionMatches.update(strongIntersectionMatches)
+
     return intersectionMatches, partialMatches
 
 
@@ -1518,6 +1533,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
     # catalysis reactions
     for key in database.eequivalenceTranslator2:
         for namingEquivalence in database.eequivalenceTranslator2[key]:
+
             baseElement = min(namingEquivalence, key=len)
             modElement = max(namingEquivalence, key=len)
             # dont overwrite user information
@@ -1537,7 +1553,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                             else:
                                 # otherwise add it to the lexical repository
                                 addToDependencyGraph(database.alternativeDependencyGraph, modElement, [baseElement])
-                                
                         else:
                             baseDB = set([x.split('/')[-2] for x in baseSet if 'identifiers.org' in x])
                             modDB = set([x.split('/')[-2] for x in modSet if 'identifiers.org' in x])
@@ -1558,6 +1573,7 @@ information however their annotations are completely different.".format(baseElem
                 else:
                     logMess('WARNING:ATO114', 'Definition conflict between binding information {0} and lexical analyis {1} for molecule {2},\
 choosing binding'.format(database.dependencyGraph[modElement], baseElement, modElement))
+
 
     # non lexical-analysis catalysis reactions
     if database.forceModificationFlag:
@@ -1675,6 +1691,8 @@ tmp,removedElement,tmp3))
             database.dependencyGraph[element] = [list(
                 database.lexicalLabelDictionary[element][0])]
 
+
+
     # Now let's go for annotation analysis and last resort stuff on the remaining orphaned molecules
 
     strippedMolecules = [x.strip('()') for x in molecules]
@@ -1683,15 +1701,14 @@ tmp,removedElement,tmp3))
     orphanedSpecies.extend([x for x in database.dependencyGraph if database.dependencyGraph[
                            x] == [] and x not in orphanedSpecies])
 
-
     # Fill SCT with annotations for those species that still dont have any
     # mapping
 
     annotationDependencyGraph, _ = fillSCTwithAnnotationInformation(
         orphanedSpecies, database.annotationDict, database)
+
     # use an empty dictionary if we wish to turn off annotation information in atomization
     #annotationDependencyGraph = {}
-
 
     for annotatedSpecies in annotationDependencyGraph:
         if len(annotationDependencyGraph[annotatedSpecies]) > 0 and annotatedSpecies not in database.userLabelDictionary:
@@ -1707,6 +1724,7 @@ tmp,removedElement,tmp3))
 
     nonOrphanedSpecies = [x for x in strippedMolecules if x not in orphanedSpecies]
 
+
     annotationDependencyGraph, _ = fillSCTwithAnnotationInformation(
         nonOrphanedSpecies, database.annotationDict, database,tentativeFlag=True)
 
@@ -1716,13 +1734,17 @@ tmp,removedElement,tmp3))
     orphanedSpecies.extend([x for x in database.dependencyGraph if database.dependencyGraph[
                            x] == [] and x not in orphanedSpecies])
 
+
     orphanedSpecies.extend(database.constructedSpecies)
     strippedMolecules.extend([x.strip('()') for x in database.constructedSpecies])
     # TODO: merge both lists and use them as a tiebreaker for consolidation
     #completeAnnotationDependencyGraph, completePartialMatches = fillSCTwithAnnotationInformation(strippedMolecules, annotationDict, database, False)
     # pure lexical analysis for the remaining orphaned molecules
+
+
     tmpDependency, database.tmpEquivalence = database.sbmlAnalyzer.findClosestModification(
         orphanedSpecies, strippedMolecules, database)
+
 
     for species in tmpDependency:
         if species not in database.userLabelDictionary:
@@ -1757,7 +1779,6 @@ tmp,removedElement,tmp3))
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
                                    database.eequivalenceTranslator, database.sbmlAnalyzer, database)
-
     return database
 
 

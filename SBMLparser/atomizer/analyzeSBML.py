@@ -145,7 +145,7 @@ class SBMLAnalyzer:
         tokenPosition = []
         tmpModifiedElement = modifiedElement
         for token in sortedPartialAnalysis:
-            sequenceMatcher = difflib.SequenceMatcher(None,token,tmpModifiedElement)
+            sequenceMatcher = difflib.SequenceMatcher(None, token, tmpModifiedElement)
             #sequenceMatcher2 = difflib.SequenceMatcher(None,token,baseElement)
             modifiedMatchingBlocks = [m.span() for m in re.finditer(token, tmpModifiedElement)]
             baseMatchingBlocks = [m.span() for m in re.finditer(token, baseElement)]
@@ -173,7 +173,8 @@ class SBMLAnalyzer:
                         continue
                     tmpModifiedElement = list(tmpModifiedElement)
                     for idx in tmp:
-                        tmpModifiedElement[idx] = '_'
+                        if idx< len(tmpModifiedElement):
+                            tmpModifiedElement[idx] = '_'
                     tmpModifiedElement = ''.join(tmpModifiedElement)
                     tmp  = [tmp[0],tmp[-1]-1]
                     tokenPosition.append(tmp)
