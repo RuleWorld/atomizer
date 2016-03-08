@@ -149,10 +149,8 @@ class SBMLAnalyzer:
             #sequenceMatcher2 = difflib.SequenceMatcher(None,token,baseElement)
             modifiedMatchingBlocks = [m.span() for m in re.finditer(token, tmpModifiedElement)]
             baseMatchingBlocks = [m.span() for m in re.finditer(token, baseElement)]
-
-            
             #matchingBlocks = [x for x in modifiedMatchingBlocks for y in baseMatching Blocks if ]
-            if len(modifiedMatchingBlocks) > 0:
+            if len(modifiedMatchingBlocks) > 0 and len(baseMatchingBlocks) > 0:
                 #select the matching block with the lowest distance to the base matching block
                 matchingBlockIdx = index_min([min([abs((y[1]+y[0])/2 - (x[1]+x[0])/2) for y in baseMatchingBlocks]) for x in modifiedMatchingBlocks])
                 matchingBlock = modifiedMatchingBlocks[matchingBlockIdx]
@@ -431,7 +429,6 @@ class SBMLAnalyzer:
             for comparisonParticle in particles:
                 if particle == comparisonParticle:
                     continue
-                
                 # try to map remaining orphaned molecules to each other based on simple, but known modifications
                 if comparisonParticle in particle:
                     fuzzyList = self.processAdHocNamingConventions(particle,comparisonParticle,localSpeciesDict, False, species)
@@ -453,9 +450,7 @@ class SBMLAnalyzer:
                         logMess('INFO:LAE005', '{0} can be mapped to {1} through existing naming conventions'.format(particle, [comparisonParticle]))
                         break           
                 else:
-                    
                     common_root =  detectOntology.findLongestSubstring(particle, comparisonParticle)
-                    
                     # some arbitrary threshold of what makes a good minimum lenght for the common root
                     if len(common_root) > 0 and common_root not in database.dependencyGraph:
                         
@@ -477,7 +472,6 @@ class SBMLAnalyzer:
 
                             logMess('INFO:LAE006', '{0} and {1} can be mapped together through new common molecule {2} by existing naming conventions'.format(particle, comparisonParticle, common_root))
                             break
-
 
 
         #if len(additionalHandling) > 0:
@@ -1499,7 +1493,6 @@ class SBMLAnalyzer:
                                 #mapping in {0} when lexically analyzing {1}.'.format(pair,reactant))
                             createArtificialNamingConvention(fuzzyReaction,
                                                                  fuzzyKey, fuzzyDifference)
-                                                                 
                     if flag and sorted([x[1] for x in matches]) not in lexicalDependencyGraph[reactant]:
                         # dont introduce cyclical dependencies
                         if all([x[1] != reactant for x in matches]):
@@ -1508,7 +1501,11 @@ class SBMLAnalyzer:
                                 # TODO(Oct14): it would be better to try to map this to an
                                 # existing molecule instead of trying to create a new one
                                 if x[1] not in strippedMolecules:
-                                    lexicalDependencyGraph[x[1]] = []
+                                    if len(x[1]) > len(x[0]):
+                                        lexicalDependencyGraph[x[1]] = [[x[0]]]
+                                    else:
+                                        lexicalDependencyGraph[x[0]] = [[x[1]]]
+                                        lexicalDependencyGraph[x[1]] = []
 
         translationKeys.extend(newTranslationKeys)
         for species in localSpeciesDict:
