@@ -16,11 +16,13 @@ def constructHistogram(data, fileName, xlabel, ylabel, bins=10):
     """
     constructs a histogram based on the information in data
     """
+    _, axs = plt.subplots(1, 1, sharex=True, figsize=(8, 6))
+
     plt.clf()
+    axs.set_xlim(xmin=0,xmax=bins[-1])
     sns.distplot(data, kde=False, rug=True, bins=bins, color="g")
     #plt.hist(ratomization)
-    plt.xlabel(xlabel, fontsize=18)
-    plt.ylabel(ylabel, fontsize=18)
+    
     plt.savefig(fileName)
 
 
@@ -28,15 +30,15 @@ def hexbin(x, y, color, **kwargs):
     cmap = sns.light_palette(color, as_cmap=True)
     plt.hexbin(x, y, gridsize=15, cmap=cmap, **kwargs)
 
-def create2DdensityPlot(dataframe, columns, axisNames, outputfilename, plotType=sns.kdeplot):
+def create2DdensityPlot(dataframe, columns, axisNames, outputfilename, plotType=sns.kdeplot, xlim=(0, 1), ylim=(0, 1)):
     """
     creates a 2d density plot given a dataframe and two columns.
     saves the image in <outputfilename>
     """
     plt.clf()
     _, _ = plt.subplots(1, 1, sharex=True, figsize=(8, 6))
-    g = sns.JointGrid(columns[0], columns[1], dataframe, xlim=(0, 1), ylim=(0, 1), space=0)
-    g.plot_marginals(sns.distplot, color="g")
+    g = sns.JointGrid(columns[0], columns[1], dataframe, xlim=xlim, ylim=ylim, space=0)
+    g.plot_marginals(sns.distplot, color="g", bins=None)
     g.plot_joint(plotType, cmap="Greens", shade=True, n_levels=20)
 
     g.set_axis_labels(axisNames[0], axisNames[1])
@@ -50,15 +52,26 @@ def create2DdensityPlot(dataframe, columns, axisNames, outputfilename, plotType=
     plt.savefig(outputfilename)
 
 
-def createHexBin(dataframe,columns,axisnames,outputfilename):
+def createHexBin(dataframe,columns,axisnames,outputfilename,xlim=(0,1),ylim=(0,1)):
     plt.clf()
-    f, _ = plt.subplots(1, 1, sharex=True, figsize=(8, 6))
-    g = sns.JointGrid(columns[0], columns[1], dataframe, xlim=(0, 1), ylim=(0, 1), space = 0)
-    g.plot_marginals(sns.distplot, color="g")
-    g.plot_joint(plt.hexbin, cmap="Greens", extent=[0, np.max(dataframe[columns[0]]), 0, np.max(dataframe[columns[1]])], n_levels=8)
-    g.annotate(stats.pearsonr)
+
+    g = sns.JointGrid(columns[0], columns[1], dataframe, space=0)
+    g.ax_marg_x.hist(dataframe[columns[0]], bins=np.arange(xlim[0], xlim[1]))
+    g.ax_marg_y.hist(dataframe[columns[1]], bins=np.arange(ylim[0], ylim[1], orientation="horizontal"))
+
+    #g.ax_marg_x.hist(x, bins=np.arange(0, 60)
+    #g.ax_marg_y.hist(y, bins=np.arange(0, 1000, 10), orientation="horizontal")
+    g.plot_joint(plt.hexbin, gridsize=25, extent=[xlim[0], xlim[1], ylim[0], ylim[1]], cmap="Blues")
+    #g.fig.savefig("/Users/mwaskom/Desktop/jointgrid.png", bbox_inches="tight")
+
+    
+    #f, _ = plt.subplots(1, 1, sharex=True, figsize=(8, 6))
+    #g = sns.JointGrid(columns[0], columns[1], dataframe, xlim=xlim, ylim=ylim, space = 0)
+    #g.plot_marginals(sns.distplot, color="g")
+    #g.plot_joint(plt.hexbin, cmap="Greens", extent=[0, np.max(dataframe[columns[0]]), 0, np.max(dataframe[columns[1]])])
+    #g.annotate(stats.pearsonr)
     #sns.jointplot(dataframe[columns[0]], dataframe[columns[1]], kind="hex", stat_func=stats.pearsonr, color="g", gridsize=8)
-    plt.savefig(outputfilename)
+    g.fig.savefig(outputfilename)
 
 def create1Ddensityplot(data, outputfilename):
     plt.clf()
@@ -99,7 +112,10 @@ def reactionBasedAtomizationDistro(directory):
             # console.bngl2xml('complex/output{0}.bngl'.format(element),timeout=10)
             try:
 
-                molecules, rules, _ = readBNGXML.parseXML(xml)
+                structures = readBNGXML.parseFullXML(xml)
+                rules = structures['rules']
+                observables = structures['observables']
+                molecules = structures['molecules']
             except IOError:
                 print xml
                 continue
@@ -128,6 +144,7 @@ def reactionBasedAtomizationDistro(directory):
             atomizationDB.set_value(xml, 'length', len(rules))
             atomizationDB.set_value(xml, 'yild', yieldValue)
             atomizationDB.set_value(xml, 'syndel', syndelValue)
+            atomizationDB.set_value(xml, 'numspecies', len(observables))
 
             validFiles += 1
         except IOError:
@@ -169,12 +186,12 @@ def constructPlots(atomizationDB):
 if __name__ == "__main__":
     folder = 'curated'
     # calculate atomization information
-    # atomizationDB = reactionBasedAtomizationDistro(folder)
-    # atomizationDB.to_hdf('{0}DB.h5','atomization')
+    atomizationDB = reactionBasedAtomizationDistro(folder)
+    atomizationDB.to_hdf('{0}DB.h5'.format(folder),'atomization')
 
     outputDir = 'testCurated'
     # read info
-    atomizationDB = pandas.read_hdf('{0}DB.h5', 'atomization')
+    atomizationDB = pandas.read_hdf('{0}DB.h5'.format(folder), 'atomization')
 
     
     # construct plots

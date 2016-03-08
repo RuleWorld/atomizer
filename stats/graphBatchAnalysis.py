@@ -21,9 +21,6 @@ def getFiles(directory,extension):
             filepath = os.path.abspath(os.path.join(root, filename))
             matches.append([filepath,os.path.getsize(os.path.join(root, filename))])
 
-    #sort by size
-    #matches.sort(key=lambda filename: filename[1], reverse=False)
-    
     matches = [x[0] for x in matches]
 
     return matches
@@ -50,18 +47,25 @@ def loadDataFrames(directory,subdirectories):
     finalFrames = pandas.concat(frames,axis=1)
     return finalFrames
 
-def create2DdensityPlot(dataframe,columns,outputfilename):
+def create2DdensityPlot(dataframe,columns,outputfilename, plotType = sns.kdeplot):
     """
     creates a 2d density plot given a dataframe and two columns.
     saves the image in <outputfilename>
     """
     plt.clf()
-    f, (ax1) = plt.subplots(1, 1, sharex=True, figsize=(8, 6))
+    f, _ = plt.subplots(1, 1, sharex=True, figsize=(8, 6))
     #with sns.axes_style("white"):
     #sns.jointplot("compression", "wiener index",atomizationInfo, kind="kde");
     g = sns.JointGrid(columns[0],columns[1],dataframe)
     g.plot_marginals(sns.distplot)
-    g.plot_joint(sns.kdeplot, shade=True, cmap="PuBu");
+    #g.plot_joint(plotType, shade=True, cmap="PuBu");
+    g.plot_joint(plotType, cmap="PuBu");
+    
+    ax = g.ax_joint
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    g.ax_marg_x.set_xscale('log')
+    g.ax_marg_y.set_yscale('log')
     g.annotate(stats.pearsonr)
     #sns.kdeplot(atomizationInfo.compression, shade=True,ax=ax1);
     plt.savefig(outputfilename)

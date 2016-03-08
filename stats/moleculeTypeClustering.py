@@ -360,6 +360,8 @@ def preliminaryAnalysis(directory='new_non_curated', directory2=None):
         pickle.dump(moleculeDictionary, f)
 
 
+
+
 def componentAnalysis(directory, atomizeThreshold=0):
     componentCount = []
     bindingCount = []
@@ -367,6 +369,7 @@ def componentAnalysis(directory, atomizeThreshold=0):
     with open(os.path.join(directory, 'moleculeTypeDataSet.dump'), 'rb') as f:
         moleculeTypesArray = pickle.load(f)
     for model in moleculeTypesArray:
+        print model
         modelComponentCount = [len(x.components) for x in model[0]]
 
         bindingComponentCount = [len([y for y in x.components if len(y.states) == 0])
@@ -422,7 +425,7 @@ def getXMLFailures(directory):
 
 def componentDensityPlot():
     directory = [('bnglTest', 'BNG control set'), ('curated', 'BioModels curated'), ('non_curated', 'BioModels non curated')]
-    #directory = [('curated', 'BioModels curated'), ('bnglTest', 'BNG control set')]
+    #directory = [('curated', 'BioModels curated')]
     #('new_non_curated', 'BioModels non curated')]
     colors = sns.color_palette("Set1", 3)
     f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(8, 6))
@@ -527,7 +530,7 @@ if __name__ == "__main__":
 
     componentDensityPlot()    
 
-    
+    '''
     colors = ['r', 'Y', 'b']
     #print processDistro
     fig, ax = plt.subplots()
@@ -536,6 +539,7 @@ if __name__ == "__main__":
 
     rects = []
     processList = ['StateChange', 'AddBond', 'DeleteBond', 'Add', 'Delete']
+    '''
     '''
     for x, y in enumerate(colors):
         rects.append(ax.bar(np.arange(len(processDistro[x].keys()))+0.25*x, [processDistro[x][z][0] for z in processList], 0.25, color=y, yerr=[processDistro[x][z][1] for z in processList]))

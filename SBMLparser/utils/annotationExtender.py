@@ -41,7 +41,7 @@ def getFiles(directory, extension):
             matches.append([os.path.join(os.path.abspath(root), filename),os.path.getsize(os.path.join(root, filename))])
 
     #sort by size
-    #matches.sort(key=lambda filename: filename[1], reverse=False)
+    matches.sort(key=lambda filename: filename[1], reverse=False)
     
     matches = [x[0] for x in matches]
 
@@ -135,7 +135,7 @@ def updateFromComplex(complexMolecule,sct,annotationDict,annotationToSpeciesDict
         flag = False
         if len(annotationDict[constituentElement]) > 0:
             for annotation in annotationDict[constituentElement]:
-                if annotation in ['BQB_IS_VERSION_OF', 'BQB_IS', 'BQB_HAS_VERSION', 'BQB_IS_HOMOLOG_TO']:
+                if annotation in ['BQB_IS_VERSION_OF', 'BQB_IS', 'BQB_HAS_VERSION', 'BQB_IS_HOMOLOG_TO', 'BQM_IS']:
                     flag = True
                     for individualAnnotation in annotationDict[constituentElement][annotation]:
                         localSpeciesDict[individualAnnotation] = constituentElement
@@ -173,15 +173,23 @@ def updateFromComponents(complexMolecule, sct, annotationDict, annotationToSpeci
     unmatchedReactants = []
     for constituentElement in sct[complexMolecule][0]:
         flag = False
+        if complexMolecule == 'G_sub_q_endsub__alpha__beta__gamma_':
+            print constituentElement
+
         if len(annotationDict[constituentElement]) > 0:
+            if complexMolecule == 'G_sub_q_endsub__alpha__beta__gamma_':
+                print constituentElement, annotationDict[constituentElement]
+
+
             for annotation in annotationDict[constituentElement]:
-                if annotation in ['BQB_IS_VERSION_OF', 'BQB_IS', 'BQB_HAS_VERSION', 'BQB_HAS_PART', 'BQB_IS_HOMOLOG_TO']:
+                if annotation in ['BQB_IS_VERSION_OF', 'BQB_IS', 'BQB_HAS_VERSION', 'BQB_HAS_PART', 'BQB_IS_HOMOLOG_TO','BQM_IS']:
                     for individualAnnotation in annotationDict[constituentElement][annotation]:
                         #localSpeciesDict[individualAnnotation] = constituentElement
                         localSpeciesDict[constituentElement].add(individualAnnotation)
                         flag = True
         if not flag:
             unmatchedReactants.append(constituentElement) 
+
     for element in localSpeciesDict:
         annotationDict[complexMolecule]['BQB_HAS_PART'].extend(list(localSpeciesDict[element]))
 
@@ -190,7 +198,6 @@ def updateFromComponents(complexMolecule, sct, annotationDict, annotationToSpeci
 def buildAnnotationTree(annotationDict, sct, database):
     annotationToSpeciesDict = {}
     for element in database.weights:
-        print element, sct[element[0]]
         if len(sct[element[0]]) > 0:
             if len(sct[element[0]][0]) == 1:
                 buildingBlock = sct[element[0]][0][0]
@@ -251,7 +258,7 @@ actionSboDictionary = {
 'ChangeCompartment':"http://identifiers.org/biomodels.sbo/SBO:0000185"}
 
 def buildReactionAnnotationDict(rules):
-    sboDict = defaultdict(lambda : defaultdict(list))
+    sboDict = defaultdict(lambda: defaultdict(list))
     for rule in rules:
         actions = [x.action for x in rule[0].actions]
         if 'Add' not in actions and 'Delete' not in actions:
@@ -281,7 +288,7 @@ def reactionAnnotationsToSBML(sbmlDocument,annotationDict):
 
         annotation = libsbml.RDFAnnotationParser.createAnnotation()
         cvterms = libsbml.RDFAnnotationParser.createCVTerms(reaction)
-        rdfAnnotation  = libsbml.RDFAnnotationParser.createRDFAnnotation()
+        rdfAnnotation = libsbml.RDFAnnotationParser.createRDFAnnotation()
         rdfAnnotation.addChild(cvterms)
         annotation.addChild(rdfAnnotation)
         reaction.setAnnotation(annotation)
@@ -297,13 +304,15 @@ def obtainSCT(fileName, reactionDefinitions, useID, namingConventions):
     reader = libsbml.SBMLReader()
     document = reader.readSBMLFromFile(fileName)
     
-    parser =SBML2BNGL(document.getModel(),useID)
+    parser = SBML2BNGL(document.getModel(), useID)
+
     database = structures.Databases()
     database.forceModificationFlag = True
-    database = mc.createSpeciesCompositionGraph(parser, database, reactionDefinitions,namingConventions,
-                       speciesEquivalences=None,bioGridFlag=False)
+    database.softConstraints = True
+    database = mc.createSpeciesCompositionGraph(parser, database, reactionDefinitions, namingConventions,
+                                                speciesEquivalences=None, bioGridFlag=False)
                        
-    return database.prunnedDependencyGraph,database,document
+    return database.prunnedDependencyGraph, database, document, parser.speciesDictionary
 
 import tempfile
 
@@ -331,7 +340,7 @@ def createDataStructures(bnglContent):
 
 def expandAnnotation(fileName,bnglFile):
 
-    sct, database, sbmlDocument = obtainSCT(fileName, 'config/reactionDefinitions.json', False, 'config/namingConventions.json')
+    sct, database, sbmlDocument, _ = obtainSCT(fileName, 'config/reactionDefinitions.json', False, 'config/namingConventions.json')
     annotationDict, speciesNameDict = buildAnnotationDict(sbmlDocument)
     buildAnnotationTree(annotationDict, sct, database)
     speciesAnnotationsToSBML(sbmlDocument,annotationDict,speciesNameDict)
@@ -353,15 +362,19 @@ def batchExtensionProcess(directory, outputDir):
     targetFiles = getFiles(outputDir,'xml')
     for fileIdx in progress(range(len(testFiles))):
         file = testFiles[fileIdx]
-        if file in ['/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000223.xml', 
-                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000488.xml',
-                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000293.xml',
-                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000472.xml',
-                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000255.xml',
-                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000424.xml',
-                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved/BIOMD0000000439.xml']:
+        if file in ['/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000223.xml', 
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000488.xml',
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000293.xml',
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000472.xml',
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000255.xml',
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000424.xml',
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000439.xml',
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000416.xml',
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000182.xml',
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000161.xml',
+                    '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsRemoved2/BIOMD0000000504.xml']:
             continue
-        if '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsExpanded/{0}'.format(file.split('/')[-1]) in targetFiles:
+        if '/home/proto/workspace/RuleWorld/atomizer/SBMLparser/annotationsExpanded2/{0}'.format(file.split('/')[-1]) in targetFiles:
             continue
         print file
         sbmlInfo = expandAnnotation(file, '')
@@ -380,15 +393,15 @@ def defineConsole():
 
  
 if __name__ == "__main__":
-    #batchExtensionProcess('annotationsRemoved', 'annotationsExpanded')
+    batchExtensionProcess('annotationsRemoved2', 'annotationsExpanded2')
     
-    parser = defineConsole()
-    namespace = parser.parse_args()
-    input_file = '/home/proto/workspace/bionetgen/parsers/SBMLparser/XMLExamples/curated/BIOMD%010i.xml' % 19
-    expandedString = expandAnnotation(namespace.input_file, '')
-    #print 'Writing extended annotation SBML to {0}'.format(namespace.output_file)    
-    with open(namespace.output_file,'w') as f:
-        f.write(expandedString)
+    # parser = defineConsole()
+    # namespace = parser.parse_args()
+    # input_file = '/home/proto/workspace/bionetgen/parsers/SBMLparser/XMLExamples/curated/BIOMD%010i.xml' % 19
+    # expandedString = expandAnnotation(namespace.input_file, '')
+    # print 'Writing extended annotation SBML to {0}'.format(namespace.output_file)    
+    # with open(namespace.output_file,'w') as f:
+    #     f.write(expandedString)
     #outputFileName = '.'.join(fileName.split('.')[0:-1]) + '_withAnnotations.xml'
     #writeSBML(sbmlDocument,outputFileName)
     

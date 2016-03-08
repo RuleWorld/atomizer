@@ -192,7 +192,7 @@ def createPDEdge(graph, molecule, edge):
 
         #differenceText = edge[2].strip('_reverse_')
         differenceText += '\n===\n'
-        differenceText = ''
+        #differenceText = ''
         if len(differencePositive) > 0 and len(differenceNegative) > 0:
             differenceText += ', '.join(differencePositive) + '\n___\n' + ', '.join(differenceNegative)
         else:

@@ -6,7 +6,7 @@ addons:
   apt:
     packages:
     - python-dev
-    - python-numpy
+- python-numpy
     - libxml2-dev
     - zlib1g-dev
     - libbz2-dev

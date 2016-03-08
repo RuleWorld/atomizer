@@ -354,12 +354,16 @@ from collections import defaultdict
 def histogram(inputDirectory, configFile):
     inputFile = os.path.join(inputDirectory,configFile)
     directory = os.path.join('resultImages', inputDirectory)
+    zeroCounter = 0
     with open(inputFile,'rb') as evaluationFile:
         ev1 =     pickle.load(evaluationFile)
     ev2 = []
     for x in ev1:
         try:
+            #if x['atomization'] == 0:
             ev2.append([x['index'],x['nreactions'],x['nspecies'],x['atomization'],x['compression']])
+            #else:
+            #    zeroCounter+=1
         except:
             continue
     number,rulesLength,speciesLength,evaluation,evaluation2 =  zip(*ev2)
@@ -370,7 +374,7 @@ def histogram(inputDirectory, configFile):
     ratio20 = []
     ration20 = []
 
-
+    print 'there are {0} elements with compression 0'.format(zeroCounter)
     #with open('ratomization.dump','rb') as f:
     #    ratomizationDict = pickle.load(f) 
     
@@ -417,6 +421,7 @@ def histogram(inputDirectory, configFile):
     plt.savefig('{0}/speciesDistro.png'.format(directory))
 
 
+
     plt.clf()
     ax = plt.gca()
     ax.plot(rulesLength,speciesLength,'o',alpha=0.5)    
@@ -427,6 +432,12 @@ def histogram(inputDirectory, configFile):
     ax.set_yscale('log')
     plt.savefig('{0}/reactionsvsspecies.png'.format(directory))
     
+    #import pandas
+    #import graphBatchAnalysis  as gba
+    #reactioninfo = pandas.DataFrame({'reactions': rulesLength,'species': speciesLength})
+    #gba.create2DdensityPlot(reactioninfo,["reactions","species"],'{0}/reactionsvsspeciesjoint.png'.format(directory), sns.jointplot)
+    #g = sns.jointplot(x="reactions", y="species", data=tips);
+
     plt.clf()
     cm = plt.cm.get_cmap('YlGnBu')
     cax = plt.scatter(rulesLength, speciesLength, s=40, 

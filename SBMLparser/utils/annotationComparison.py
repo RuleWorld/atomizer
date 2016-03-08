@@ -122,7 +122,7 @@ def annotationFileComparison(model1 ,model2):
     for entry in  annotationDict1:
         if not set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x])) \
             and not set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).issubset(set([x for x in annotationDict1[entry]['BQB_HAS_VERSION'] if 'uniprot' in x])):
-            print '--------------'
+            print '--------------+'
             print entry
             difference = set([x for x in annotationDict2[entry]['BQB_HAS_PART'] if 'uniprot' in x]).difference(set([x for x in annotationDict1[entry]['BQB_HAS_PART'] if 'uniprot' in x]))
             print difference
@@ -167,14 +167,18 @@ import characterizeAnnotationLog as cal
 
 if __name__ == "__main__":
     
-    
-    significanceTreshold = 0.3
-    errorList = batchAnnotationComparison('annotationsExpanded', '../XMLExamples/curated')
-   
-    print errorList
-    print len(errorList)   
-    
+    batch = False
 
+    if batch:
+        errorList = batchAnnotationComparison('annotationsExpanded2', '../XMLExamples/curated')
+       
+        print errorList
+        print len(errorList)   
+    else:    
+        annotationFileComparison('annotationsExpanded2/BIOMD0000000022.xml', '/home/proto/workspace/RuleWorld/atomizer/XMLExamples/curated/BIOMD0000000022.xml')
+
+
+    # significanceTreshold = 0.3
     # errorLogDict = {}
     # for fileName in errorList:
     #     errorLogDict[fileName] = cal.processLogFile('../curated/{0}.bngl.log'.format(fileName))
@@ -186,5 +190,5 @@ if __name__ == "__main__":
     # parser = defineConsole()
     # namespace = parser.parse_args()
     
-    # annotationFileComparison('annotationsExpanded/BIOMD0000000474.xml', '/home/proto/workspace/RuleWorld/atomizer/XMLExamples/curated/BIOMD0000000474.xml')
+    # annotationFileComparison('annotationsExpanded2/BIOMD0000000048.xml', '/home/proto/workspace/RuleWorld/atomizer/XMLExamples/curated/BIOMD0000000048.xml')
 
