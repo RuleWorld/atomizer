@@ -901,6 +901,7 @@ class SBMLAnalyzer:
                                 finalReactant = '_'.join(treactant)   
 
                         if '_'.join(tproduct) in strippedMolecules:
+
                             finalProduct = '_'.join(tproduct)
                         else:
                             productMatches = get_close_matches('_'.join(tproduct), strippedMolecules)
@@ -1500,8 +1501,8 @@ class SBMLAnalyzer:
                                                                  fuzzyKey, fuzzyDifference)
                                                                  
                     if flag and sorted([x[1] for x in matches]) not in lexicalDependencyGraph[reactant]:
-                        if [x[1] for x in matches] != [reactant]:
-
+                        # dont introduce cyclical dependencies
+                        if all([x[1] != reactant for x in matches]):
                             lexicalDependencyGraph[reactant].append(sorted([x[1] for x in matches]))
                             for x in matches:
                                 # TODO(Oct14): it would be better to try to map this to an

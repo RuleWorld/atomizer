@@ -564,6 +564,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
         if len(candidates) >= 1:
             candidates, uneven, originalCandidate = selectBestCandidate(
                 element[0], candidates, prunnedDependencyGraph, sbmlAnalyzer)
+
             #except CycleError:
             #    candidates = None
             #    uneven = []
@@ -1055,7 +1056,6 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
             mol = st.Molecule(molecule)
             dependencyGraph[molecule] = deepcopy(mol)
             species.addMolecule(mol)
-
     dependencyGraphCounter = Counter(dependencyGraph[element[0]][0])
 
     # XXX: this wont work for species with more than one molecule with the
@@ -1408,7 +1408,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
     # lexical dependency graph contains lexically induced binding compositions. atomizer gives preference to binding obtained this way as opposed to stoichiometry
     # stronger bounds on stoichiometry based binding can be defined in
     # reactionDefinitions.json.
-
     for element in lexicalDependencyGraph:
         if element in database.dependencyGraph and element not in database.userLabelDictionary:
             if len(lexicalDependencyGraph[element]) == 0:
@@ -1722,8 +1721,9 @@ tmp,removedElement,tmp3))
             if tmpDependency[species] == []:
                 addToDependencyGraph(database.dependencyGraph, species, [])
             for instance in tmpDependency[species]:
-                addToDependencyGraph(
-                    database.dependencyGraph, species, instance)
+                addToDependencyGraph(database.dependencyGraph, species, instance)
+                if len(instance) == 1 and instance[0] not in database.dependencyGraph:
+                    addToDependencyGraph(database.dependencyGraph, instance[0], [])
 
 
 
@@ -1731,6 +1731,7 @@ tmp,removedElement,tmp3))
         x for x in strippedMolecules if x not in database.dependencyGraph or database.dependencyGraph[x] == []]
     orphanedSpecies.extend([x for x in database.dependencyGraph if database.dependencyGraph[
                            x] == [] and x not in orphanedSpecies])
+
 
     # greedy lexical analysis for the remaining orhpaned species
     for reactant in orphanedSpecies:
@@ -1743,9 +1744,14 @@ tmp,removedElement,tmp3))
     if len(database.constructedSpecies) > 0:
         logMess('WARNING:SCT131','The following species names do not appear in the original model but where created to have more appropiate naming conventions: [{0}]'.format(','.join(database.constructedSpecies)))
     # initialize and remove zero elements
+
+
+
+
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
                                    database.eequivalenceTranslator, database.sbmlAnalyzer, database)
+
     return database
 
 
