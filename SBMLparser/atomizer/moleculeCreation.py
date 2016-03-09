@@ -24,7 +24,6 @@ from collections import Counter, defaultdict
 import itertools
 from atomizerUtils import BindingException
 
-
 def memoize(obj):
     cache = obj.cache = {}
 
@@ -129,6 +128,7 @@ def isInComplexWith(moleculeSet, parser=None):
 
         name1 = getURIFromSBML(element[0], parser, ['uniprot', 'go'])
         name2 = getURIFromSBML(element[1], parser, ['uniprot', 'go'])
+        
         modelAnnotation = parser.extractModelAnnotation()
         modelOrganism = modelAnnotation[
             'BQB_OCCURS_IN'] if 'BQB_OCCURS_IN' in modelAnnotation else None
@@ -138,10 +138,10 @@ def isInComplexWith(moleculeSet, parser=None):
         simpleOrganism = [x.split('/')[-1]
                           for x in modelOrganism] if modelOrganism else None
         bindingResults = pwcm.queryBioGridByName(
-            molecule1, molecule2, simpleOrganism)
+            molecule1, molecule2, simpleOrganism, element[0], element[1])
         if not bindingResults:
             bindingResults = pwcm.queryBioGridByName(
-                element[0], element[1], simpleOrganism)
+                element[0], element[1], simpleOrganism, None, None)
         #bindingResults = None
         #bindingResults = pwcm.isInComplexWith([element[0], name1], [element[1], name2], organism=modelOrganism)
         if bindingResults:
@@ -218,6 +218,7 @@ def bindingReactionsAnalysis(dependencyGraph, reaction, classification):
                 addToDependencyGraph(dependencyGraph, element, reaction[1])
 
 def weightDependencyGraph(dependencyGraph):
+    @memoize
     def measureGraph(element, path):
         counter = 1
         for x in path:
@@ -231,6 +232,7 @@ def weightDependencyGraph(dependencyGraph):
     for element in dependencyGraph:
         path = resolveDependencyGraph(dependencyGraph, element)
         try:
+
             path2 = resolveDependencyGraph(dependencyGraph, element, True)
         except CycleError:
             path2 = []
@@ -389,7 +391,6 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
 
             # analyze based on standard modifications
             #lexCandidate, translationKeys, tmpequivalenceTranslator = sbmlAnalyzer.analyzeSpeciesModification(candidates[0][0], reactant, originalTmpCandidates[0])
-            # print lexCandidate
             # print '++++'
             lexCandidate, translationKeys, tmpequivalenceTranslator = sbmlAnalyzer.analyzeSpeciesModification2(
                 candidates[0][0], reactant, originalTmpCandidates[0])
@@ -589,6 +590,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
         else:
             prunnedDependencyGraph[element[0]] = [
                 sorted(x) for x in candidates]
+
     weights = weightDependencyGraph(prunnedDependencyGraph)
     return prunnedDependencyGraph, weights, unevenElementDict, equivalenceTranslator
 
@@ -652,7 +654,7 @@ def addBondToComponent(species, moleculeName, componentName, bond, priority=1):
                 order += 1
 
 
-def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser):
+def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser, compositionEntry):
     '''
     given two binding complexes it will attempt to find the ways in which they bind using different criteria
 
@@ -675,12 +677,16 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser):
         for molecule in sortMolecules(array, True):
             if molecule.name == name:
                 return molecule
+            elif molecule.trueName == name:
+                return molecule
 
-    names1 = [str(x.name) for x in totalComplex[0]]
-    names2 = [str(x.name) for x in totalComplex[1]]
+    names1 = [str(x.trueName) for x in totalComplex[0] ]
+    names2 = [str(x.trueName) for x in totalComplex[1] ]
     bioGridDict = {}
     # find all pairs of molecules
     comb = set([tuple(sorted([x, y])) for x in names1 for y in names2])
+    comb2 = set([tuple(sorted([x,y])) for x in compositionEntry for y in compositionEntry])
+
     dbPair = set([])
     combTemp = set()
 
@@ -738,6 +744,7 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser):
             mol2 = getBiggestMolecule(tmpComplexSubset2)
             logMess('INFO:ATO002', "According to BioGrid/Pathwaycommons there's more than one way to bind {0} and {1} together: {2}. Defaulting to {3}-{4}".format(names1, names2, dbPair,
                                                                                                                                                                    mol1.name, mol2.name))
+
         else:
             mol1 = getNamedMolecule(totalComplex[0], dbPair[0][0])
             if not mol1:
@@ -768,13 +775,13 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser):
             # addAssumptions('unknownBond',(mol1.name,mol2.name))
         '''
         raise BindingException(
-            '{0}-{1}'.format([x.name for x in totalComplex[0]], [x.name for x in totalComplex[1]]))
+            '{0}-{1}'.format(sorted([x.name for x in totalComplex[0]]), sorted([x.name for x in totalComplex[1]])), comb)
 
     return mol1, mol2
 
 
 def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommonsFlag=False,
-                               parser=None, bondSeeding=[], bondExclusion=[]):
+                               parser=None, bondSeeding=[], bondExclusion=[], database=None):
     '''
     method used during the atomization process. It determines how molecules
     in a species bind together
@@ -908,8 +915,7 @@ def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommon
             mol1 = list(totalComplex[0])[0]
             mol2 = list(totalComplex[1])[0]
         else:
-            mol1, mol2 = solveComplexBinding(
-                totalComplex, pathwaycommonsFlag, parser)
+            mol1, mol2 = solveComplexBinding(totalComplex, pathwaycommonsFlag, parser, database.prunnedDependencyGraph[moleculeName][0])
         pairedMolecules.append([mol1, mol2])
         totalComplex[0] = totalComplex[0].union(totalComplex[1])
         totalComplex.pop(1)
@@ -1065,10 +1071,15 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
             if molecule != getTrueTag(dependencyGraph, molecule):
                 original = translator[getTrueTag(dependencyGraph, molecule)]
                 updateSpecies(tmpSpecies, original.molecules[0])
+            if tmpSpecies.molecules[0].name in database.constructedSpecies:
+                tmpSpecies.molecules[0].trueName = molecule
+            else:
+                tmpSpecies.molecules[0].trueName = tmpSpecies.molecules[0].name
             species.addMolecule(deepcopy(tmpSpecies.molecules[0]))
         else:
             mol = st.Molecule(molecule)
-            dependencyGraph[molecule] = deepcopy(mol)
+            mol.trueName = molecule
+            #dependencyGraph[molecule] = deepcopy(mol)
             species.addMolecule(mol)
     dependencyGraphCounter = Counter(dependencyGraph[element[0]][0])
 
@@ -1102,7 +1113,7 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
     bondExclusion = [partialBonds[x] for x in partialBonds if x < 0]
     # how do things bind together?
     moleculePairsList = getComplexationComponents2(
-        element[0], species, bioGridFlag, pathwaycommonsFlag, parser, bondSeeding, bondExclusion)
+        element[0], species, bioGridFlag, pathwaycommonsFlag, parser, bondSeeding, bondExclusion, database)
     #moleculeCount = Counter([y for x in moleculePairsList for y in x])
     # print moleculeCount
     #moleculePairsList = [sorted(x) for x in moleculePairsList]
@@ -1171,40 +1182,81 @@ def atomize(dependencyGraph, weights, translator, reactionProperties,
     '''
     The atomizer's main methods. Receives a dependency graph
     '''
-    for idx, element in enumerate(weights):
-        # 0 molecule
-        if element[0] == '0':
-            continue
-        # user defined molecules to be the zero molecule
-        if dependencyGraph[element[0]] == [['0']]:
-            zeroSpecies = st.Species()
-            zeroMolecule = st.Molecule('0')
-            zeroSpecies.addMolecule(zeroMolecule)
-            translator[element[0]] = zeroSpecies
-            continue
-        # undivisible molecules
+    redrawflag = True
+    loops = 0
+    while redrawflag and loops < 10:
+        loops +=1
+        bindingCounter = Counter()
+        bindingFailureDict = {}
 
-        elif dependencyGraph[element[0]] == []:
-            if element[0] not in translator:
-                translator[element[0]] = createEmptySpecies(element[0])
-        else:
-            if len(dependencyGraph[element[0]][0]) == 1:
-                # catalysis
-                createCatalysisRBM(dependencyGraph, element, translator, reactionProperties,
-                                   equivalenceDictionary, sbmlAnalyzer, database)
-            else:
-                try:
+        for idx, element in enumerate(weights):
+            # 0 molecule
+            if element[0] == '0':
+                continue
+            # user defined molecules to be the zero molecule
+            if dependencyGraph[element[0]] == [['0']]:
+                zeroSpecies = st.Species()
+                zeroMolecule = st.Molecule('0')
+                zeroSpecies.addMolecule(zeroMolecule)
+                translator[element[0]] = zeroSpecies
+                continue
+            # undivisible molecules
 
-                    createBindingRBM(element, translator, dependencyGraph,
-                                     bioGridFlag, database.pathwaycommons, parser, database)
-
-                except BindingException as e:
-                    logMess('ERROR:ATO202', "We don't know how {0} binds together in complex {1}. Not atomizing".format(
-                            e.value, element[0]))
-        
-                    # there awas an issue during binding, don't atomize
+            elif dependencyGraph[element[0]] == []:
+                if element[0] not in translator:
                     translator[element[0]] = createEmptySpecies(element[0])
+            else:
+                if len(dependencyGraph[element[0]][0]) == 1:
+                    # catalysis
+                    createCatalysisRBM(dependencyGraph, element, translator, reactionProperties,
+                                       equivalenceDictionary, sbmlAnalyzer, database)
+                else:
+                    try:
+                        createBindingRBM(element, translator, dependencyGraph,
+                                         bioGridFlag, database.pathwaycommons, parser, database)
 
+                    except BindingException as e:
+                        for c in e.combinations:
+                            bindingCounter[c] += 1
+                            bindingFailureDict[element[0]] = e.combinations
+                        logMess('DEBUG:ATO003', "We don't know how {0} binds together in complex {1}. Not atomizing".format(
+                                e.value, element[0]))
+            
+                        # there awas an issue during binding, don't atomize
+                        translator[element[0]] = createEmptySpecies(element[0])
+        
+        # evaluate species that weren't bound properly and see if we can get information from all over the model to find the right binding partner
+        bindingTroubleLog = defaultdict(list)
+        modifiedPairs = set()
+
+        redrawflag = False
+        for molecule in bindingFailureDict:
+            bindingWinner = defaultdict(list)
+            for candidateTuple in bindingFailureDict[molecule]:
+                bindingWinner[bindingCounter[candidateTuple]].append(candidateTuple)
+            bestBindingCandidates = bindingWinner[max(bindingWinner.keys())]
+            if len(bestBindingCandidates) > 1:
+                bindingTroubleLog[tuple(sorted(bestBindingCandidates))].append(molecule)
+            else:
+                bindingPair = bestBindingCandidates[0]
+                if bindingPair not in modifiedPairs:
+                    modifiedPairs.add(bindingPair)
+                else:
+                    continue
+                c1 = st.Component(bindingPair[1].lower())
+                c2 = st.Component(bindingPair[0].lower())
+                molecule1 = translator[translator[bindingPair[0]].molecules[0].name].molecules[0]
+                molecule2 = translator[translator[bindingPair[1]].molecules[0].name].molecules[0]
+
+                molecule1.addComponent(c1)
+                molecule2.addComponent(c2)
+                redrawflag = True
+                logMess('INFO:ATO031','Determining that {0} binds together based on frequency of the bond in the reaction network.'.format(bindingPair))
+    for trouble in bindingTroubleLog:
+        logMess('ERROR:ATO202','{0}:We need information to resolve the bond structure of these complexes . \
+Please choose among the possible binding candidates that had the most observed frequency in the reaction network or provide a new one:{1}'.format(bindingTroubleLog[trouble],trouble))
+
+    
 
 def updateSpecies(species, referenceMolecule):
     flag = False
@@ -1430,6 +1482,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
     # reactionDefinitions.json.
 
     for element in lexicalDependencyGraph:
+
         if element in database.dependencyGraph and element not in database.userLabelDictionary:
             if len(lexicalDependencyGraph[element]) == 0:
                 continue
@@ -1460,6 +1513,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                 # this is a species that was not originally in the model. in case theres conflict later this is 
                 # to indicate it is given less priority
                 database.dependencyGraph[molecule] = []
+
     # user defined transformations
     for key in userEquivalenceTranslator:
         for namingEquivalence in userEquivalenceTranslator[key]:
@@ -1469,6 +1523,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                 database.dependencyGraph[baseElement] = []
             addToDependencyGraph(database.dependencyGraph, modElement,
                                  [baseElement])
+
 
     # database.eequivalence translator contains 1:1 equivalences
     # FIXME: do we need this update step or is it enough with the later one?
@@ -1519,7 +1574,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                 database.dependencyGraph[
                     database.userLabelDictionary[element][0][0]] = []
 
-    
     # add species elements defined by the user into the naming convention
     # definition
     molecules.extend(['{0}()'.format(
@@ -1574,7 +1628,6 @@ information however their annotations are completely different.".format(baseElem
                     logMess('WARNING:ATO114', 'Definition conflict between binding information {0} and lexical analyis {1} for molecule {2},\
 choosing binding'.format(database.dependencyGraph[modElement], baseElement, modElement))
 
-
     # non lexical-analysis catalysis reactions
     if database.forceModificationFlag:
         for reaction, classification in zip(rules, database.classifications):
@@ -1605,8 +1658,11 @@ choosing binding'.format(database.dependencyGraph[modElement], baseElement, modE
 
                     if greedyMatch not in [-1,-2, []]:
                         database.dependencyGraph[mod] = [greedyMatch]
+                        if mod in database.alternativeDependencyGraph:
+                            del database.alternativeDependencyGraph[mod]
                         logMess('INFO:LAE006','{0}: Mapped to {1} using lexical analysis/greedy matching'.format(mod, greedyMatch))
                         continue
+                    
 
                     # if the annotations have no overlap whatsoever don't force
                     # this modifications
@@ -1624,7 +1680,6 @@ choosing binding'.format(database.dependencyGraph[modElement], baseElement, modE
 information however their annotations are completely different.".format(base, mod))
                                 continue
                     database.dependencyGraph[mod] = [[base]]
-
 
     '''
     #complex catalysis reactions
@@ -1774,11 +1829,12 @@ tmp,removedElement,tmp3))
         logMess('WARNING:SCT131','The following species names do not appear in the original model but where created to have more appropiate naming conventions: [{0}]'.format(','.join(database.constructedSpecies)))
     # initialize and remove zero elements
 
-            
+    
 
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
                                    database.eequivalenceTranslator, database.sbmlAnalyzer, database)
+                                        
     return database
 
 

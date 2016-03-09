@@ -236,6 +236,7 @@ class Molecule:
         self.components = []
         self.name = name
         self.compartment = ''
+        self.trueName = ''
         
         a = numpy.random.rand(10, 100)
         self.hash = hashlib.sha1(a).digest()

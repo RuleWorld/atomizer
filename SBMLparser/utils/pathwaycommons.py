@@ -34,17 +34,19 @@ def name2uniprot(nameStr):
     return [x[1] for x in parsedData if len(x) == 2]
 '''
 @memoize
-def queryBioGridByName(name1, name2, organism=None):
+def queryBioGridByName(name1, name2, organism, truename1,truename2):
     url = 'http://webservice.thebiogrid.org/interactions/?'
     response = None
     if organism:
         organismExtract = list(organism)[0].split('/')[-1]
         xparams = 'geneList={0}&includeInteractors=false&accesskey=59764eb62ca572de5949062a1ba75e5d&format=json&taxId={1}'.format('|'.join([name1,name2]),'|'.join(organism))
+        
         try:
             response = urllib2.urlopen(url, xparams).read()
         except urllib2.HTTPError:
             logMess('ERROR:MSC02', 'A connection could not be established to biogrid while testing with taxon {1} and genes {0}'.format('|'.join([name1, name2]), '|'.join(organism)))
             return -1
+
     if not response:
         xparams = 'geneList={0}&includeInteractors=false&accesskey=59764eb62ca572de5949062a1ba75e5d&format=json'.format('|'.join([name1,name2]))        
         try:
@@ -53,6 +55,9 @@ def queryBioGridByName(name1, name2, organism=None):
             logMess('ERROR:MSC02', 'A connection could not be established to biogrid')
             return -1
     results = json.loads(response)
+
+    referenceName1 = truename1.lower() if truename1 else name1.lower()
+    referenceName2 = truename2.lower() if truename2 else name2.lower()
     for result in results:
         resultName1 = results[result]['OFFICIAL_SYMBOL_A'].lower()
         resultName2 = results[result]['OFFICIAL_SYMBOL_B'].lower()
@@ -60,11 +65,11 @@ def queryBioGridByName(name1, name2, organism=None):
         synonymName1 = [x.lower() for x in synonymName1]
         synonymName2 = results[result]['SYNONYMS_B'].split('|')
         synonymName2 = [x.lower() for x in synonymName2]
-        name1 = name1.lower()
-        name2 = name2.lower()
-        if (name1 == resultName1 or name1 in synonymName1) and (name2 == resultName2 or name2 in synonymName2):
+        if truename1 != None and truename2 != None and resultName1 != resultName2:
             return True
-        if (name2 == resultName1 or name2 in synonymName1) and (name1 == resultName2 or name1 in synonymName2):
+        if (referenceName1 == resultName1 or referenceName1 in synonymName1) and (referenceName2 == resultName2 or referenceName2 in synonymName2):
+            return True
+        if (referenceName2 == resultName1 or referenceName2 in synonymName1) and (referenceName1 == resultName2 or referenceName1 in synonymName2):
             return True
 
     return False
