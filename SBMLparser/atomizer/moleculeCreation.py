@@ -570,7 +570,17 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
         return [tmpCandidates[0]], unevenElements, originalCandidateName
 
     prunnedDependencyGraph = deepcopy(dependencyGraph)
-    weights = weightDependencyGraph(prunnedDependencyGraph)
+
+    tempMergedDependencyGraph = deepcopy(prunnedDependencyGraph)
+    for element in database.alternativeDependencyGraph:
+        if element in tempMergedDependencyGraph:
+            tempMergedDependencyGraph[element].extend(database.alternativeDependencyGraph[element])
+    weights = weightDependencyGraph(tempMergedDependencyGraph)
+
+
+
+    #raise Exception
+
     unevenElementDict = {}
     for element in weights:
         candidates = [x for x in prunnedDependencyGraph[element[0]]]
@@ -1476,7 +1486,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
     for reaction, classification in zip(rules, database.classifications):
         bindingReactionsAnalysis(database.dependencyGraph,
                                  list(parseReactions(reaction)), classification)
-
     # lexical dependency graph contains lexically induced binding compositions. atomizer gives preference to binding obtained this way as opposed to stoichiometry
     # stronger bounds on stoichiometry based binding can be defined in
     # reactionDefinitions.json.
@@ -1557,7 +1566,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                             addToDependencyGraph(database.dependencyGraph, modElement,
                                                  [baseElement])
     '''
-
     # include user label information.
     for element in database.userLabelDictionary:
         if database.userLabelDictionary[element] in [0, [(0,)]]:
@@ -1830,11 +1838,9 @@ tmp,removedElement,tmp3))
     # initialize and remove zero elements
 
     
-
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
                                    database.eequivalenceTranslator, database.sbmlAnalyzer, database)
-                                        
     return database
 
 
@@ -1921,6 +1927,7 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
 
     database.weights = sorted(
         database.weights, key=lambda rule: (rule[1], len(rule[0])))
+
 
     atomize(database.prunnedDependencyGraph, database.weights, database.translator, database.reactionProperties,
             database.eequivalenceTranslator2, bioGridFlag, database.sbmlAnalyzer, database, parser)
