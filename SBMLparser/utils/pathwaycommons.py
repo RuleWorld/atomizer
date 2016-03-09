@@ -45,7 +45,7 @@ def queryBioGridByName(name1, name2, organism, truename1,truename2):
             response = urllib2.urlopen(url, xparams).read()
         except urllib2.HTTPError:
             logMess('ERROR:MSC02', 'A connection could not be established to biogrid while testing with taxon {1} and genes {0}'.format('|'.join([name1, name2]), '|'.join(organism)))
-            return -1
+            return False
 
     if not response:
         xparams = 'geneList={0}&includeInteractors=false&accesskey=59764eb62ca572de5949062a1ba75e5d&format=json'.format('|'.join([name1,name2]))        
@@ -53,7 +53,7 @@ def queryBioGridByName(name1, name2, organism, truename1,truename2):
             response = urllib2.urlopen(url, xparams).read()
         except urllib2.HTTPError:
             logMess('ERROR:MSC02', 'A connection could not be established to biogrid')
-            return -1
+            return False
     results = json.loads(response)
 
     referenceName1 = truename1.lower() if truename1 else name1.lower()
