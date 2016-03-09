@@ -528,11 +528,15 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                 # if we had constructed species disregard those since they are introducing noise
                 if len(tmpCandidates2) > 0 and len(tmpCandidates) != len(tmpCandidates2):
                     return selectBestCandidate(reactant, tmpCandidates2, dependencyGraph, sbmlAnalyzer)
-
-                if loginformation:
-                    logMess('ERROR:SCT211', '{0}:Cannot converge to solution, conflicting definitions {1}={2}'.format(
-                    reactant, tmpCandidates, originalTmpCandidates))
-                return None, None, None
+                elif len(tmpCandidates2) == 0:
+                    #the differences is between species that we created so its the LAE fault. Just choose one.
+                    tmpCandidates.sort(key=len)
+                    tmpCandidates = [tmpCandidates[0]]
+                else:
+                    if loginformation:
+                        logMess('ERROR:SCT211', '{0}:Cannot converge to solution, conflicting definitions {1}={2}'.format(
+                        reactant, tmpCandidates, originalTmpCandidates))
+                    return None, None, None
         elif reactant in database.alternativeDependencyGraph and loginformation:
             # there is one stoichionetry candidate but the naming convention
             # and the stoichionetry dotn agree
@@ -550,9 +554,13 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                 if namingtmpCandidates and tmpCandidates[0] != namingtmpCandidates[0]:
 
                     if loginformation:
-                        database.alternativeDependencyGraph[reactant] = namingtmpCandidates
-                        logMess('WARNING:SCT111', '{0}:conflicting definitions between stoichiometry ({1}) and naming conventions {2}. Choosing the latter'.format(
-                        reactant, tmpCandidates[0], database.alternativeDependencyGraph[reactant]))
+                        if namingtmpCandidates[0][0] in database.constructedSpecies:
+                            namingTmpCandidates = tmpCandidates
+
+                        else:
+                            database.alternativeDependencyGraph[reactant] = namingtmpCandidates
+                            logMess('WARNING:SCT111', '{0}:conflicting definitions between stoichiometry ({1}) and naming conventions {2}. Choosing the latter'.format(
+                                    reactant, tmpCandidates[0], database.alternativeDependencyGraph[reactant]))
                     tmpCandidates = namingtmpCandidates
                     addAssumptions('lexicalVsstoch', (reactant, ('stoch', str(tmpCandidates)), ('lexical', str(
                         namingtmpCandidates)), ('original', str(originalTmpCandidates))))
@@ -1489,7 +1497,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
     # lexical dependency graph contains lexically induced binding compositions. atomizer gives preference to binding obtained this way as opposed to stoichiometry
     # stronger bounds on stoichiometry based binding can be defined in
     # reactionDefinitions.json.
-
     for element in lexicalDependencyGraph:
 
         if element in database.dependencyGraph and element not in database.userLabelDictionary:
@@ -1591,6 +1598,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
         _, adhocLabelDictionary, _, _ = database.sbmlAnalyzer.classifyReactions(
             rules, molecules, database.dependencyGraph)
     database.reactionProperties.update(adhocLabelDictionary)
+
     # update catalysis equivalences
     # catalysis reactions
     for key in database.eequivalenceTranslator2:
@@ -1635,7 +1643,6 @@ information however their annotations are completely different.".format(baseElem
                 else:
                     logMess('WARNING:ATO114', 'Definition conflict between binding information {0} and lexical analyis {1} for molecule {2},\
 choosing binding'.format(database.dependencyGraph[modElement], baseElement, modElement))
-
     # non lexical-analysis catalysis reactions
     if database.forceModificationFlag:
         for reaction, classification in zip(rules, database.classifications):
@@ -1837,10 +1844,11 @@ tmp,removedElement,tmp3))
         logMess('WARNING:SCT131','The following species names do not appear in the original model but where created to have more appropiate naming conventions: [{0}]'.format(','.join(database.constructedSpecies)))
     # initialize and remove zero elements
 
-    
+
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
                                    database.eequivalenceTranslator, database.sbmlAnalyzer, database)
+
     return database
 
 
