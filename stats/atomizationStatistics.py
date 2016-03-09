@@ -19,9 +19,12 @@ def constructHistogram(data, fileName, xlabel, ylabel, bins=10):
     _, axs = plt.subplots(1, 1, sharex=True, figsize=(8, 6))
 
     plt.clf()
-    axs.set_xlim(xmin=0,xmax=bins[-1])
+    if type(bins) != int:
+        axs.set_xlim(xmin=0,xmax=bins[-1])
     sns.distplot(data, kde=False, rug=True, bins=bins, color="g")
     #plt.hist(ratomization)
+    plt.xlabel(xlabel, fontsize=18)
+    plt.ylabel(ylabel, fontsize=18)
     
     plt.savefig(fileName)
 

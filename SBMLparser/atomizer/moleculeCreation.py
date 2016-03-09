@@ -232,7 +232,6 @@ def weightDependencyGraph(dependencyGraph):
     for element in dependencyGraph:
         path = resolveDependencyGraph(dependencyGraph, element)
         try:
-
             path2 = resolveDependencyGraph(dependencyGraph, element, True)
         except CycleError:
             path2 = []
@@ -1363,9 +1362,9 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
             sortedPair = sorted(list(combinationParticle), key=len)
             # get unary keys
             unaryAnnotation1 = [y for x in annotationDict[combinationParticle[0]] for y in annotationDict[
-                combinationParticle[0]][x] if x in ['BQM_IS_DESCRIBED_BY', 'BQB_IS_VERSION_OF', 'BQB_IS'] and ('uniprot' in y or 'chebi' in y)]
+                combinationParticle[0]][x] if x in ['BQM_IS_DESCRIBED_BY', 'BQB_IS_VERSION_OF', 'BQB_IS','BQB_ENCODES'] and ('uniprot' in y or 'chebi' in y)]
             unaryAnnotation2 = [y for x in annotationDict[combinationParticle[1]] for y in annotationDict[
-                combinationParticle[1]][x] if x in ['BQM_IS_DESCRIBED_BY', 'BQB_IS_VERSION_OF', 'BQB_IS'] and ('uniprot' in y or 'chebi' in y)]
+                combinationParticle[1]][x] if x in ['BQM_IS_DESCRIBED_BY', 'BQB_IS_VERSION_OF', 'BQB_IS','BQB_ENCODES'] and ('uniprot' in y or 'chebi' in y)]
 
             # get compositional keys
             compositionalAnnotation1 = [y for x in annotationDict[combinationParticle[0]] for y in annotationDict[
@@ -1399,7 +1398,6 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
     exactMatches = consolidateDependencyGraph(
         dict(exactMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
 
-
     if logResults:
         for x in [y for y in exactMatches if len(exactMatches[y]) > 0]:
             if not tentativeFlag:
@@ -1416,7 +1414,6 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
     strongIntersectionMatches = {x: strongIntersectionMatches[x] for x in strongIntersectionMatches if x not in partialMatches}
     strongIntersectionMatches.update(exactMatches)
     strongIntersectionMatches = consolidateDependencyGraph(dict(strongIntersectionMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
-
     if logResults:
         for x in [y for y in strongIntersectionMatches if len(strongIntersectionMatches[y]) > 0]:
             if x not in exactMatches:
@@ -1434,7 +1431,6 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
 
 
     intersectionMatches = consolidateDependencyGraph(dict(intersectionMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
-
     if logResults:
         for x in intersectionMatches:
             if x not in exactMatches:
@@ -1443,7 +1439,6 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
 
     partialMatches = consolidateDependencyGraph(
         dict(partialMatches), {}, {}, database.sbmlAnalyzer, database, loginformation=False)[0]
-
 
     if logResults:
         for x in partialMatches:
@@ -1656,8 +1651,8 @@ choosing binding'.format(database.dependencyGraph[modElement], baseElement, modE
                 else:
                     mod = preaction[1][0]
                     base = preaction[0][0]
-
                 if database.dependencyGraph[mod] == [] and mod not in database.userLabelDictionary:
+
                     if base in database.userLabelDictionary and \
                             database.userLabelDictionary[base] == 0:
                         continue
@@ -1811,7 +1806,6 @@ tmp,removedElement,tmp3))
     #completeAnnotationDependencyGraph, completePartialMatches = fillSCTwithAnnotationInformation(strippedMolecules, annotationDict, database, False)
     # pure lexical analysis for the remaining orphaned molecules
 
-
     tmpDependency, database.tmpEquivalence = database.sbmlAnalyzer.findClosestModification(
         orphanedSpecies, strippedMolecules, database)
 
@@ -1843,7 +1837,6 @@ tmp,removedElement,tmp3))
     if len(database.constructedSpecies) > 0:
         logMess('WARNING:SCT131','The following species names do not appear in the original model but where created to have more appropiate naming conventions: [{0}]'.format(','.join(database.constructedSpecies)))
     # initialize and remove zero elements
-
 
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
