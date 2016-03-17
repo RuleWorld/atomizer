@@ -1289,9 +1289,12 @@ def updateSpecies(species, referenceMolecule):
                     newComponent.addState('0')
                 if count > 0:
                     for _ in range(0, count):
-                        moleculeStructure.addComponent(deepcopy(newComponent))
+                        #just make a copy of the reference component and set active state to 0
+                        moleculeStructure.addComponent(deepcopy(component))
+                        moleculeStructure.components[-1].setActiveState('0')
                 elif count < 0:
                     for _ in range(0, -count):
+                        #FIXME: does not fully copy the states
                         referenceMolecule.addComponent(deepcopy(newComponent))
                         flag = True
                 elif count == 0:
