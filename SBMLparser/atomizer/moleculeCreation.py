@@ -1074,7 +1074,6 @@ def createCatalysisRBM(dependencyGraph, element, translator, reactionProperties,
             translator[baseName] = deepcopy(species)
             translator[element[0]] = modifiedSpecies
 
-
 globalNumberGenerator = []
 
 
@@ -1297,13 +1296,14 @@ def updateSpecies(species, referenceMolecule):
                 count -= [x.name for x in moleculeStructure.components].count(
                     component.name)
                 newComponent = st.Component(component.name)
-                if len(component.states) > 0:
-                    newComponent.addState('0')
+                #if len(component.states) > 0:
+                #    newComponent.addState('0')
                 if count > 0:
                     for _ in range(0, count):
                         #just make a copy of the reference component and set active state to 0
-                        moleculeStructure.addComponent(deepcopy(component))
-                        moleculeStructure.components[-1].setActiveState('0')
+                        componentCopy = deepcopy(component)
+                        componentCopy.setActiveState('0')
+                        moleculeStructure.addComponent(componentCopy)
                 elif count < 0:
                     for _ in range(0, -count):
                         #FIXME: does not fully copy the states
@@ -1871,7 +1871,7 @@ def sanityCheck(translator):
             if stringrep[translator.keys()[key]] == stringrep[translator.keys()[key2]]:
                 repeats.add((translator.keys()[key], translator.keys()[key2]))
     for repeat in repeats:
-        logMess('ERROR:MSC201', 'Elements {0} and {1} produce\
+        logMess('ERROR:SCT241', 'Elements {0} and {1} produce\
             the same translation. Emptying {1}.'.format(repeat[0], repeat[1]))
         if max(repeat) in translator:
             translator.pop(max(repeat))
@@ -1946,12 +1946,10 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
 
     atomize(database.prunnedDependencyGraph, database.weights, database.translator, database.reactionProperties,
             database.eequivalenceTranslator2, bioGridFlag, database.sbmlAnalyzer, database, parser)
-
     onlySynDec = len(
         [x for x in database.classifications if x not in ['Generation', 'Decay']]) == 0
     propagateChanges(database.translator, database.prunnedDependencyGraph)
-
-    # sanityCheck(database.translator)
+    sanityCheck(database.translator)
     '''
     pr.disable()
     s = StringIO.StringIO()
