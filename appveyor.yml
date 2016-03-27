@@ -31,7 +31,6 @@ install:
   # - ps: (new-object net.webclient).DownloadFile($env:NUMPY_URL, 'c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl')
   # - "%PYTHON%\\python.exe -m pip install --user c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl"  
 
-  - "%PYTHON%\\python.exe SBMLparser\\sbmlTranslator.py -ai XMLExamples\\BIOMD0000000217.xml"
 branches:
   # whitelist
   only:
@@ -47,7 +46,7 @@ build_script:
   - make install
 
 artifacts:
- - path: build\sbmlTranslator.exe
+ - path: dist\sbmlTranslator.exe
    name: sbmlTranslator
    
 notifications:
