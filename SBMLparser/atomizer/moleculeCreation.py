@@ -462,15 +462,19 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                     activeCandidates = []
                     for individualCandidate in tmpCandidates:
                         for tmpCandidate in individualCandidate:
-                            uniprotkey = getURIFromSBML(tmpCandidate,database.parser,  ['uniprot'])[0]
-                            uniprotkey = uniprotkey.split('/')[-1]
-                            activeQuery = pwcm.queryActiveSite(uniprotkey, None)
+                            activeQuery = None
+                            uniprotkey = getURIFromSBML(tmpCandidate,database.parser,  ['uniprot'])
+                            if len(uniprotkey) > 0:
+                                uniprotkey = uniprotkey[0].split('/')[-1]
+                                activeQuery = pwcm.queryActiveSite(uniprotkey, None)
                             if activeQuery and len(activeQuery) > 0:
                                 activeCandidates.append(tmpCandidate)
                                 #enter modification information to database
                                 #logMess('INFO:SCT051', '{0}:Determined that {0} has an active site for modication'.format(reactant, tmpCandidate))
                                 #return [individualCandidate], unevenElements, candidates
-                            else:
+                            # we want relevant biological names, its useless if they are too short
+                            elif len(tmpCandidate) >= 3:
+                            #else:
                                 individualMajorCandidates = [y for x in candidates for y in x]
                                 activeQuery =pwcm.queryActiveSite(tmpCandidate,None)
                                 if activeQuery and len(activeQuery) > 0:
@@ -489,7 +493,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
 
                         for tmpCandidate, candidate in zip(tmpCandidates, candidates):
                             fuzzyList = sbmlAnalyzer.processAdHocNamingConventions(reactant, candidate[0], {}, False, dependencyGraph.keys())
-                            if len(fuzzyList) > 0:
+                            if len(fuzzyList) > 0 and fuzzyList[0][1]:
                                 if sbmlAnalyzer.testAgainstExistingConventions(fuzzyList[0][1], sbmlAnalyzer.namingConventions['modificationList']):
                                     database.eequivalenceTranslator2[fuzzyList[0][1]].append((activeCandidates[0], '{0}{1}'.format(activeCandidates, fuzzyList[0][1])))
                                 else:
