@@ -74,7 +74,34 @@ def queryBioGridByName(name1, name2, organism, truename1,truename2):
 
     return False
 
+@memoize
+def queryActiveSite(nameStr,organism):
+    url = 'http://www.uniprot.org/uniprot/?'
 
+    response = None
+    retry = 0
+    while retry < 3:
+        retry += 1
+        if organism:
+            organismExtract = list(organism)[0].split('/')[-1]
+            xparams = 'query={0}+AND+organism:{1}&columns=entry name,id,feature(ACTIVE SITE)&format=tab&limit=5&sort=score'.format(nameStr, organismExtract)
+            try:
+                response = urllib2.urlopen(url, xparams).read()
+            except urllib2.HTTPError:
+                logMess('ERROR:MSC03', 'A connection could not be established to uniprot')
+
+        if response in ['', None]:
+            url = 'http://www.uniprot.org/uniprot/?'
+            xparams = 'query={0}&columns=entry name,id,feature(ACTIVE SITE)&format=tab&limit=5&sort=score'.format(nameStr)
+            try:
+                response = urllib2.urlopen(url, xparams).read()
+            except urllib2.HTTPError:
+                logMess('ERROR:MSC03', 'A connection could not be established to uniprot')
+    if not response:
+        return response
+    parsedData = [x.split('\t') for x in response.split('\n')][1:]
+    #return parsedData
+    return [x[0] for x in parsedData if len(x) == 3 and any(nameStr.lower() in z for z in [y.lower() for y in x[0].split('_')]) and len(x[2]) > 0]
 
 @memoize
 def name2uniprot(nameStr, organism):
@@ -169,8 +196,10 @@ def isInComplexWith(name1, name2, sbmlURI=[], sbmlURI2=[], organism=None):
     return False
 
 if __name__ == "__main__":
+    #pass
     #results =  isInComplexWith('Crk','Ras')
-    print getReactomeBondByName('Crk', 'pro_TrkA', [], [])
+    #print getReactomeBondByName('EGF', 'Grb2', [], [])
+    print queryActiveSite('EGF', '')
     #print getReactomeBondByName('EGF', 'EGF', ['P07522'], ['P07522'])
     #print name2uniprot('MEKK1')
     #print results

@@ -1064,10 +1064,8 @@ but reaction is marked as reversible'.format(reactionID))
         compartmentDict[''] = 1
         speciesAnnotationInfo = default_to_regular(self.getFullAnnotation())
         annotationInfo = {'moleculeTypes': {}, 'species': {}}
-
         for compartment in self.model.getListOfCompartments():
             compartmentDict[compartment.getId()] = compartment.getSize()
-
         for species in self.model.getListOfSpecies():
             rawSpecies = self.getRawSpecies(species, parameters)
             #if rawSpecies['returnID'] in self.boundaryConditionVariables:

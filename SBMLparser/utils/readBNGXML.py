@@ -289,6 +289,9 @@ def parseXMLFromString(xmlString):
     doc = etree.fromstring(xmlString)
     return parseXMLStruct(doc)
 
+def parseFullXMLFromString(xmlString):
+    doc = etree.fromstring(xmlString)
+    return parseFullXML(doc)
 
 
 def parseXML(xmlFile):

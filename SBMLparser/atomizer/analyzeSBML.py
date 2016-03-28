@@ -654,6 +654,7 @@ class SBMLAnalyzer:
             # string share a common subset but they contain mutually exclusive appendixes: a_b,a_c
             else:
                 commonRoot = detectOntology.findLongestSubstring(reactant, product)
+
                 if len(commonRoot) > longEnough or commonRoot in moleculeSet:
                     #find if we can find a commonRoot from existing molecules
                     mostSimilarRealMolecules = get_close_matches(commonRoot, [x for x in moleculeSet if x not in [reactant, product]])
@@ -1361,7 +1362,6 @@ class SBMLAnalyzer:
                         if tuple(sorted([x[0] for x in reaction],key=len)) not in equivalenceTranslator['{0}'.format(fuzzyKey)]:
                             equivalenceTranslator['{0}'.format(fuzzyKey)].append(tuple(sorted([x[0] for x in reaction],key=len)))
                         return
-
                     logMess('INFO:LAE004', 'added induced naming convention {0}'.format(str(reaction)))
                     equivalenceTranslator['{0}'.format(fuzzyKey)] = []
                     if fuzzyKey == '0':

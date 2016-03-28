@@ -22,6 +22,7 @@ def defineConsole():
     parser.add_argument('-a', '--atomize', action='store_true', help='Infer molecular structure')
     parser.add_argument('-p', '--pathwaycommons', action='store_true', help='Use pathway commons to infer molecule binding. This setting requires an internet connection and will query the pathway commons web service.')
     parser.add_argument('-b', '--bionetgen-analysis', type=str, help='Set the BioNetGen path for context post analysis.')
+    parser.add_argument('-s','--isomorphism-check', action='store_true', help='disallow atomizations that produce the same graph structure')
     return parser
 
 
@@ -39,6 +40,7 @@ def checkInput(namespace):
     options['atomize'] = namespace.atomize
     options['pathwaycommons'] = namespace.pathwaycommons
     options['bionetgenAnalysis'] = namespace.bionetgen_analysis
+    options['isomorphismCheck'] = namespace.isomorphism_check
     return options
 
 
