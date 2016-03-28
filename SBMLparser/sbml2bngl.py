@@ -517,6 +517,7 @@ but reaction is marked as reversible'.format(reactionID))
             # remove compartments from expression. also separate left hand and right hand side
             rateL, rateR, nl, nr = self.analyzeReactionRate(math, compartmentList,
                 reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers)
+
             if rateR == '0':
                 reversible = False
             if symmetryFactors[0] > 1:
@@ -700,10 +701,15 @@ but reaction is marked as reversible'.format(reactionID))
         
     def convertToName(self, rate):
         for element in sorted(self.speciesDictionary, key=len, reverse=True):
-            if element in rate:
-                rate = re.sub(r'(\W|^)({0})(\W|$)'.format(element),
-                              r'\1{0}\3'.format(
-                              self.speciesDictionary[element]), rate)
+            while True:
+                oldRate = rate
+                if element in rate:
+                    rate = re.sub(r'(\W|^)({0})(\W|$)'.format(element),
+                                  r'\1{0}\3'.format(
+                                  self.speciesDictionary[element]), rate)
+                    if rate != oldRate:
+                        continue
+                break
             #rate = rate.replace(element,self.speciesDictionary[element])
         return rate
 
@@ -824,6 +830,7 @@ but reaction is marked as reversible'.format(reactionID))
                                              r'\1{0}\3'.format('r{0}_{1}'.format(index + 1, parameter)),
                                              finalString)
                     functionName = '{0},{1}'.format(functionName, finalString)
+
             else:
 
                 if rawRules['numbers'][0] > threshold or rawRules['rates'][0] in translator:
