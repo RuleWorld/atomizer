@@ -19,9 +19,10 @@ def constructHistogram(data, fileName, xlabel, ylabel, bins=10):
     _, axs = plt.subplots(1, 1, sharex=True, figsize=(8, 6))
 
     plt.clf()
+    sns.set_palette("BuGn_d")
     if type(bins) != int:
         axs.set_xlim(xmin=0,xmax=bins[-1])
-    sns.distplot(data, kde=False, rug=True, bins=bins, color="g")
+    sns.distplot(data, kde=False, rug=False, bins=bins, hist_kws=dict(alpha=1))
     #plt.hist(ratomization)
     plt.xlabel(xlabel, fontsize=18)
     plt.ylabel(ylabel, fontsize=18)
@@ -189,8 +190,8 @@ def constructPlots(atomizationDB):
 if __name__ == "__main__":
     folder = 'curated'
     # calculate atomization information
-    atomizationDB = reactionBasedAtomizationDistro(folder)
-    atomizationDB.to_hdf('{0}DB.h5'.format(folder),'atomization')
+    #atomizationDB = reactionBasedAtomizationDistro(folder)
+    #atomizationDB.to_hdf('{0}DB.h5'.format(folder),'atomization')
 
     outputDir = 'testCurated'
     # read info

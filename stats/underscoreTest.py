@@ -8,7 +8,6 @@ import pandas
 from scipy.stats import kendalltau
 from scipy import stats
 
-
 def getModelStructures(bngxml):
     structures = readBNGXML.parseFullXML(bngxml)
     return structures
@@ -28,7 +27,7 @@ def constructHistogram(data, fileName, xlabel, ylabel, bins=10):
 
 def categorizeStatistics(effort):
     if effort == 0:
-        return '=0'
+        return '0'
     elif effort >=1 and effort <= 5:
         return '1-5'
     elif effort >5 and effort <= 10:
@@ -145,14 +144,21 @@ def batchComparison(directory):
 def createPlots(atomizationDB):
 
     plt.clf()
-    sns.set(font_scale=1.5) 
+    #sns.set(font_scale=1.5) 
+    sns.set_context("paper", font_scale=3)
+    sns.set_style("white")
 
     prunnedDB =  atomizationDB[atomizationDB.nonatoscore.notnull()]
 
     g = sns.factorplot(x="categorized_nonatoscore", data=prunnedDB, kind="count",
-                   palette="BuGn_d", size=7, aspect=1.7, order=['=0', '1-5' , '6-10', '>10'])
+                   palette="BuGn_d", size=7, aspect=1.7, order=['0', '1-5' , '6-10', '>10'])
 
-    g.set_axis_labels("Number of unatomized species in models with complex formation", "Number of Models")
+    plt.xlabel("Number of unatomized species\n in models with complex formation ({0} models)".format(len(prunnedDB)), fontsize=32)
+    plt.ylabel("Number of Models", fontsize=32)
+
+    #g.set_axis_labels("Number of unatomized species\n in models with complex formation ({0} models)".format(len(prunnedDB)), "Number of Models")
+
+
     g.fig.savefig('underscorebarplot.png',bbox_inches='tight')
 
     #nonatoscore = [x for x,y in zip(atomizationDB['nonatoscore'], atomizationDB['nonatoscore'].notnull()) if y]

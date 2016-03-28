@@ -1550,7 +1550,7 @@ if __name__ == "__main__":
     #print failures
     #spaceCoveredCDF('complex2')
     # modelCompositionCDF('complex2')
-    reactionBasedAtomizationDistro('curated', 'curatedImg')
+    reactionBasedAtomizationDistro('curated', 'testCurated')
     # nonAtomizedSpeciesAnalysis()
     # createGroupingCDF()
     #print reactionBasedAtomizationFile('curated/BIOMD0000000019.xml.xml')
