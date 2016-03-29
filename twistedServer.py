@@ -61,6 +61,13 @@ class AtomizerServer(xmlrpc.XMLRPC):
             logStream = StringIO.StringIO()
             result = libsbml2bngl.readFromString(xmlFile,
                                                  reaction, False, None, atomize, logStream)
+
+            if result:
+                pointer = tempfile.mkstemp(suffix='.bngl', text=True)
+                with open(pointer[1], 'w') as f:
+                    f.write(result.finalString)
+                print pointer[1]
+                result = libsbml2bngl.postAnalyzeString(pointer[1], bngDistro, result.database)
             self.addToDict(ticket, [result, logStream.getvalue()])
             print 'success', ticket, result
         except:

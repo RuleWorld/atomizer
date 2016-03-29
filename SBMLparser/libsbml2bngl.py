@@ -156,8 +156,14 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
     pathwaycommons = True
     if bioGrid:
         loadBioGrid()
+
     database = structures.Databases()
+    database.document = document
     database.forceModificationFlag = True
+    database.reactionDefinitions = reactionDefinitions
+    database.useID = useID
+    database.atomize = atomize
+    database.speciesEquivalence = speciesEquivalence
     database.pathwaycommons = False
     if pathwaycommons:
         database.pathwaycommons = True
@@ -171,8 +177,13 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
     if loggingStream:
         finishStreamLog(console)
 
-    return analyzeHelper(document, reactionDefinitions,
-                         useID,'', speciesEquivalence, atomize, translator).finalString
+    returnArray = analyzeHelper(document, reactionDefinitions,
+                         useID,'', speciesEquivalence, atomize, translator)
+
+    if atomize and onlySynDec:
+        returnArray = list(returnArray)
+    returnArray = AnalysisResults(*(list(returnArray[0:-2]) + [database] + [returnArray[-1]]))
+    return returnArray
 
 def processFunctions(functions,sbmlfunctions,artificialObservables,tfunc):
     '''
@@ -237,6 +248,7 @@ def processFunctions(functions,sbmlfunctions,artificialObservables,tfunc):
         fd.append([function,resolveDependencies(dependencies2,function.split(' = ' )[0].split('(')[0],0)])
     fd = sorted(fd,key= lambda rule:rule[1])
     functions = [x[0] for x in fd]
+
     return functions
 
 
@@ -387,11 +399,7 @@ def reorderFunctions(functions):
     return [x[0] for x in idx]
 
 
-def postAnalyzeFile(outputFile, bngLocation, database):
-    """
-    Performs a postcreation file analysis based on context information
-    """
-    #print('Transforming generated BNG file to BNG-XML representation for analysis')
+def postAnalysisHelper(outputFile, bngLocation, database):
     consoleCommands.setBngExecutable(bngLocation)
     outputDir = os.sep.join(outputFile.split(os.sep)[:-1])
     if outputDir != '':
@@ -406,14 +414,23 @@ def postAnalyzeFile(outputFile, bngLocation, database):
     # analysis of redundant bonds
     deleteBonds = contextAnalysis.analyzeRedundantBonds(database.assumptions['redundantBonds'])
 
-    modificationFlag = True
-
     for molecule in database.assumptions['redundantBondsMolecules']:
         if molecule[0] in deleteBonds:
             for bond in deleteBonds[molecule[0]]:
                 database.translator[molecule[1]].deleteBond(bond)
                 logMess('INFO:CTX002', 'Used context information to determine that the bond {0} in species {1} is not likely'.format(bond,molecule[1]))
 
+
+
+def postAnalyzeFile(outputFile, bngLocation, database):
+    """
+    Performs a postcreation file analysis based on context information
+    """
+    #print('Transforming generated BNG file to BNG-XML representation for analysis')
+
+    postAnalysisHelper(outputFile, bngLocation, database)
+
+    # recreate file using information from the post analysis
     returnArray = analyzeHelper(database.document, database.reactionDefinitions, database.useID,
                                 outputFile, database.speciesEquivalence, database.atomize, database.translator)
     with open(outputFile, 'w') as f:
@@ -437,6 +454,14 @@ def postAnalyzeFile(outputFile, bngLocation, database):
         
     # score hypothetical bonds
     #contextAnalysis.scoreHypotheticalBonds(assumptions['unknownBond'])
+
+def postAnalyzeString(outputFile,bngLocation, database):
+    postAnalysisHelper(outputFile, bngLocation, database)
+
+    # recreate file using information from the post analysis
+    returnArray = analyzeHelper(database.document, database.reactionDefinitions, database.useID,
+                                outputFile, database.speciesEquivalence, database.atomize, database.translator).finalString
+    return returnArray    
 
 def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, outputFile,
                 speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False):
@@ -612,6 +637,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # FIXME: this method is a mess, improve handling of assignmentrules since we can actually handle those
     aParameters, aRules, nonzparam, artificialRules, removeParams, artificialObservables = parser.getAssignmentRules(zparam, param, rawSpecies, 
                                                                                                                      observablesDict, translator)
+
     compartments = parser.getCompartments()
     functions = []
     assigmentRuleDefinedParameters = []
@@ -619,6 +645,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                                                                    atomize=atomize, parameterFunctions=artificialObservables)
 
     functions.extend(rateFunctions)
+
     for element in nonzparam:
         param.append('{0} 0'.format(element))
     param = [x for x in param if x not in removeParams]
@@ -652,6 +679,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     
     deleteMolecules = []
     deleteMoleculesFlag = True 
+
     for key in artificialObservables:
         flag = -1
         for idx,observable in enumerate(observables):
@@ -682,7 +710,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         if flag != -1:
             initialConditions[flag] = '#' + initialConditions[flag]
 
-
     for flag in sorted(deleteMolecules,reverse=True):
         
         if deleteMoleculesFlag:
@@ -704,7 +731,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     sbmlfunctions = parser.getSBMLFunctions()
     #print functions
     processFunctions(functions,sbmlfunctions,artificialObservables,rateFunctions)
-
     for interation in range(0,3):
         for sbml2 in sbmlfunctions:
             for sbml in sbmlfunctions:
@@ -712,14 +738,15 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                     continue
                 if sbml in sbmlfunctions[sbml2]:
                     sbmlfunctions[sbml2] = writer.extendFunction(sbmlfunctions[sbml2],sbml,sbmlfunctions[sbml])
-    functions = reorderFunctions(functions)
 
+    functions = reorderFunctions(functions)
 
 
     functions = changeNames(functions, aParameters)
     # change reference for observables with compartment name
     functions = changeNames(functions, observablesDict)
 #     print [x for x in functions if 'functionRate60' in x]
+
     functions = unrollFunctions(functions)
     rules = changeRates(rules, aParameters)
     if len(compartments) > 1 and 'cell 3 1.0' not in compartments:
