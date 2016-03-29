@@ -137,11 +137,12 @@ def isInComplexWith(moleculeSet, parser=None):
 
         simpleOrganism = [x.split('/')[-1]
                           for x in modelOrganism] if modelOrganism else None
+
         bindingResults = pwcm.queryBioGridByName(
             molecule1, molecule2, simpleOrganism, element[0], element[1])
         if not bindingResults:
             bindingResults = pwcm.queryBioGridByName(
-                element[0], element[1], simpleOrganism, None, None)
+                element[0], element[1], None, None, None)
         #bindingResults = None
         #bindingResults = pwcm.isInComplexWith([element[0], name1], [element[1], name2], organism=modelOrganism)
         if bindingResults:
