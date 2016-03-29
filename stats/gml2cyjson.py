@@ -9,7 +9,8 @@ def gml2cyjson(gmlText, graphtype=None):
     """
     Converts a gml graph definition to the format that cytoscape.js expects
     """
-    r = lambda: random.randint(0, 255)
+    #r = lambda: random.randint(0, 255)
+    r = lambda: 100
 
     jsonDict = {}
     jsonDict['style'] =  [
@@ -37,6 +38,10 @@ def gml2cyjson(gmlText, graphtype=None):
       'selector': 'edge',
       'css': {
         'target-arrow-shape': 'none'
+        
+      },
+      'style':{
+        'width': 10
       }
     },
     {
