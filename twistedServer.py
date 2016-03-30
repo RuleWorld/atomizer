@@ -192,6 +192,12 @@ class AtomizerServer(xmlrpc.XMLRPC):
                 xmlFileName = xmlFileName.split(os.sep)[-1]
 
                 gmlGraph = stdgraph.generateSTDGML(xmlFileName)
+                os.remove('{0}.gml'.format(xmlFileName))
+                #result = gml2cyjson(gmlGraph, graphtype=graphtype)
+                #jsonStr = json.dumps(result, indent=1, separators=(',', ': '))
+
+                #result = {'jsonStr': jsonStr, 'gmlStr': gmlGraph}
+
                 self.addToDict(ticket, ''.join(gmlGraph))
                 print 'success', ticket
         except:

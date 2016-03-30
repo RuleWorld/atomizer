@@ -242,6 +242,9 @@ def generateSTDGML(inputFile):
     nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
     graph = generateSTD(nodeList, edgeList)
     gml = nx.generate_gml(graph)
+    nx.write_gml(graph,inputFile+'.gml')
+    with open(inputFile+'.gml','r') as f:
+        gml = f.read()
     return gml
 
 if __name__ == "__main__":
@@ -250,7 +253,7 @@ if __name__ == "__main__":
     namespace = parser.parse_args()
     inputFile = namespace.input
 
-    generateSTDGML(inputFile)
+    print generateSTDGML(inputFile)
     #nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
     #graph = generateSTD(nodeList, edgeList)
     #outputGraph(graph, '{0}_std.gml'.format(namespace.input), {})
