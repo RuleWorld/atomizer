@@ -120,7 +120,7 @@ class SBML2BNGL:
     def isSameNameDifferentCompartment(self, name):
         speciesList = []
         for species in self.model.getListOfSpecies():
-            if species.name == name:
+            if species.getName() == name:
                 speciesList.append(species.getCompartment())
 
         return len(speciesList) == len(set(speciesList))
