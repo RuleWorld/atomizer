@@ -237,15 +237,17 @@ def outputGraph(graph, fileName, labelDict):
     nx.write_gml(graph, fileName)
     #ato_write_gml(graph, fileName, labelDict)
 
+import codecs
 
 def generateSTDGML(inputFile):
     nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
     graph = generateSTD(nodeList, edgeList)
     gml = nx.generate_gml(graph)
-    nx.write_gml(graph,inputFile+'.gml')
-    with open(inputFile+'.gml','r') as f:
-        gml = f.read()
-    return gml
+    #x.write_gml(graph,inputFile+'.gml')
+    #with open(inputFile+'.gml','r') as f:
+    #    gml = f.read()
+    gml = codecs.open(inputFile + '.gml', 'r','utf-8')
+    return gml.read()
 
 if __name__ == "__main__":
     
