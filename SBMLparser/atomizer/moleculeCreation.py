@@ -67,10 +67,7 @@ def resolveDependencyGraph(dependencyGraph, reactant, withModifications=False):
     return topCandidate
 
 
-assumptions = defaultdict(set)
-
-
-def addAssumptions(assumptionType, assumption):
+def addAssumptions(assumptionType, assumption, assumptions):
     assumptions[assumptionType].add(assumption)
 
 
@@ -560,7 +557,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                         logMess('WARNING:SCT112', '{0}:Stoichiometry analysis result in non self-consistent definitions but conflicts with lexical analysis stoichiometry({1})!= naming({2}). Selecting lexical analysis'.format(reactant,
                                                                                                                                                                                                                                           tmpCandidates, namingTmpCandidates))
                     addAssumptions('lexicalVsstoch', (reactant, ('lexical', str(
-                        namingTmpCandidates)), ('stoch', str(tmpCandidates)), ('original', str(originalTmpCandidates))))
+                        namingTmpCandidates)), ('stoch', str(tmpCandidates)), ('original', str(originalTmpCandidates))), database.assumptions)
 
                 tmpCandidates = namingTmpCandidates
                 if loginformation:
@@ -574,7 +571,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                         reactant, tmpCandidates, tmpCandidates[sortedCandidates[0][1]]))
                 replacementCandidate = [tmpCandidates[sortedCandidates[0][1]]]
                 addAssumptions('lexicalVsstoch', (reactant, ('current', str(replacementCandidate)), ('alternatives', str(
-                    [x for x in tmpCandidates if x != replacementCandidate[0]])), ('original', str(originalTmpCandidates))))
+                    [x for x in tmpCandidates if x != replacementCandidate[0]])), ('original', str(originalTmpCandidates))), database.assumptions)
                 tmpCandidates = replacementCandidate
             else:
                 tmpCandidates2 = [x for x in tmpCandidates if all(y not in x for y in database.constructedSpecies)]
@@ -616,7 +613,7 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
                                     reactant, tmpCandidates[0], database.alternativeDependencyGraph[reactant]))
                     tmpCandidates = namingtmpCandidates
                     addAssumptions('lexicalVsstoch', (reactant, ('stoch', str(tmpCandidates)), ('lexical', str(
-                        namingtmpCandidates)), ('original', str(originalTmpCandidates))))
+                        namingtmpCandidates)), ('original', str(originalTmpCandidates))), database.assumptions)
                     for element in tmpCandidates[0]:
                         if element not in prunnedDependencyGraph:
                             # elemental species that were not used anywhere
@@ -945,10 +942,11 @@ def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommon
 
     if len(redundantBonds) > 0:
         for x in redundantBonds:
-            addAssumptions(
-                'redundantBonds', tuple(sorted([y.name for y in x])))
-            addAssumptions(
-                'redundantBondsMolecules', (tuple(sorted([y.name for y in x])), moleculeName))
+            if database:
+                addAssumptions(
+                    'redundantBonds', tuple(sorted([y.name for y in x])), database.assumptions)
+                addAssumptions(
+                    'redundantBondsMolecules', (tuple(sorted([y.name for y in x])), moleculeName), database.assumptions)
             logMess('WARNING:CTX001', 'Redundant bonds detected between molecules {0} in species {1}'.format(
                 [y.name for y in x], moleculeName))
     totalComplex = [set(x) for x in pairedMolecules]
@@ -2017,6 +2015,6 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     ps.print_stats(10)
     print s.getvalue()
     '''
-    database.assumptions = deepcopy(assumptions)
-    assumptions.clear()
+    #database.assumptions = deepcopy(assumptions)
+    #assumptions.clear()
     return database.translator, onlySynDec

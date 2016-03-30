@@ -32,6 +32,7 @@ import logging
 from rulifier import postAnalysis
 import pprint
 import fnmatch
+from collections import defaultdict
 
 # returntype for the sbml analyzer translator and helper functions
 AnalysisResults = namedtuple('AnalysisResults', ['rlength', 'slength', 'reval', 'reval2', 'clength', 'rdf', 'finalString', 'speciesDict', 'database', 'annotation'])
@@ -158,15 +159,16 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
         loadBioGrid()
 
     database = structures.Databases()
+    database.assumptions = defaultdict(set)
     database.document = document
     database.forceModificationFlag = True
     database.reactionDefinitions = reactionDefinitions
     database.useID = useID
     database.atomize = atomize
     database.speciesEquivalence = speciesEquivalence
-    database.pathwaycommons = False
-    if pathwaycommons:
-        database.pathwaycommons = True
+    database.pathwaycommons = True
+    #if pathwaycommons:
+    #    database.pathwaycommons = True
     namingConventions = resource_path('config/namingConventions.json')
     
     if atomize:
@@ -485,6 +487,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
         return
     parser =SBML2BNGL(document.getModel(),useID)
     database = structures.Databases()
+    database.assumptions = defaultdict(set)
     database.forceModificationFlag = True
     database.pathwaycommons = pathwaycommons
 
@@ -604,6 +607,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     useArtificialRules = False
     parser = SBML2BNGL(document.getModel(), useID)
     database = structures.Databases()
+    database.assumptions = defaultdict(set)
     #translator,log,rdf = m2c.transformMolecules(parser,database,reactionDefinitions,speciesEquivalence)
         
     #try:
