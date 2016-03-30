@@ -98,32 +98,36 @@ class AtomizerServer(xmlrpc.XMLRPC):
     def compareFiles(self, ticket, bnglContents, bnglContents2, mappingFile):
         finalBNGLContent = []
         finalNamespace = []
-        for mapInfo, bnglContent in zip(mappingFile['model'], [bnglContents, bnglContents2]):
-            pointer = tempfile.mkstemp(suffix='.bngl', text=True)
-            with open(pointer[1], 'w') as f:
-                f.write(bnglContent)
+        try:
+            for mapInfo, bnglContent in zip(mappingFile['model'], [bnglContents, bnglContents2]):
+                pointer = tempfile.mkstemp(suffix='.bngl', text=True)
+                with open(pointer[1], 'w') as f:
+                    f.write(bnglContent)
 
-            print pointer[1]
-            consoleCommands.setBngExecutable(bngDistro)
-            consoleCommands.bngl2xml(pointer[1])
+                print pointer[1]
+                consoleCommands.setBngExecutable(bngDistro)
+                consoleCommands.bngl2xml(pointer[1])
 
-            xmlFileName = pointer[1].split('.')[0] + '.xml'
-            xmlFileName = xmlFileName.split(os.sep)[-1]
-            bnglNamespace = readBNGXML.parseFullXML(xmlFileName)
-            normalizer.normalizeNamespace(bnglNamespace, mapInfo)
+                xmlFileName = pointer[1].split('.')[0] + '.xml'
+                xmlFileName = xmlFileName.split(os.sep)[-1]
+                bnglNamespace = readBNGXML.parseFullXML(xmlFileName)
+                normalizer.normalizeNamespace(bnglNamespace, mapInfo)
+                
+                finalBNGLContent.append(readBNGXML.createBNGLFromDescription(bnglNamespace))
+                finalNamespace.append(bnglNamespace)
+
+
+
+                # os.remove(pointer[1])
+                os.remove(xmlFileName)
+
+            similarity = modelComparison.evaluateSimilarity(finalNamespace[0], finalNamespace[1])
+            self.addToDict(ticket, [finalBNGLContent, similarity])
+            print 'success', ticket
+        except:
+            self.addToDict(ticket,-5)
+            print 'failure',ticket
             
-            finalBNGLContent.append(readBNGXML.createBNGLFromDescription(bnglNamespace))
-            finalNamespace.append(bnglNamespace)
-
-
-
-            # os.remove(pointer[1])
-            os.remove(xmlFileName)
-
-        similarity = modelComparison.evaluateSimilarity(finalNamespace[0], finalNamespace[1])
-        self.addToDict(ticket, [finalBNGLContent, similarity])
-        print 'success', ticket
-
 
 
         pass
