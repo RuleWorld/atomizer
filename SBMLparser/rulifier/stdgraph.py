@@ -243,7 +243,7 @@ def generateSTDGML(inputFile):
     nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
     graph = generateSTD(nodeList, edgeList)
     gml = nx.generate_gml(graph)
-    #x.write_gml(graph,inputFile+'.gml')
+    nx.write_gml(graph,inputFile+'.gml')
     #with open(inputFile+'.gml','r') as f:
     #    gml = f.read()
     gml = codecs.open(inputFile + '.gml', 'r','utf-8')
