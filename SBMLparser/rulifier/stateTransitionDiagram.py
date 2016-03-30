@@ -88,9 +88,10 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
                         componentName = element.split('(')[1][:-1].split('~')[0].split('!')[0]
                         destinationCounter[element.split('(')[0].split('%')[0]][componentName] += productUnit[species]
         #add the first context unit
-        finalContext = tmpContext[tmpContext.keys()[0]]
-        for idx in range(1, len(tmpContext.keys())):
-            finalContext[tmpContext.keys()[idx]] -= 1
+        if len(tmpContext) > 0:
+            finalContext = tmpContext[tmpContext.keys()[0]]
+            for idx in range(1, len(tmpContext.keys())):
+                finalContext[tmpContext.keys()[idx]] -= 1
 
         for species in finalContext:
         #for speciesUnit in tmpContext:

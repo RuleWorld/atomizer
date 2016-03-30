@@ -160,7 +160,7 @@ def createPDGraphNode(graph, molecule, nodeList):
         #    graph.add_edge(subNodeId[idx], subNodeId[idx+len(subNodeId)/2], graphics={'fill': '#CCCCFF', 'style': 'dashed'})
 
 
-def createPDEdge(graph, molecule, edge):
+def createPDEdge(graph, molecule, edge, edgeList):
     nodeId0 = [x[0] for x in edge[0] if x[1]]
     nodeId1 = [x[0] for x in edge[1] if x[1]]
     bidirectionalArray = [x for x in edgeList[molecule] if (edge[1],edge[0]) == (x[0], x[1])]
@@ -225,17 +225,24 @@ def generateSTD(nodeList, edgeList):
         bidirectionalList = []
         for edge in edgeList[molecule]:
             if list([edge[0], edge[1]]) not in bidirectionalList:
-                bidirectional = createPDEdge(graph, molecule, edge)
+                bidirectional = createPDEdge(graph, molecule, edge, edgeList)
             if bidirectional:
                 bidirectionalList.append([edge[1],edge[0]])
 
+    return graph    
     
-    outputGraph(graph, '{0}_std.gml'.format(namespace.input), globalLabelDict)
     
 
 def outputGraph(graph, fileName, labelDict):
     nx.write_gml(graph, fileName)
     #ato_write_gml(graph, fileName, labelDict)
+
+
+def generateSTDGML(inputFile):
+    nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
+    graph = generateSTD(nodeList, edgeList)
+    gml = nx.generate_gml(graph)
+    return gml
 
 if __name__ == "__main__":
     
@@ -243,6 +250,9 @@ if __name__ == "__main__":
     namespace = parser.parse_args()
     inputFile = namespace.input
 
-    nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
-    graph = generateSTD(nodeList, edgeList)
+    generateSTDGML(inputFile)
+    #nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
+    #graph = generateSTD(nodeList, edgeList)
+    #outputGraph(graph, '{0}_std.gml'.format(namespace.input), {})
+    
     

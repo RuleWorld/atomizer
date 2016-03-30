@@ -29,7 +29,7 @@ import SBMLparser.utils.readBNGXML as readBNGXML
 import SBMLparser.utils.annotationExtender as annotationExtender
 import SBMLparser.utils.nameNormalizer as normalizer
 import SBMLparser.utils.modelComparison as modelComparison
-
+import SBMLparser.rulifier.stdgraph as stdgraph
 bngDistro = '/home/ubuntu/wokspace/bionetgen/bng2/BNG2.pl'
 iid = 1
 iid_lock = threading.Lock()
@@ -62,12 +62,14 @@ class AtomizerServer(xmlrpc.XMLRPC):
             result = libsbml2bngl.readFromString(xmlFile,
                                                  reaction, False, None, atomize, logStream)
 
-            if result:
+            if result and atomize:
                 pointer = tempfile.mkstemp(suffix='.bngl', text=True)
                 with open(pointer[1], 'w') as f:
                     f.write(result.finalString)
                 print pointer[1]
                 result = libsbml2bngl.postAnalyzeString(pointer[1], bngDistro, result.database)
+            else:
+                result = result.finalString
             self.addToDict(ticket, [result, logStream.getvalue()])
             print 'success', ticket, result
         except:
@@ -154,39 +156,47 @@ class AtomizerServer(xmlrpc.XMLRPC):
         pointer = tempfile.mkstemp(suffix='.bngl', text=True)
         with open(pointer[1], 'w') as f:
             f.write(bnglContents)
-        # try:
-        if graphtype in ['regulatory', 'contactmap']:
-            consoleCommands.setBngExecutable(bngDistro)
-            consoleCommands.generateGraph(pointer[1], graphtype)
-            name = pointer[1].split('.')[0].split('/')[-1]
-            with open('{0}_{1}.gml'.format(name, graphtype), 'r') as f:
-                graphContent = f.read()
+        try:
+            if graphtype in ['regulatory', 'contactmap']:
+                consoleCommands.setBngExecutable(bngDistro)
+                consoleCommands.generateGraph(pointer[1], graphtype)
+                name = pointer[1].split('.')[0].split('/')[-1]
+                with open('{0}_{1}.gml'.format(name, graphtype), 'r') as f:
+                    graphContent = f.read()
 
-            gml = networkx.read_gml('{0}_{1}.gml'.format(name, graphtype))
-            result = gml2cyjson(gml, graphtype=graphtype)
-            jsonStr = json.dumps(result, indent=1, separators=(',', ': '))
+                gml = networkx.read_gml('{0}_{1}.gml'.format(name, graphtype))
+                result = gml2cyjson(gml, graphtype=graphtype)
+                jsonStr = json.dumps(result, indent=1, separators=(',', ': '))
 
-            result = {'jsonStr': jsonStr, 'gmlStr': graphContent}
-            self.addToDict(ticket, result)
-            os.remove('{0}_{1}.gml'.format(name, graphtype))
-            print 'success', ticket
+                result = {'jsonStr': jsonStr, 'gmlStr': graphContent}
+                self.addToDict(ticket, result)
+                os.remove('{0}_{1}.gml'.format(name, graphtype))
+                print 'success', ticket
 
-        elif graphtype in ['sbgn_er']:
-            consoleCommands.setBngExecutable(bngDistro)
-            consoleCommands.generateGraph(pointer[1], 'contactmap')
-            name = pointer[1].split('.')[0].split('/')[-1]
-            # with open('{0}_{1}.gml'.format(name,'contactmap'),'r') as f:
-            #   graphContent = f.read()
-            graphContent = networkx.read_gml(
-                '{0}_{1}.gml'.format(name, 'contactmap'))
-            sbgn = libsbgn.createSBNG_ER_gml(graphContent)
-            self.addToDict(ticket, sbgn)
-            os.remove('{0}_{1}.gml'.format(name, 'contactmap'))
-            print 'success', ticket
+            elif graphtype in ['sbgn_er']:
+                consoleCommands.setBngExecutable(bngDistro)
+                consoleCommands.generateGraph(pointer[1], 'contactmap')
+                name = pointer[1].split('.')[0].split('/')[-1]
+                # with open('{0}_{1}.gml'.format(name,'contactmap'),'r') as f:
+                #   graphContent = f.read()
+                graphContent = networkx.read_gml(
+                    '{0}_{1}.gml'.format(name, 'contactmap'))
+                sbgn = libsbgn.createSBNG_ER_gml(graphContent)
+                self.addToDict(ticket, sbgn)
+                os.remove('{0}_{1}.gml'.format(name, 'contactmap'))
+                print 'success', ticket
+            elif graphtype in ['std']:
+                consoleCommands.setBngExecutable(bngDistro)
+                consoleCommands.bngl2xml(pointer[1])
+                xmlFileName = pointer[1].split('.')[0] + '.xml'
+                xmlFileName = xmlFileName.split(os.sep)[-1]
 
-        # except:
-        #  self.addToDict(ticket,-5)
-        #    print 'failure',ticket
+                gmlGraph = stdgraph.generateSTDGML(xmlFileName)
+                self.addToDict(ticket, ''.join(gmlGraph))
+                print 'success', ticket
+        except:
+            self.addToDict(ticket,-5)
+            print 'failure',ticket
 
     def xmlrpc_generateGraph(self, bbnglFile, graphtype):
         counter = next_id()

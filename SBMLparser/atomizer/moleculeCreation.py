@@ -2017,5 +2017,6 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     ps.print_stats(10)
     print s.getvalue()
     '''
-    database.assumptions = assumptions
+    database.assumptions = deepcopy(assumptions)
+    assumptions.clear()
     return database.translator, onlySynDec
