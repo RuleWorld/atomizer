@@ -16,9 +16,8 @@ def extractCenterContext(rules, excludeReverse=False):
         tatomicArray, ttransformationCenter, ttransformationContext, \
             tproductElements, tactionNames, tlabelArray = extractAtomic.extractTransformations(
                 [rule], True)
-        #if excludeReverse and '_reverse_' in rule[0].label and \
-        #        len([x for x in tactionNames if 'ChangeCompartment' not in x]) > 1:
-        #    continue
+        if excludeReverse and '_reverse_' in rule[0].label:
+            continue
         label.append(rule[0].label)
 
         if len([x for x in tactionNames if 'ChangeCompartment' not in x]) > 1:
@@ -49,11 +48,10 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
         destinationCounter = {}
 
         tmpSourceCounter = defaultdict(Counter)
-        tmpContext = []
+        tmpContext = {}
         flag = True
 
         for centerUnit, productUnit, actionUnit, contextUnit in zip(center, product, action, context):
-
             # create a node label based on reactant + context/ product + context
             if 'ChangeCompartment' in actionUnit:
                 continue
@@ -77,7 +75,7 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
                         if isActive(element.split('(')[1][:-1]):
                             componentName = element.split('(')[1][:-1].split('~')[0].split('!')[0]
                             sourceCounter[element.split('(')[0].split('%')[0]][componentName] += centerUnit[species]
-                    tmpContext.append(contextUnit)
+                    tmpContext[species] = contextUnit
                 flag = False
             for species in productUnit:
                 for element in species.split('.'):
@@ -89,26 +87,47 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
                     if isActive(element.split('(')[1][:-1]):
                         componentName = element.split('(')[1][:-1].split('~')[0].split('!')[0]
                         destinationCounter[element.split('(')[0].split('%')[0]][componentName] += productUnit[species]
-
         #add the first context unit
-        for speciesUnit in tmpContext:
-            for species in speciesUnit:
-                for element in species.split('.'):
-                    if isActive(element.split('(')[1][:-1]):
-                        if element.split('(')[0].split('%')[0] in sourceCounter:
-                            componentName = element.split('(')[1][:-1].split('~')[0].split('!')[0]
+        finalContext = tmpContext[tmpContext.keys()[0]]
+        for idx in range(1, len(tmpContext.keys())):
+            finalContext[tmpContext.keys()[idx]] -= 1
 
-                            sourceCounter[element.split('(')[0].split('%')[0]][componentName] += speciesUnit[species]
-                            destinationCounter[element.split('(')[0].split('%')[0]][componentName] += speciesUnit[species]
+        for species in finalContext:
+        #for speciesUnit in tmpContext:
+        #    for species in tmpContext[speciesUnit]:
+            for element in species.split('.'):
+                if isActive(element.split('(')[1][:-1]):
+                    if element.split('(')[0].split('%')[0] in sourceCounter:
+                        componentName = element.split('(')[1][:-1].split('~')[0].split('!')[0]
 
-
+                        sourceCounter[element.split('(')[0].split('%')[0]][componentName] += finalContext[species]
+                        destinationCounter[element.split('(')[0].split('%')[0]][componentName] += finalContext[species]
 
         for element in tmpSourceCounter:
             destinationCounter[element].subtract(tmpSourceCounter[element])
         for molecule in sourceCounter:
+
             if molecule in destinationCounter:
-                sourceTuple = tuple(sorted([(x[0], x[1] > 0) for x in sourceCounter[molecule].items()], key=lambda x: x[0]))
-                destinationTuple = tuple(sorted([(x[0], x[1] > 0) for x in destinationCounter[molecule].items()], key=lambda x: x[0]))
+                localMoleculeCounter =  Counter(moleculeDict[molecule])
+                # get total list of nodes. this is important because of symmetric components
+
+
+                #sourceTuple = tuple(sorted([(x[0], x[1] > 0) for x in sourceCounter[molecule].items()], key=lambda x: x[0]))
+                #destinationTuple = tuple(sorted([(x[0], x[1] > 0) for x in destinationCounter[molecule].items()], key=lambda x: x[0]))
+
+                sourceTuple = []
+                for x in sourceCounter[molecule].items():
+                    sourceTuple.append((x[0], x[1] > 0))
+                    for idx in range(1, localMoleculeCounter[x[0]]):
+                        sourceTuple.append(('{0}-{1}'.format(x[0], idx+1), x[1] > idx))
+                sourceTuple = tuple(sorted(sourceTuple, key=lambda x: x[0]))
+
+                destinationTuple = []
+                for x in destinationCounter[molecule].items():
+                    destinationTuple.append((x[0], x[1] > 0))
+                    for idx in range(1, localMoleculeCounter[x[0]]):
+                        destinationTuple.append(('{0}-{1}'.format(x[0], idx+1), x[1] > idx))
+                destinationTuple = tuple(sorted(destinationTuple, key=lambda x: x[0]))
 
                 #sourceTuple = tuple(sorted([x[0] for x in sourceCounter[molecule].items()]))
                 #destinationTuple = tuple(sorted([x[0] for x in destinationCounter[molecule].items() if x[1]> 0]))
@@ -117,7 +136,6 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
                 nodeList[molecule].add(destinationTuple)
                 parameterList = [parameters[x] if x in parameters else x for x in rule[0].rates]
                 edgeList[molecule].add((sourceTuple, destinationTuple, label, ','.join(parameterList)))
-
         # find the intersection context set
     return nodeList, edgeList
 
@@ -128,9 +146,7 @@ def getContextRequirements(inputfile, collapse=True, motifFlag=False, excludeRev
     molecules, rules, parameters = readBNGXML.parseXML(inputfile)
 
     moleculeStateMatrix = {}
- 
     label, center, context, product, atomicArray, actions, doubleAction = extractCenterContext(rules, excludeReverse=excludeReverse)
-
     return getStateTransitionDiagram(label, center, product, context, actions, molecules, rules, parameters)
 
 

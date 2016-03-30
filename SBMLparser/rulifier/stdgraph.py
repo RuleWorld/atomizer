@@ -93,7 +93,6 @@ def createBitNode(graph, molecule, nodeList):
             else:
                 componentLegend += '/'
         createNode(graph, '{0}_{1}'.format(molecule, '/'.join(nodeId)), {'type': "roundrectangle"}, {'text': nodeName}, 0, graph.node[molecule]['id'])
-
     createNode(graph, '{0}_legend'.format(molecule), {}, {'text': componentLegend}, 0, graph.node[molecule]['id'])
 
 
@@ -192,15 +191,13 @@ def createPDEdge(graph, molecule, edge):
 
         #differenceText = edge[2].strip('_reverse_')
         differenceText += '\n===\n'
-        #differenceText = ''
+        differenceText = ''
         if len(differencePositive) > 0 and len(differenceNegative) > 0:
             differenceText += ', '.join(differencePositive) + '\n___\n' + ', '.join(differenceNegative)
         else:
             differenceText += ', '.join(differencePositive) + ', '.join(differenceNegative)
-        
         createNode(graph, processNodeName, {'type': "rectangle", 'fill': "#FFFFFF"},
                    {'text': differenceText, "fontStyle": "bold", "fontSize": 20}, 0, graph.node[molecule]['id'])
-
         if bidirectional:
             graph.add_edge('{0}_{1}'.format(molecule, '/'.join(nodeId0)), processNodeName,
                            graphics={'fill': '#000000', 'sourceArrow': "standard", "width": 3})
@@ -246,6 +243,6 @@ if __name__ == "__main__":
     namespace = parser.parse_args()
     inputFile = namespace.input
 
-    nodeList, edgeList = std.getContextRequirements(inputFile)
+    nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
     graph = generateSTD(nodeList, edgeList)
     
