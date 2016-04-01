@@ -396,17 +396,25 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
             if lexCandidate is not None:
                 lexCandidate = tmpCandidates[0][
                     originalTmpCandidates[0].index(lexCandidate)]
-                lexCandidateModification = lexCandidate + translationKeys[0]
+                if (translationKeys[0] + lexCandidate) in dependencyGraph:
+                    lexCandidateModification = translationKeys[0] + lexCandidate
+                else:
+                    lexCandidateModification = lexCandidate + translationKeys[0]
+
                 for element in tmpequivalenceTranslator:
                     if element not in equivalenceTranslator:
                         equivalenceTranslator[element] = []
                 equivalenceTranslator[element].append(
                     (lexCandidate, lexCandidateModification))
-                dependencyGraph[lexCandidateModification] = [[lexCandidate]]
                 while lexCandidate in tmpCandidates[0]:
                     tmpCandidates[0].remove(lexCandidate)
                     tmpCandidates[0].append(lexCandidateModification)
                     break
+                if lexCandidateModification not in dependencyGraph:
+                    logMess('WARNING:SCT711', 'While analyzing {0}={1} we discovered equivalence {2}={3}, please verify \
+this the correct behavior or provide an alternative for {0}'.format(reactant, tmpCandidates[0], lexCandidateModification, lexCandidate))
+                dependencyGraph[lexCandidateModification] = [[lexCandidate]]
+
                 return [tmpCandidates[0]], unevenElements, candidates
 
             else:
@@ -641,6 +649,8 @@ def consolidateDependencyGraph(dependencyGraph, equivalenceTranslator,
 
     unevenElementDict = {}
     for element in weights:
+        if element[0] == 'EGF_pEGFR_2_Grb2_MEKK1apRafbppMEKcdef':
+            pass
         candidates = [x for x in prunnedDependencyGraph[element[0]]]
         if len(candidates) == 1 and type(candidates[0][0]) == tuple:
             prunnedDependencyGraph[element[0]] = []
@@ -1596,7 +1606,6 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
                 # this is a species that was not originally in the model. in case theres conflict later this is 
                 # to indicate it is given less priority
                 database.dependencyGraph[molecule] = []
-
     # user defined transformations
     for key in userEquivalenceTranslator:
         for namingEquivalence in userEquivalenceTranslator[key]:
@@ -1830,7 +1839,6 @@ tmp,removedElement,tmp3))
                 database.lexicalLabelDictionary[element][0])]
 
 
-
     # Now let's go for annotation analysis and last resort stuff on the remaining orphaned molecules
 
     
@@ -1842,8 +1850,10 @@ tmp,removedElement,tmp3))
     # Fill SCT with annotations for those species that still dont have any
     # mapping
 
+
     annotationDependencyGraph, _ = fillSCTwithAnnotationInformation(
         orphanedSpecies, database.annotationDict, database)
+
 
     # use an empty dictionary if we wish to turn off annotation information in atomization
     #annotationDependencyGraph = {}
@@ -1859,6 +1869,7 @@ tmp,removedElement,tmp3))
                 # dependency graph
                 if element not in database.dependencyGraph:
                     addToDependencyGraph(database.dependencyGraph, element, [])
+
 
     nonOrphanedSpecies = [x for x in strippedMolecules if x not in orphanedSpecies]
 
@@ -1908,12 +1919,14 @@ tmp,removedElement,tmp3))
             logMess('INFO:LAE006', 'Mapped {0} to {1} using lexical analysis/greedy matching'.format(reactant, greedyMatch))
     if len(database.constructedSpecies) > 0:
         logMess('WARNING:SCT131', 'The following species names do not appear in the original model but where created to have more appropiate naming conventions: [{0}]'.format(','.join(database.constructedSpecies)))
+
+
     # initialize and remove zero elements
 
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
-
                                    database.eequivalenceTranslator, database.sbmlAnalyzer, database)
+
     return database
 
 
