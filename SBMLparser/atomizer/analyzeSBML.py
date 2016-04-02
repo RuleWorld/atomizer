@@ -292,7 +292,12 @@ class SBMLAnalyzer:
 
         return finalMatches
 
-    def findClosestModification(self, particles, species, database):
+    def findClosestModification(self, particles, species, annotationDict, originalDependencyGraph):
+        '''
+        maps a set of particles to the complete set of species using lexical analysis. This step is done
+        independent of the reaction network.
+        '''
+
         equivalenceTranslator = {}
         dependencyGraph = {}
         localSpeciesDict = defaultdict(lambda : defaultdict(list))
@@ -442,9 +447,9 @@ class SBMLAnalyzer:
                     fuzzyList = self.processAdHocNamingConventions(particle,comparisonParticle,localSpeciesDict, False, species)
                     if self.testAgainstExistingConventions(fuzzyList[0][1],self.namingConventions['modificationList']):
 
-                        if particle in database.annotationDict and comparisonParticle in database.annotationDict:
-                            baseSet = set([y  for x in database.annotationDict[particle] for y in database.annotationDict[particle][x]])
-                            modSet = set([y  for x in database.annotationDict[comparisonParticle] for y in database.annotationDict[comparisonParticle][x]])
+                        if particle in annotationDict and comparisonParticle in annotationDict:
+                            baseSet = set([y  for x in annotationDict[particle] for y in annotationDict[particle][x]])
+                            modSet = set([y  for x in annotationDict[comparisonParticle] for y in annotationDict[comparisonParticle][x]])
                             if len(baseSet.intersection(modSet)) == 0:
                                 baseDB = set([x.split('/')[-2] for x in baseSet if 'identifiers.org' in x])
                                 modDB = set([x.split('/')[-2] for x in modSet if 'identifiers.org' in x])
@@ -460,7 +465,7 @@ class SBMLAnalyzer:
                 else:
                     common_root =  detectOntology.findLongestSubstring(particle, comparisonParticle)
                     # some arbitrary threshold of what makes a good minimum lenght for the common root
-                    if len(common_root) > 0 and common_root not in database.dependencyGraph:
+                    if len(common_root) > 0 and common_root not in originalDependencyGraph:
                         
                         fuzzyList = self.processAdHocNamingConventions(common_root,comparisonParticle,localSpeciesDict, False, species)
                         fuzzyList2 = self.processAdHocNamingConventions(common_root,particle,localSpeciesDict, False, species)
@@ -468,9 +473,9 @@ class SBMLAnalyzer:
                         particleMap = self.testAgainstExistingConventions(fuzzyList[0][1], self.namingConventions['modificationList'])
                         compParticleMap =  fuzzyList2, self.testAgainstExistingConventions(fuzzyList2[0][1], self.namingConventions['modificationList'])
                         if particleMap and compParticleMap:
-                            if particle in database.annotationDict and comparisonParticle in database.annotationDict:
-                                baseSet = set([y  for x in database.annotationDict[particle] for y in database.annotationDict[particle][x]])
-                                modSet = set([y  for x in database.annotationDict[comparisonParticle] for y in database.annotationDict[comparisonParticle][x]])
+                            if particle in annotationDict and comparisonParticle in annotationDict:
+                                baseSet = set([y  for x in annotationDict[particle] for y in annotationDict[particle][x]])
+                                modSet = set([y  for x in annotationDict[comparisonParticle] for y in annotationDict[comparisonParticle][x]])
                                 if len(baseSet.intersection(modSet)) == 0:
                                     logMess('ERROR:ANN202', '{0} can be mapped to {1} through naming conventions but the annotation information does not match'.format(particle,comparisonParticle))
                                     break
@@ -539,7 +544,7 @@ class SBMLAnalyzer:
     
     def checkCompliance(self,ruleCompliance,tupleCompliance,ruleBook):
         '''
-        This method is mainly useful when a single rule can be possibly classified
+        This method is mainly useful when a single reaction can be possibly classified
         in different ways, but in the context of its tuple partners it can only be classified
         as one
         '''
@@ -638,6 +643,17 @@ class SBMLAnalyzer:
         '''
         1-1 string comparison. This method will attempt to detect if there's
         a modifiation relatinship between string <reactant> and <product>
+
+        >>> sa = SBMLAnalyzer(None,'./config/reactionDefinitions.json','./config/namingConventions.json')
+        >>> sa.processAdHocNamingConventions('EGF_EGFR_2','EGF_EGFR_2_P', {}, False, ['EGF','EGFR', 'EGF_EGFR_2'])
+        [[[['EGF_EGFR_2'], ['EGF_EGFR_2_P']], '_p', ('+ _', '+ p')]]
+        >>> sa.processAdHocNamingConventions('A', 'A_P', {}, False,['A','A_P']) #changes neeed to be at least 3 characters long
+        [[[['A'], ['A_P']], None, None]]
+        >>> sa.processAdHocNamingConventions('Ras_GDP', 'Ras_GTP', {}, False,['Ras_GDP','Ras_GTP', 'Ras']) 
+        [[[['Ras'], ['Ras_GDP']], '_gdp', ('+ _', '+ g', '+ d', '+ p')], [[['Ras'], ['Ras_GTP']], '_gtp', ('+ _', '+ g', '+ t', '+ p')]]
+        >>> sa.processAdHocNamingConventions('cRas_GDP', 'cRas_GTP', {}, False,['cRas_GDP','cRas_GTP'])
+        [[[['cRas'], ['cRas_GDP']], '_gdp', ('+ _', '+ g', '+ d', '+ p')], [[['cRas'], ['cRas_GTP']], '_gtp', ('+ _', '+ g', '+ t', '+ p')]]
+
         '''
 
         #strippedMolecules = [x.strip('()') for x in molecules]

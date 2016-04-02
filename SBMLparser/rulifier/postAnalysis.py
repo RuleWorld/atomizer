@@ -24,6 +24,10 @@ def memoize(obj):
 def resolveEntry(dependencyGraph, moleculeSet):
     """
     resolve an entry to its basic components according to dependency graph
+    >>> dependencyGraph = {'EGF_EGFR_2':[['EGF_EGFR','EGF_EGFR']],'EGF_EGFR':[['EGF','EGFR']],'EGFR':[],'EGF':[]}
+    >>> resolveEntry(dependencyGraph, ['EGF_EGFR_2'])
+    ['EGF', 'EGFR', 'EGF', 'EGFR']
+
     """
     if type(moleculeSet) == str:
         return [moleculeSet]
@@ -313,16 +317,27 @@ def defineConsole():
     defines the program console line commands
     """
     parser = argparse.ArgumentParser(description='SBML to BNGL translator')
-    parser.add_argument('-i', '--input', type=str, help='sbml file', required=True)
+    parser.add_argument('-i', '--input', type=str, help='sbml file')
     parser.add_argument('-r', '--raw', type=str, help='raw sbml file')
+    parser.add_argument('-t','--tests',action='store_true',help='run unit tests')
     return parser
 
+
+def runTests():
+    import doctest
+    doctest.testmod()
 
 
 if __name__ == "__main__":
     parser = defineConsole()
     namespace = parser.parse_args()
+
+
+    if namespace.tests:
+        runTests()
+        exit()
     inputFile = namespace.input
+
 
     modelLearning = ModelLearning(namespace.input, namespace.raw)
     #print modelLearning.getMotifFromPair('EGFR','grb2','shc')

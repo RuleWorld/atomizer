@@ -386,7 +386,7 @@ tmp,removedElement,tmp3))
     #completeAnnotationDependencyGraph, completePartialMatches = fillSCTwithAnnotationInformation(strippedMolecules, annotationDict, database, False)
     # pure lexical analysis for the remaining orphaned molecules
     tmpDependency, database.tmpEquivalence = database.sbmlAnalyzer.findClosestModification(
-        orphanedSpecies, strippedMolecules, database)
+        orphanedSpecies, strippedMolecules, database.annotationDict, database.dependencyGraph)
 
     for species in tmpDependency:
         if species not in database.userLabelDictionary:
@@ -763,7 +763,7 @@ this the correct behavior or provide an alternative for {0}'.format(reactant, tm
 
                     # last ditch attempt using straighforward lexical analysis
                     tmpDependency, tmpEquivalence = sbmlAnalyzer.findClosestModification(
-                        [reactant], dependencyGraph.keys(), database)
+                        [reactant], dependencyGraph.keys(), database.annotationDict, database.dependencyGraph)
                     if reactant in tmpDependency and tmpDependency[reactant] in tmpCandidates[0]:
                         for element in tmpDependency:
                             if element not in dependencyGraph:
