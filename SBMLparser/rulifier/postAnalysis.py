@@ -32,7 +32,7 @@ def resolveEntry(dependencyGraph, moleculeSet):
     compositionList = []
     for molecule in moleculeSet:
         if len(dependencyGraph[molecule]) == 0:
-            compositionList.extend(molecule)
+            compositionList.append(molecule)
         else:
             compositionList.extend(resolveEntry(dependencyGraph, dependencyGraph[molecule][0]))
     return compositionList
