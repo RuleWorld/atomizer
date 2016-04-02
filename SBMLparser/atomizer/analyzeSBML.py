@@ -258,6 +258,13 @@ class SBMLAnalyzer:
     def greedyModificationMatching(self,speciesString, referenceSpecies):
         '''
         recursive function trying to map a given species string to a string permutation of the strings in reference species
+        >>> sa = SBMLAnalyzer(None,'./config/reactionDefinitions.json','./config/namingConventions.json')
+        >>> sorted(sa.greedyModificationMatching('EGF_EGFR',['EGF','EGFR']))
+        ['EGF', 'EGFR']
+        >>> sorted(sa.greedyModificationMatching('EGF_EGFR_2_P_Grb2',['EGF','EGFR','EGF_EGFR_2_P','Grb2']))
+        ['EGF_EGFR_2_P', 'Grb2']
+        >>> sorted(sa.greedyModificationMatching('A_B_C_D',['A','B','C','C_D','A_B_C','A_B']))
+        ['A_B', 'C_D']
         '''
         bestMatch = ['', 0]
         finalMatches = []
