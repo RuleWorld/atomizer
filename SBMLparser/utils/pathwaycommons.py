@@ -67,6 +67,8 @@ def queryBioGridByName(name1, name2, organism, truename1,truename2):
         synonymName2 = [x.lower() for x in synonymName2]
         if truename1 != None and truename2 != None and resultName1 != resultName2:
             return True
+        elif truename1 != None and truename2 != None and truename1 == truename2 and resultName1 == resultName2:
+            return True
         if (referenceName1 == resultName1 or referenceName1 in synonymName1) and (referenceName2 == resultName2 or referenceName2 in synonymName2):
             return True
         if (referenceName2 == resultName1 or referenceName2 in synonymName1) and (referenceName1 == resultName2 or referenceName1 in synonymName2):
