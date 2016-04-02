@@ -18,6 +18,7 @@ python:
     - "2.7"
 cache:
     - pip
+    - apt
 # command to install dependencies
 before_install: 
  - pip install networkx==1.9.1
@@ -26,6 +27,9 @@ before_install:
  - pip install pyyaml
  - pip install python-libsbml
  - pip install nose
+ - pip install bioservices
+ - pip install progressbar
+ - pip install xlwt
 # command to run tests
 notifications:
   slack: faederlab:8ABlK9WdYWbm2sc4UAkaRTGB
