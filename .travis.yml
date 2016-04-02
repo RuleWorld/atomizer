@@ -25,6 +25,7 @@ before_install:
  - pip install lxml
  - pip install pyyaml
  - pip install python-libsbml
+ - pip install nose
 # command to run tests
 notifications:
   slack: faederlab:8ABlK9WdYWbm2sc4UAkaRTGB
