@@ -44,6 +44,7 @@ cache:
 build_script:
   - make
   - make install
+  - make test
 
 artifacts:
  - path: dist\sbmlTranslator.exe
@@ -64,6 +65,6 @@ deploy:
     secret_access_key:
       secure: qbD+jQk8IRRrHhucUlL6D17o4DffrAObRzBlo1ll8NzHG09o2kCGskQzd828WLJD
     bucket: ratomizer
-    folder: 1
+    folder: 1.1
     artifact: sbmlTranslator
     set_public: true
