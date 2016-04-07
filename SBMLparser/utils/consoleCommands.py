@@ -5,7 +5,12 @@ Created on Mon Sep  2 18:11:35 2013
 @author: proto
 """
 
-import pexpect
+import platform
+
+if platform.system() != 'Windows':
+    import pexpect
+else:
+    import winpexpect
 import subprocess
 import os
 
