@@ -1,0 +1,69 @@
+environment:
+  CTEST_OUTPUT_ON_FAILURE: 1
+  matrix:
+    - PYTHON: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7.x" # currently 2.7.9
+      PYTHON_ARCH: "64"
+      LXML_URL: "appveyor\\lxml-3.4.4.win-amd64-py2.7.exe"
+      PYWIN32_URL: "https://downloads.sourceforge.net/project/pywin32/pywin32/Build%20219/pywin32-219.win-amd64-py2.7.exe"
+      LIBSBML_URL: "http://downloads.sourceforge.net/project/sbml/libsbml/5.12.0/stable/Windows/64-bit/python/libSBML-5.12.0-win-py2.7-amd64.exe"
+      NUMPY_URL: "https://www.dropbox.com/s/sq1d10lo9z4k7mi/numpy-1.9.3%2Bmkl-cp27-none-win_amd64.whl"
+install:
+  - choco install -r -y make
+  - choco sources add -n "msft" -s "https://go.microsoft.com/fwlink/?LinkID=230477"
+  - choco install libxml2
+  - choco install libxslt
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "%PYTHON%\\python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
+  - "%PYTHON%\\python.exe -m pip install --user wheel"
+#  - "%PYTHON%\\python.exe -m pip install --user numpy"
+  - "%PYTHON%\\Scripts\\easy_install.exe %LXML_URL%"
+  - "%PYTHON%\\python.exe -m pip install --user networkx==1.9.1"
+  - ps: (new-object net.webclient).DownloadFile($env:LIBSBML_URL, 'c:\\libsbml.exe')
+  - "%PYTHON%\\Scripts\\easy_install.exe c:\\libsbml.exe"
+  - ps: (new-object net.webclient).DownloadFile($env:PYWIN32_URL, 'c:\\pywin32.exe')
+  - "%PYTHON%\\Scripts\\easy_install.exe c:\\pywin32.exe"
+  - "%PYTHON%\\python.exe -m pip install --user winpexpect"
+  - "%PYTHON%\\python.exe -m pip install --user pyyaml"
+  - "powershell ./appveyor/install_numpy.ps1"
+  - "%PYTHON%\\python.exe -m pip install --no-index --find-links=c:\\tmp numpy"
+  # - "%PYTHON%\\python.exe -m pip install --user numpy"
+  # - ps: (new-object net.webclient).DownloadFile($env:NUMPY_URL, 'c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl')
+  # - "%PYTHON%\\python.exe -m pip install --user c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl"  
+
+branches:
+  # whitelist
+  only:
+    - master
+    - release
+    - development
+platform: x64
+cache:
+  - C:\tmp -> \appveyor\install_numpy.ps1
+
+build_script:
+  - make
+  - make install
+
+artifacts:
+ - path: dist\sbmlTranslator.exe
+   name: sbmlTranslator
+   
+notifications:
+  - provider: Slack
+    auth_token:
+      secure: jN4Fas2b8/Z1yNInrC6yWZf1sHzA5M7M/wANf+O4nRQLRqNqLsmNFGMNusaS+adFyS0kz3TfGBtLjAEKeh84jw==
+    channel: build-results
+
+
+deploy:
+    # Amazon S3 deployment provider settings
+  - provider: S3
+    access_key_id:
+      secure: gyxTxeHww7ldSGxRSqjkAA1qa2JodkLDtmZeVrdmPfA=
+    secret_access_key:
+      secure: qbD+jQk8IRRrHhucUlL6D17o4DffrAObRzBlo1ll8NzHG09o2kCGskQzd828WLJD
+    bucket: ratomizer
+    folder: 1
+    artifact: sbmlTranslator
+    set_public: true
