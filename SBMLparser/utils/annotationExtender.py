@@ -9,7 +9,7 @@ import libsbml
 from util import logMess
 from sbml2bngl import SBML2BNGL as  SBML2BNGL
 import structures
-import atomizer.moleculeCreation as mc
+import atomizer.resolveSCT as mc
 import os
 from subprocess import call        
 import tempfile
@@ -309,6 +309,7 @@ def obtainSCT(fileName, reactionDefinitions, useID, namingConventions):
     database = structures.Databases()
     database.forceModificationFlag = True
     database.softConstraints = True
+    database.parser = parser
     database = mc.createSpeciesCompositionGraph(parser, database, reactionDefinitions, namingConventions,
                                                 speciesEquivalences=None, bioGridFlag=False)
                        

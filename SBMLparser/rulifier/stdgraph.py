@@ -243,11 +243,15 @@ def generateSTDGML(inputFile):
     nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
     graph = generateSTD(nodeList, edgeList)
     gml = nx.generate_gml(graph)
-    nx.write_gml(graph,inputFile+'.gml')
+    
+    #nx.write_gml(graph,inputFile+'.gml')
     #with open(inputFile+'.gml','r') as f:
     #    gml = f.read()
-    gml = codecs.open(inputFile + '.gml', 'r','utf-8')
-    return gml.read()
+    #gml = codecs.open(inputFile + '.gml', 'r','utf-8')
+    #gml = ''.join(gml)
+    #return gml.read()
+    #return graph
+    return ''.join(gml)
 
 if __name__ == "__main__":
     
@@ -255,7 +259,12 @@ if __name__ == "__main__":
     namespace = parser.parse_args()
     inputFile = namespace.input
 
-    print generateSTDGML(inputFile)
+    gmlgraph =  generateSTDGML(inputFile)
+    print gmlgraph[0:400]
+    #nxgml = nx.parse_gml(gmlgraph)   
+    #import gml2cyjson
+    gmlgraph = nx.parse_gml(gmlgraph)
+    gml2cyjson.gml2cyjson(gmlgraph,'std') 
     #nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
     #graph = generateSTD(nodeList, edgeList)
     #outputGraph(graph, '{0}_std.gml'.format(namespace.input), {})

@@ -6,6 +6,7 @@ import os
 import progressbar
 import cPickle as pickle
 import numpy as np
+#import SBMLparser.utils.characterizeAnnotationLog as cal
 
 def defineConsole():
     parser = argparse.ArgumentParser(description='SBML to BNGL translator')
@@ -161,8 +162,6 @@ def batchAnnotationComparison(removedAnnotationsDir, referenceDir):
     return errorList
 
 
-import pprint
-import characterizeAnnotationLog as cal
 
 
 if __name__ == "__main__":

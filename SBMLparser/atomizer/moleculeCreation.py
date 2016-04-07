@@ -282,25 +282,6 @@ def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommon
     '''
     method used during the atomization process. It determines how molecules
     in a species bind together
-    Bind together EGF.EGFR.GAP
-    >>> species = st.Species()
-    >>> mol1 = st.Molecule('EGF')
-    >>> comp1 = st.Component('egfr')
-    >>> mol1.addComponent(comp1)
-    >>> mol2 = st.Molecule('EGFR')
-    >>> comp2a = st.Component('egf')
-    >>> comp2b = st.Component('gap')
-    >>> mol2.addComponent(comp2a)
-    >>> mol2.addComponent(comp2b)
-    >>> mol3 = st.Molecule('GAP')
-    >>> comp3 = st.Component('egfr')
-    >>> mol3.addComponent(comp3)
-    >>> species.addMolecule(mol1)
-    >>> species.addMolecule(mol2)
-    >>> species.addMolecule(mol3)
-    >>> result = getComplexationComponents2('EGF_EGFR_GAP',species,False)
-    >>> sorted(result[0]) == sorted([mol1,mol2]) and sorted(result[1]) == sorted([mol2,mol3])
-    True
     '''
 
     def sortMolecules(array, reverse):
