@@ -31,7 +31,6 @@ install:
   # - ps: (new-object net.webclient).DownloadFile($env:NUMPY_URL, 'c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl')
   # - "%PYTHON%\\python.exe -m pip install --user c:\\numpy-1.9.3+mkl-cp27-none-win_amd64.whl"  
 
-  - "%PYTHON%\\python.exe SBMLparser\\sbmlTranslator.py -ai XMLExamples\\BIOMD0000000217.xml"
 branches:
   # whitelist
   only:
@@ -46,9 +45,25 @@ build_script:
   - make
   - make install
 
-#notifications:
-#  - provider: Slack
-#    auth_token:
-#      secure: jN4Fas2b8/Z1yNInrC6yWZf1sHzA5M7M/wANf+O4nRQLRqNqLsmNFGMNusaS+adFyS0kz3TfGBtLjAEKeh84jw==
-#    channel: build-results
+artifacts:
+ - path: dist\sbmlTranslator.exe
+   name: sbmlTranslator
+   
+notifications:
+  - provider: Slack
+    auth_token:
+      secure: jN4Fas2b8/Z1yNInrC6yWZf1sHzA5M7M/wANf+O4nRQLRqNqLsmNFGMNusaS+adFyS0kz3TfGBtLjAEKeh84jw==
+    channel: build-results
 
+
+deploy:
+    # Amazon S3 deployment provider settings
+  - provider: S3
+    access_key_id:
+      secure: gyxTxeHww7ldSGxRSqjkAA1qa2JodkLDtmZeVrdmPfA=
+    secret_access_key:
+      secure: qbD+jQk8IRRrHhucUlL6D17o4DffrAObRzBlo1ll8NzHG09o2kCGskQzd828WLJD
+    bucket: ratomizer
+    folder: 1
+    artifact: sbmlTranslator
+    set_public: true
