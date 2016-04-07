@@ -1,0 +1,5 @@
+networkx==1.9.1
+pexpect==3.3
+lxml
+pyyaml
+python-libsbml
