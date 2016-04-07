@@ -17,20 +17,19 @@ addons:
     - lib32z1-dev
     - python-lxml
     - libyaml-dev
-
 cache: pip
-
 before_install:
-    - source osx_install.sh
-    - sudo -H pip install -U pip wheel
-    - pip install --user -r requirements.txt
+- source osx_install.sh
+- sudo -H pip install -U pip wheel
+- pip install --user -r requirements.txt
 before_deploy:
-    - cd dist; python changeFilename.py; cd ..
+- cd dist; python changeFilename.py; cd ..
 deploy:
   provider: s3
-  access_key_id: AKIAJWSJW4BT6G3TOO2A
+  access_key_id:
+    secure: KuIAJoqN+aFKSmAmhFxh8NXT64VD/kXCTl1K9ry53ip1XeHRslsxaPoesx86NANA1yeoEhHh81+xtu2aEXBFcE2r/XRxKNzLXXJUbBNpXnrIJxh+pICaWd9KCudzXNyHJoLzkGqg2Ir8twPseWCkB9AW3uGJk6hHPVqspdn27XDmA+uGuQpG3ec3GwAzPIh2nF/OS8VCHHfFWjr3jx5eOruF2cD0tXwwo7Ii+pYcjZQHKoEv+NDgTXZc6lTnMHE0C++Xu2DeZiiDzvLBDgSpbZvOIUAaLPAaO69j0srR5Phrh5ArW+T7LLykdox/okrHeQBTn4LkPlZ68c1aiRDxre/GphqWtgICZiyDQC7U8p7FQ10sMj6rIiNxH3fuJW6fkXNzznKHjRChELCxQxXIAEfqMoSKXGaqS8oEHyDr7kmgiLIptXiGS4Oo4ROQFfPGVAmTQEyYuIkaJKE3f9Qa2OvK/VK/K4eukCFfT4AyXbV+D6eBS4HB6jg6WIEAkBew+93G3aZrd/BdqhOX35ZZ++Hz5qt7eUweTTks5SYG7e7wnzk4iLVsR/WFMgNaQS5GuWtZAg0+IRH/8mKzYvwmCMZi+jjo7c8bmWKwGFTlfjPvFpul43jBX4varBobJ/0X0Fd20qfZQfMSwYvFYzPjDd+5IsKRRQSgJeBs94nCzBI=
   secret_access_key:
-    secure: rVRYIB86hhRqnCzaUpNcfLU7PvzBMztL9x+8aOK91/o8yqrqHTYZb6E2kMHGlcOY3/iwBXjicVhh1HNm6t35YfhQi9xiwhx5DkUfTRsuM1s14fArmqddnHgkXDwQhfVK5xLFCEpH+lYUAs45BkgNjC7+t3EwMfXdLorrVLI6jM/kncheZOe7qzBoIdpCpm2lm3pQMyKqBF1eo36e3k4Q8fuj+U3o8/ri3PMnWC27Jk0mgm0dE5zLmY9hOGDqDjISQLHfRQElnBuSgHacDcljmQjSwS85mqRZdzSsmKuVZCmZ8M07g0RrjVM0xhrvdHBw1Lt+0ArGlzf9YVa89cRUS118/uYDtKqNKw3TkX1ozyd0GcMcuGxY1xAeiCvxCfI/S9nbtkBWt4V3vqqFR5fmabMPypRvjJUwrpXyIwP2ZbREwjM+o64PxQoHnsf3Tw1MURNSecMUv+B9oyopcAxovtK/3uSNTCtSololLpPG0s32pJOmADNoZgHf3/JbDG6+BSI5Fxvg+ZwgH1VFGULcbtsR17hnoGKUJfor1eImXiVn7PH05QAGn0KifILfKNCWUS4k2wgxMFvfpecVLTcilgsbu5EwAqOtIOKYNMBzl1pVTBi1GIgrnExC4ixX5sNf+9ZhImy9eyk9ZYcbyxczd2mC4gkLmreJus4szcSj1p8=
+    secure: arPvSSy2lLf0+DPhgMkO55BBlYWUFeBbiYiCHWJbZOT7MIioQGP6rM2rxcbYyUE+y2QFBlbTAL304nWz1KRnx9vPX9YSTgz9u+ZHkffKB6MlAYZqfeZlfakcrNQSoi16q8PDmA+HG5Zp8lAiftfXa4XfeTR+oYT84BP0sNhcYD9HRuzAwpjLOtnyaDN9fvs4n+LQmx0tVvwIJHS96cox8r0snz5eNrDIHqzF+/shDDU0AA1DQ9NaSH6XyyAOS+4U+VaC4oFitp4HsgLPHvKSoL2sdSuYwOzBrdlpRWL5NW1po0ortr6pa6FIH82Zi4V3nZVI27SXzeiKEkRV9qfoV/SUxc2QEbsAtnIAgXUJm93jn8MZ4CI2ZLUYc5DtuALP4itN61DIGWqxH1jiS48ThStWTymdq4t4OBkra6Rg+q5BzNP1h+avQqvWMQlACWbrU8Wc9w8YDsaekyV/ZVrJkS6ioUF0S28pskTMyNQmwQIIg08o/0lXFhVPkS33zmruiBCzUEOMXpnzWSeM/SrS7MPNcM/bD8IFGIfImZ66Maefh5QpiRnqHcTbeYX/urr9LRT2S3wGZVuOal1Y/LzpyggX/9PWw46oKr5bd69bdRREz8tcFSJEAkXwvHlpHIgMqpIHTkPn5S1RBuIXE1iEco7IVrO2W6oHlpqWSG5NI8A=
   bucket: ratomizer
   skip_cleanup: true
   acl: public_read
