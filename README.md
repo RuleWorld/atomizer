@@ -12,7 +12,7 @@ libsbml, networkx (for state transition diagram creation), pexpect (for post ato
 
 ## Execution
 
-> ./sbmlTranslator -i <yoursbmlfile> [-a] [-o output.bngl]
+> ./sbmlTranslator -i /path/to/sbml/file [-a] [-o output.bngl]
 
 Optional arguments
 - [-a] activates the atomizer. Otherwise only a flat translation will be provided (no molecular structure)
