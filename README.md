@@ -1,4 +1,7 @@
-Project for the translation of SBML files into BNGL files
+Project for the translation of SBML files into BNGL files 
+
+[![Build Status](https://travis-ci.org/RuleWorld/atomizer.svg?branch=master)](https://travis-ci.org/RuleWorld/atomizer) [![Build status](https://ci.appveyor.com/api/projects/status/rb4sci41f2fy62il?svg=true)](https://ci.appveyor.com/project/jjtapia/atomizer)
+
 
 ## Requirements
 libsbml, networkx (for state transition diagram creation), pexpect (for post atomization analysis), 
