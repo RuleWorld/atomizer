@@ -4,7 +4,12 @@ Project for the translation of SBML files into BNGL files
 
 
 ## Requirements
-libsbml, networkx (for state transition diagram creation), pexpect (for post atomization analysis), 
+libsbml, networkx (for state transition diagram creation), pexpect (for post atomization analysis). Check requirements.txt for specific versions of the libraries that Atomizer needs. You can also install all requirements with one command by doing
+
+> pip install -r requirements.txt
+
+From the atomizer root directory 
+
 
 ## Installation:
 
