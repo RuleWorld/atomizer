@@ -1414,7 +1414,12 @@ class SBMLAnalyzer:
         
         # load the json config file
         reactionDefinition = self.loadConfigFiles(self.configurationFile)
+        rawReactions = [parseReactions(x) for x in reactions]
         strippedMolecules = [x.strip('()') for x in molecules]
+        reactionnetworkelements = set([z for x in rawReactions for y in x for z in y])
+        #only keep those molecuels that appear in the reaction network
+        strippedMolecules = [x for x in strippedMolecules if x in reactionnetworkelements]
+
         # load user defined complexes     
         if self.speciesEquivalences != None:
             self.userEquivalences = self.loadConfigFiles(self.speciesEquivalences)['reactionDefinition']
@@ -1426,7 +1431,7 @@ class SBMLAnalyzer:
         #XXX: we should take this function out of processNamingConventions2 and all process that calls it
         tmpTranslator,translationKeys,conventionDict =  detectOntology.analyzeNamingConventions(strippedMolecules,
                                                                               self.userNamingConventions,similarityThreshold=10)
-        userEquivalenceTranslator, _, _ = self.processNamingConventions2(molecules,onlyUser=True)
+        userEquivalenceTranslator, _, _ = self.processNamingConventions2(strippedMolecules,onlyUser=True)
         for element in tmpTranslator:
             if element in userEquivalenceTranslator:
                 userEquivalenceTranslator[element].extend(tmpTranslator[element])
@@ -1438,7 +1443,7 @@ class SBMLAnalyzer:
         adhocLabelDictionary = {}
 
         # lists of plain reactions
-        rawReactions = [parseReactions(x) for x in reactions]
+        
         # process fuzzy naming conventions based on reaction information
         indirectEquivalenceTranslator = {x: [] for x in equivalenceTranslator}
         localSpeciesDict = defaultdict(lambda: defaultdict(list))
@@ -1449,6 +1454,10 @@ class SBMLAnalyzer:
         # matches to different ones in the right hand size of a given reaction
         lexicalDependencyGraph = defaultdict(list)
         strippedMolecules = [x.strip('()') for x in molecules]
+
+        #only keep those molecuels that appear in the reaction network
+        strippedMolecules = [x for x in strippedMolecules if x in reactionnetworkelements]
+
         for idx,reaction in enumerate(rawReactions):
             flagstar = False
             if len(reaction[0]) == 1 and len(reaction[1]) == 1 \
