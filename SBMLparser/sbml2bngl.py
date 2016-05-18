@@ -893,9 +893,16 @@ but reaction is marked as reversible'.format(reactionID))
         removeParameters = []
         artificialReactions = []
         artificialObservables = {}
+        nonamecounter = 0
         for arule in self.model.getListOfRules():
-            
             rawArule = self.__getRawAssignmentRules(arule)
+
+            #rule has no name
+            if rawArule[0] == '':
+                logMess('ERROR:SIM215','atomizer has found an sbml rule without a name. {0}'.format(rawArule[1:]))
+                rawArule = list(rawArule)
+                rawArule[0] = 'noname{0}'.format(nonamecounter)
+                nonamecounter += 1
             #tmp.remove(rawArule[0])
             #newRule = rawArule[1].replace('+',',').strip()
             if rawArule[3] == True:
