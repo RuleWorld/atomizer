@@ -34,7 +34,7 @@ def createSpeciesCompositionGraph(parser, database, configurationFile, namingCon
 
     It first does stoichiometry analysis, then lexical...
     '''
-    _, rules, _ = parser.getReactions(atomize=True)
+    _, rules, _ = parser.getReactions(atomize=True,database=database)
     molecules, _, _, _, _, _ = parser.getSpecies()
     database.sbmlAnalyzer = \
         analyzeSBML.SBMLAnalyzer(
@@ -366,7 +366,7 @@ tmp,removedElement,tmp3))
                 if element not in database.dependencyGraph:
                     atoAux.addToDependencyGraph(database.dependencyGraph, element, [])
 
-
+    # can we now add information to the non orphaned species? maybe annotation tells me stuff that contradicts the reaction-network
     nonOrphanedSpecies = [x for x in strippedMolecules if x not in orphanedSpecies]
 
 

@@ -23,6 +23,8 @@ def defineConsole():
     parser.add_argument('-p', '--pathwaycommons', action='store_true', help='Use pathway commons to infer molecule binding. This setting requires an internet connection and will query the pathway commons web service.')
     parser.add_argument('-b', '--bionetgen-analysis', type=str, help='Set the BioNetGen path for context post analysis.')
     parser.add_argument('-s','--isomorphism-check', action='store_true', help='disallow atomizations that produce the same graph structure')
+    parser.add_argument('-I','--ignore', action='store_true', help='ignore atomization translation errors')
+
     return parser
 
 
@@ -41,6 +43,7 @@ def checkInput(namespace):
     options['pathwaycommons'] = namespace.pathwaycommons
     options['bionetgenAnalysis'] = namespace.bionetgen_analysis
     options['isomorphismCheck'] = namespace.isomorphism_check
+    options['ignore'] = namespace.ignore
     return options
 
 
@@ -51,7 +54,7 @@ def main():
     options = checkInput(namespace)
     returnArray = ls2b.analyzeFile(options['inputFile'], options['conventionFile'], options['useId'], options['namingConventions'],
                                    options['outputFile'], speciesEquivalence=options['userStructure'],
-                                   atomize=options['atomize'], bioGrid=False, pathwaycommons=options['pathwaycommons'])
+                                   atomize=options['atomize'], bioGrid=False, pathwaycommons=options['pathwaycommons'], ignore=options['ignore'])
 
     if namespace.bionetgen_analysis and returnArray:
         ls2b.postAnalyzeFile(options['outputFile'], namespace.bionetgen_analysis, returnArray.database)

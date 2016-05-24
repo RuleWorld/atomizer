@@ -937,6 +937,8 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     onlySynDec = len(
         [x for x in database.classifications if x not in ['Generation', 'Decay']]) == 0
     propagateChanges(database.translator, database.prunnedDependencyGraph)
+    
+    #check for isomorphism
     #sanityCheck(database.translator)
     '''
     pr.disable()

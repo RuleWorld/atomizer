@@ -24,7 +24,7 @@ from collections import Counter,namedtuple
 
 import utils.structures as structures
 import atomizer.analyzeRDF
-from utils.util import logMess, setupLog, setupStreamLog, finishStreamLog
+from utils.util import logMess, setupLog, setupStreamLog, finishStreamLog, TranslationException
 from utils import consoleCommands
 from sbml2bngl import SBML2BNGL
 #from biogrid import loadBioGridDict as loadBioGrid
@@ -470,11 +470,11 @@ def postAnalyzeString(outputFile,bngLocation, database):
 
     # recreate file using information from the post analysis
     returnArray = analyzeHelper(database.document, database.reactionDefinitions, database.useID,
-                                outputFile, database.speciesEquivalence, database.atomize, database.translator).finalString
+                                outputFile, database.speciesEquivalence, database.atomize, database.translator, database).finalString
     return returnArray    
 
 def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, outputFile,
-                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False):
+                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False):
     '''
     one of the library's main entry methods. Process data from a file
     '''
@@ -498,6 +498,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     database.assumptions = defaultdict(set)
     database.forceModificationFlag = True
     database.pathwaycommons = pathwaycommons
+    database.ignore = ignore
 
     bioGridDict = {}
     if bioGrid:
@@ -505,9 +506,18 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     
     # call the atomizer (or not). structured molecules are contained in translator
     # onlysyndec is a boolean saying if a model is just synthesis of decay reactions
-    if atomize:
-        translator, onlySynDec = mc.transformMolecules(parser, database, reactionDefinitions,
-                                                       namingConventions, speciesEquivalence, bioGrid)
+    try:
+        if atomize:
+            translator, onlySynDec = mc.transformMolecules(parser, database, reactionDefinitions,
+                                                           namingConventions, speciesEquivalence, bioGrid)
+    except TranslationException as e:
+        print "Found an error in {0}. Check log for more details. Use -I to ignore translation errors".format(e.value)
+        if len(logMess.log) > 0:
+            with open(outputFile + '.log', 'w') as f:
+                for element in logMess.log:
+                    f.write(element + '\n')
+        return 
+
     else:    
         translator={}
     # process other sections of the sbml file (functions reactions etc.)
@@ -525,7 +535,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     database.speciesEquivalence = speciesEquivalence
     database.atomize = atomize
 
-    returnArray = analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator)
+    returnArray = analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator, database)
     with open(outputFile, 'w') as f:
         f.write(returnArray.finalString)
     #with open('{0}.dict'.format(outputFile),'wb') as f:
@@ -606,7 +616,7 @@ def unrollFunctions(functions):
     return functions
 
 
-def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator, bioGrid=False):
+def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator, database, bioGrid=False):
     '''
     taking the atomized dictionary and a series of data structure, this method
     does the actual string output.
@@ -614,7 +624,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     useArtificialRules = False
     parser = SBML2BNGL(document.getModel(), useID)
-    database = structures.Databases()
+    #database = structures.Databases()
     database.assumptions = defaultdict(set)
     #translator,log,rdf = m2c.transformMolecules(parser,database,reactionDefinitions,speciesEquivalence)
         
@@ -654,7 +664,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     functions = []
     assigmentRuleDefinedParameters = []
     reactionParameters, rules, rateFunctions = parser.getReactions(translator, len(compartments) > 1,
-                                                                   atomize=atomize, parameterFunctions=artificialObservables)
+                                                                   atomize=atomize, parameterFunctions=artificialObservables, database=database)
 
     functions.extend(rateFunctions)
 

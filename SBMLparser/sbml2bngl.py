@@ -12,7 +12,7 @@ from collections import Counter
 from collections import defaultdict
 import numpy as np
 
-from utils.util import logMess
+from utils.util import logMess, TranslationException
 import libsbml
 
 
@@ -436,7 +436,6 @@ but reaction is marked as reversible'.format(reactionID))
 
                 #nl, nr = 1,1
         else:
-            
             rateL, nl = (self.removeFactorFromMath(math.deepCopy(),
                                                    rReactant, rProduct, parameterFunctions))
 
@@ -462,15 +461,17 @@ but reaction is marked as reversible'.format(reactionID))
         if self.useID:
             reactant = [(reactant.getSpecies(), reactant.getStoichiometry())
                         for reactant in reaction.getListOfReactants() if
-                        reactant.getSpecies() not in ['EmptySet','Trash','Sink','Source']]
+                        reactant.getSpecies() not in ['EmptySet','Trash','Sink','Source'] and reactant.getStoichiometry() not in [0,'0']]
             product = [(product.getSpecies(), product.getStoichiometry())
                        for product in reaction.getListOfProducts() if product.getSpecies()
-                       not in ['EmptySet','Trash','Sink','Source']]
+                       not in ['EmptySet','Trash','Sink','Source'] and product.getStoichiometry() not in [0,'0']]
         else:
             reactant = [(self.speciesDictionary[rElement.getSpecies()], rElement.getStoichiometry(), rElement.getSpecies())
-                        for rElement in reaction.getListOfReactants() if self.speciesDictionary[rElement.getSpecies()] not in ['EmptySet', 'Trash', 'Source', 'Sink']]
+                        for rElement in reaction.getListOfReactants() if self.speciesDictionary[rElement.getSpecies()] not in ['EmptySet', 'Trash', 'Source', 'Sink']
+                        and rElement.getStoichiometry() not in [0,'0']]
             product = [(self.speciesDictionary[rProduct.getSpecies()], rProduct.getStoichiometry(), rProduct.getSpecies())
-                       for rProduct in reaction.getListOfProducts() if self.speciesDictionary[rProduct.getSpecies()] not in ['EmptySet', 'Trash', 'Source', 'Sink']]
+                       for rProduct in reaction.getListOfProducts() if self.speciesDictionary[rProduct.getSpecies()] not in ['EmptySet', 'Trash', 'Source', 'Sink']
+                       and rProduct.getStoichiometry() not in [0,'0']]
         kineticLaw = reaction.getKineticLaw()
         reversible = reaction.getReversible()
 
@@ -483,19 +484,26 @@ but reaction is marked as reversible'.format(reactionID))
 
         # in case a given species was defined as the zero molecule don't include it in the rate correction method
         for x in reaction.getListOfReactants():
-            if x.getSpecies() not in ['EmptySet']:
-                speciesName = self.speciesDictionary[x.getSpecies()] if x.getSpecies() in self.speciesDictionary else ''
-                if speciesName in translator and str(translator[speciesName]) == '0':
-                    continue
-                rReactant.append((x.getSpecies(), x.getStoichiometry()))
+            if x.getSpecies() not in ['EmptySet', 'Trash', 'Sink', 'Source'] and x.getStoichiometry() not in [0, '0']:
+                if not x.getConstant():
+                    logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
+                    raise TranslationException(reaction.getId())
+                else:
+                    speciesName = self.speciesDictionary[x.getSpecies()] if x.getSpecies() in self.speciesDictionary else ''
+                    if speciesName in translator and str(translator[speciesName]) == '0':
+                        continue
+                    rReactant.append((x.getSpecies(), x.getStoichiometry()))
 
         for x in reaction.getListOfProducts():
-            if x.getSpecies() not in ['EmptySet']:
-                speciesName = self.speciesDictionary[x.getSpecies()] if x.getSpecies() in self.speciesDictionary else ''
-                if speciesName in translator and str(translator[speciesName]) == '0':
-                    continue
-                rProduct.append((x.getSpecies(), x.getStoichiometry()))
-
+            if x.getSpecies() not in ['EmptySet', 'Trash', 'Sink', 'Source'] and x.getStoichiometry() not in [0, '0']:
+                if not x.getConstant():
+                    logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
+                    raise TranslationException(reaction.getId())
+                else:
+                    speciesName = self.speciesDictionary[x.getSpecies()] if x.getSpecies() in self.speciesDictionary else ''
+                    if speciesName in translator and str(translator[speciesName]) == '0':
+                        continue
+                    rProduct.append((x.getSpecies(), x.getStoichiometry()))
         #rReactant = [(x.getSpecies(), x.getStoichiometry()) for x in reaction.getListOfReactants() if x.getSpecies() not in ['EmptySet']]
         #rProduct = [(x.getSpecies(), x.getStoichiometry()) for x in reaction.getListOfProducts() if x.getSpecies() not in ['EmptySet']]
         rModifiers = [x.getSpecies() for x in reaction.getListOfModifiers() if x.getSpecies() != 'EmptySet']
@@ -591,9 +599,26 @@ but reaction is marked as reversible'.format(reactionID))
 
         if kineticLaw is None:
             return 1, 1
+        rReactant = rProduct = []
+        '''
+        for x in reaction.getListOfReactants():
+            if x.getSpecies() not in ['EmptySet', 'Trash', 'Source', 'Sink'] \
+                        and rElement.getStoichiometry() not in [0, '0']:
+                if not x.getConstant():
+                    logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
+                    return 1, 1
+                else:
+                    rReactant.append(x.getSpecies(), x.getStoichiometry())
 
-        rReactant = [(x.getSpecies(), x.getStoichiometry()) for x in reaction.getListOfReactants() if x.getSpecies() != 'EmptySet']
-        rProduct = [(x.getSpecies(), x.getStoichiometry()) for x in reaction.getListOfProducts() if x.getSpecies() != 'EmptySet']
+        for x in reaction.getListOfProducts():
+            if x.getSpecies() not in ['EmptySet', 'Trash', 'Source', 'Sink'] \
+                        and rElement.getStoichiometry() not in [0, '0']:
+                if not x.getConstant():
+                    logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
+                    return 1, 1
+                else:
+                    rProduct.append(x.getSpecies(), x.getStoichiometry())
+        '''
         
         # TODO: For some reason creating a deepcopy of this screws everything up, even
         # though its what we should be doing
@@ -760,7 +785,7 @@ but reaction is marked as reversible'.format(reactionID))
 
         return newRate
 
-    def getReactions(self, translator={}, isCompartments=False, extraParameters={}, atomize=False, parameterFunctions={}):
+    def getReactions(self, translator={}, isCompartments=False, extraParameters={}, atomize=False, parameterFunctions={}, database= None):
         '''
         @returns: a triple containing the parameters,reactions,functions
         '''
@@ -785,7 +810,15 @@ but reaction is marked as reversible'.format(reactionID))
             # symmetry factors for components with the same name
             sl, sr = self.reduceComponentSymmetryFactors(reaction, translator, functions)
             
-            rawRules = self.__getRawRules(reaction, [sl, sr], parameterFunctions,translator)
+            try:
+                rawRules = self.__getRawRules(reaction, [sl, sr], parameterFunctions,translator)
+            except TranslationException as e:
+                if(database and database.ignore):
+                    reactions.append('#Reaction {0} is not correctly translated. check log for details'.format(e.value))
+                    continue
+                else:
+                    raise TranslationException(e.value + " during reaction processing")
+
             if len(rawRules['parameters']) > 0:
                 for parameter in rawRules['parameters']:
                     """

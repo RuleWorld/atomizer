@@ -61,7 +61,8 @@ grammar = Suppress(Optional(name)) + ((Group(species) | '0') + Suppress(Optional
 
 @memoize
 def parseReactions(reaction, specialSymbols=''):
-
+    if reaction.startswith('#'):
+        return None
     result = grammar.parseString(reaction).asList()
     if len(result) < 2:
         result = [result, []]
@@ -1414,7 +1415,14 @@ class SBMLAnalyzer:
         
         # load the json config file
         reactionDefinition = self.loadConfigFiles(self.configurationFile)
-        rawReactions = [parseReactions(x) for x in reactions]
+        rawReactions = []
+        
+        for x in reactions:
+            tmp = parseReactions(x)
+            if tmp:
+                rawReactions.append(tmp)
+
+        #rawReactions = [parseReactions(x) for x in reactions if parseReactions(x)]
         strippedMolecules = [x.strip('()') for x in molecules]
         reactionnetworkelements = set([z for x in rawReactions for y in x for z in y])
         #only keep those molecuels that appear in the reaction network
