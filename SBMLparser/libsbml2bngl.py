@@ -383,15 +383,23 @@ def reorderFunctions(functions):
     functionNames = []
     tmp = []
     for function in functions:
+
         m = re.split('(?<=\()[\w)]', function)
-        functionNames.append(m[0])
+        functionName = m[0]
+        if '=' in functionName:
+            functionName = functionName.split('=')[0].strip() + '('
+        functionNames.append(functionName)
     functionNamesDict = {x: [] for x in functionNames}
     for idx, function in enumerate(functions):
         tmp = [x for x in functionNames if x in function.split('=')[1] and x!= functionNames[idx]]
         functionNamesDict[functionNames[idx]].extend(tmp)
     newFunctionNamesDict = {}
     for name in functionNamesDict:
-        newFunctionNamesDict[name] = recursiveSearch(functionNamesDict,name,[])
+        try:
+            newFunctionNamesDict[name] = recursiveSearch(functionNamesDict,name,[])
+        #there is a circular dependency
+        except:
+            newFunctionNamesDict[name] = 99999
     functionWeightsDict = {x: newFunctionNamesDict[x] for x in newFunctionNamesDict}
     functionWeights = []
     for name in functionNames:
