@@ -503,7 +503,8 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     bioGridDict = {}
     if bioGrid:
         bioGridDict = loadBioGrid()
-    
+
+    translator = {}    
     # call the atomizer (or not). structured molecules are contained in translator
     # onlysyndec is a boolean saying if a model is just synthesis of decay reactions
     try:
@@ -518,8 +519,6 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
                     f.write(element + '\n')
         return 
 
-    else:    
-        translator={}
     # process other sections of the sbml file (functions reactions etc.)
     '''
     pr.disable()
@@ -534,7 +533,6 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     database.useID = useID
     database.speciesEquivalence = speciesEquivalence
     database.atomize = atomize
-
     returnArray = analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator, database)
     with open(outputFile, 'w') as f:
         f.write(returnArray.finalString)
