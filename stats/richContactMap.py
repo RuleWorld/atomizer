@@ -18,6 +18,8 @@ from copy import copy, deepcopy
 import scipy.stats
 from scipy import linalg
 import seaborn as sns
+sns.set_style("white")
+
 import sys
 import os
 import matplotlib
@@ -1102,8 +1104,9 @@ def reactionBasedAtomizationDistro(directory, outputDir):
         len(syndelArray)), normed=False)
 
     plt.clf()
+    sns.set_palette("BuGn_d")
 
-    sns.distplot(ratomization, kde=False, rug=True, bins=10);
+    sns.distplot(ratomization, kde=False, rug=False, hist_kws=dict(alpha=1),bins=10);
     #plt.hist(ratomization)
     plt.xlabel('Reaction atomization level', fontsize=18)
     plt.ylabel('Number of models', fontsize=18)
@@ -1153,10 +1156,11 @@ def reactionBasedAtomizationDistro(directory, outputDir):
     plt.xlabel('Percentage of non syn=del reactions', fontsize=24)
     plt.savefig('{0}/atomizationScatterplot.png'.format(outputDir))
 
+    sns.set_palette("BuGn_d")
     #yield histogram
     plt.clf()
 
-    sns.distplot(yieldArray, kde=False, rug=True, bins=10);
+    sns.distplot(yieldArray, kde=False, rug=False, hist_kws=dict(alpha=1),bins=10);
     #plt.hist(ratomization)
     plt.xlabel('Yield level', fontsize=18)
     plt.ylabel('Number of models', fontsize=18)
@@ -1275,7 +1279,7 @@ def reactionBasedAtomizationDistro(directory, outputDir):
     plt.clf()
     plt.imshow(ratomizationHeatmap,
                extent=extent, aspect='auto', origin='lower', interpolation='nearest')
-    plt.xlabel('Fraction of non syn-del reactionsModel size')
+    plt.xlabel('Fraction of non syn-del reactions')
     plt.ylabel('Model Size (reactions)')
     cb = plt.colorbar()
     cb.set_label('Atomization level')
@@ -1550,7 +1554,7 @@ if __name__ == "__main__":
     #print failures
     #spaceCoveredCDF('complex2')
     # modelCompositionCDF('complex2')
-    reactionBasedAtomizationDistro('curated', 'testCurated')
+    reactionBasedAtomizationDistro('non_curated', 'testNonCurated')
     # nonAtomizedSpeciesAnalysis()
     # createGroupingCDF()
     #print reactionBasedAtomizationFile('curated/BIOMD0000000019.xml.xml')

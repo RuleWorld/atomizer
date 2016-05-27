@@ -32,11 +32,14 @@ def extractStatsFromFile(fileName):
     fileStats['index'] = fileName.split('/')[-1].split('.')[0]
     fileStats['nreactions'] = len(structures['rules'])
     fileStats['nspecies'] = len(structures['observables'])
-    fileStats['atomization'] = len([x for x in structures['rules'] if x[0].actionslen(structures[''])
+    if fileStats['nreactions'] > 0:
+        fileStats['atomization'] = sum([1 for x in structures['rules'] if any([y.action not in ['Add','Delete'] for y in x[0].actions])]) *1.0/len(structures['rules'])
+    else:
+        fileStats['atomization'] = 0
     return fileStats
 
 if __name__ == "__main__":
-    directory = 'non_curated'
+    directory = 'curated'
     files = getFiles(directory, 'xml.xml')
     fileStats = []
     import progressbar

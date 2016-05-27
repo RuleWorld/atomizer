@@ -181,7 +181,7 @@ def constructPlots(atomizationDB):
     """
     constructHistogram(atomizationDB['syndel'], '{0}/syndelHist.png'.format(outputDir), 'Fraction of non syn-del reactions', 'Number of models')             
     constructHistogram(atomizationDB['yild'], '{0}/yieldHist.png'.format(outputDir), 'Yield score', 'Number of models')             
-    constructHistogram(atomizationDB['score'], '{0}/atomizationHist.png'.format(outputDir), 'Atomization score', 'Number of models')             
+    constructHistogram(atomizationDB['score'], '{0}/atomizationHist.png'.format(outputDir), 'Percentage of reactions with mechanistic processes', 'Number of models')             
     create2DdensityPlot(atomizationDB, ['score', 'yild'], ['Atomization score', 'Yield score'], '{0}/atomizationvsyield.png'.format(outputDir))
     create2DdensityPlot(atomizationDB, ['syndel', 'yild'], ['Percentage or non-syndel reactions', 'Yield score'], '{0}/syndelvsyield.png'.format(outputDir))
 

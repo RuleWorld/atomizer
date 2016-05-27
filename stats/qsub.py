@@ -29,7 +29,7 @@ def getFiles(directory,extension):
             matches.append([filepath,os.path.getsize(os.path.join(root, filename))])
 
     #sort by size
-    #matches.sort(key=lambda filename: filename[1], reverse=False)
+    matches.sort(key=lambda filename: filename[1], reverse=False)
     
     matches = [x[0] for x in matches]
 

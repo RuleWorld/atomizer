@@ -12,7 +12,11 @@ import fnmatch
 import matplotlib.pyplot as plt
 import pandas
 import seaborn as sns
-
+sns.set_style("ticks")
+sns.despine()
+sns.set_context("paper", font_scale=2, rc={"lines.linewidth": 2.5})
+sns.set_style("ticks")
+sns.despine()
 import sys
 import os
 sys.path.insert(0, os.getcwd())
@@ -179,7 +183,7 @@ def extractProcessDistribution(folderName, cluster=False):
                 actionDict['process'].append(x)
                 actionDict['fraction'].append(actionHistogram[x])
                 actionDict['database'].append(folderName[1])
-
+                actionDict['file'].append(fileName)
             #actionHistogram.sort(key=lambda x:x[0])
             for element in actionHistogram:
                 modelHistogram[element].append(actionHistogram[element])
@@ -369,7 +373,6 @@ def componentAnalysis(directory, atomizeThreshold=0):
     with open(os.path.join(directory, 'moleculeTypeDataSet.dump'), 'rb') as f:
         moleculeTypesArray = pickle.load(f)
     for model in moleculeTypesArray:
-        print model
         modelComponentCount = [len(x.components) for x in model[0]]
 
         bindingComponentCount = [len([y for y in x.components if len(y.states) == 0])
@@ -424,21 +427,34 @@ def getXMLFailures(directory):
         pickle.dump(failures, f)
 
 def componentDensityPlot():
-    directory = [('bnglTest', 'BNG control set'), ('curated', 'BioModels curated'), ('non_curated', 'BioModels non curated')]
+    directory = [('bnglTest', 'BNG control set'), ('curated', 'BioModels curated'), ('non_curated', 'BioModels non\n curated')]
     #directory = [('curated', 'BioModels curated')]
     #('new_non_curated', 'BioModels non curated')]
     colors = sns.color_palette("Set1", 3)
-    f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(8, 6))
+    colors = [colors[1], colors[2], colors[0]]
+    f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(6, 9.45))
+    f.tight_layout() 
     for color, direct in zip(colors, directory):
         totalCount, bindingCount, modifyCount = componentAnalysis(direct[0], 0.1)
         sns.kdeplot(totalCount, shade=True, color=color, label=direct[1], ax=ax1, clip=(0, 8), bw=0.5)
         sns.kdeplot(bindingCount, shade=True, color=color, ax=ax2, clip=(0, 8), bw=0.5)
         sns.kdeplot(modifyCount, shade=True, color=color, ax=ax3, clip=(0, 8), bw=0.5)
-    plt.xlabel('Number of components')
-    ax1.set_title('Components per molecule')
-    ax2.set_title('Binding components per molecule')
-    ax3.set_title('Modification components per molecule')
-    plt.savefig('componentDensity.png')
+    plt.xlabel('Number of components', fontsize=22,fontweight='bold')
+    #f.text(-0.14,0.5,'Model percentage', fontsize=22,fontweight='bold',va='center', rotation='vertical')
+    ax1.set_title('Components/molecule')
+    ax2.set_title('Binding components/molecule')
+    ax3.set_title('Modification components/molecule')
+    ax1.set_ylabel('Fraction',fontsize=22,fontweight='bold')
+    ax2.set_ylabel('Fraction',fontsize=22,fontweight='bold')
+    ax3.set_ylabel('Fraction',fontsize=22,fontweight='bold')
+    plt.tight_layout()
+    sns.despine()
+    plt.savefig('componentDensity.pdf',bbox_inches='tight')
+
+    #g = sns.FacetGrid(pandasDistro, row="process", hue="database", margin_titles=True, row_order=processOrder, xlim=(0, 1))
+    #g.map(sns.kdeplot, "fraction", shade=True, clip=(0, 1))
+    #plt.savefig('componentDensity.pdf',bbox_inches='tight')    
+
 
 def processHistogram():
     def getsubplot(axs, index, dimensions):
@@ -451,10 +467,10 @@ def processHistogram():
     processDistro  = []
     
     cluster = True
-
+    
     pandasDistro = collections.defaultdict(list)
     
-
+    
     
     if not cluster:
         processFile = 'processDistro.dump'
@@ -465,6 +481,7 @@ def processHistogram():
     '''
     for direct in directory:
         process, pandasc = extractProcessDistribution(direct, cluster=cluster)
+        print direct, process
         processDistro.append(process)
         for element in pandasc:
             pandasDistro[element].extend(pandasc[element])
@@ -474,20 +491,27 @@ def processHistogram():
     with open(processFile, 'wb') as f:
         pickle.dump(processDistro, f)
         pickle.dump(pandasDistro, f)
-    
     '''
+    
     with open(processFile, 'rb') as f:
         processDistro = pickle.load(f)
         pandasDistro = pickle.load(f)
 
-    sns.factorplot("process", "fraction", "database", pandasDistro, kind='bar', x_order=processOrder)
-    plt.savefig('processBarChar2.png')
+    #get only those files that are not entirely syn/del
+    tmp = set(pandasDistro.query('process == "Add/Delete" & fraction != 1').file)
+    pandasDistro = pandasDistro[pandasDistro.file.isin(tmp)]
+
+    g = sns.factorplot(x="process", y="fraction", row="database", data=pandasDistro, kind='bar', legend_out=True,order=processOrder,aspect=1.9,palette="Set2")
+    g.set_xlabels("Process",fontweight='bold',fontsize=28)
+    g.set_ylabels("Fraction",fontweight='bold',fontsize=28)
+
+    plt.savefig('processBarChar2.pdf',bbox_inches='tight')
 
     # place in here the subplot grid size
-    print processDistro[0]
+    
     dimensions = [3, 1]
     f, axs = plt.subplots(dimensions[0], dimensions[1], sharex=True, figsize=(8, 8))
-    sns.set_context('talk', font_scale=1, rc={"lines.linewidth": 2.5})
+    #sns.set_context('talk', font_scale=1, rc={"lines.linewidth": 2.5})
     colors = sns.color_palette("Set1", 3)
     for color, direct in zip(colors, directory):
         for index, process in enumerate(processOrder):
@@ -499,13 +523,13 @@ def processHistogram():
             ax = getsubplot(axs, index, dimensions).set_title(process)
             getsubplot(axs, index, dimensions).set_xlim([0, 1])
 
-    plt.suptitle('CDF for the fraction of <x> process to the total number of processes in a model for different datasets')
-    plt.savefig('processDensity.png')
+    #plt.suptitle('CDF for the fraction of <x> process to the total number of processes in a model for different datasets')
+    plt.savefig('processDensity.png',bbox_inches='tight')
 
-    g = sns.FacetGrid(pandasDistro, row="process", col="database", hue="database", 
+    g = sns.FacetGrid(pandasDistro, row="process", hue="database", 
         margin_titles=True, row_order=processOrder, xlim=(0, 1))
     g.map(sns.kdeplot, "fraction", shade=True, clip=(0, 1))
-    plt.savefig('processDensityGrid.png')
+    plt.savefig('processDensityGrid.png',bbox_inches='tight')
     #plt.show()
     #
 def rankMoleculeTypes(directory):

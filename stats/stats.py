@@ -8,7 +8,9 @@ Created on Mon Oct  8 14:16:25 2012
 import matplotlib.pyplot as plt
 #plt.style.use('ggplot')
 import seaborn as sns
-
+sns.set_style("white")
+sns.despine()
+sns.set_context("notebook", font_scale=1.5, rc={"lines.linewidth": 2.5})
 import numpy as np
 import libsbml
 import pickle
@@ -33,6 +35,29 @@ import concurrent.futures
 
 import bioservices
 import pprint
+
+
+def constructHistogram(data, fileName, xlabel, ylabel, bins=10):
+    """
+    constructs a histogram based on the information in data
+    """
+    _, axs = plt.subplots(1, 1,figsize=(7, 6))
+    
+    plt.clf()
+    
+    sns.set_palette("BuGn_d")
+    sns.set_context("paper", font_scale=3)
+    sns.set_style("ticks")
+
+    if type(bins) != int:
+        axs.set_xlim(xmin=0,xmax=bins[-1])
+    sns.distplot(data, kde=False, rug=False, bins=bins, hist_kws=dict(alpha=1))
+    #plt.hist(ratomization)
+    plt.xlabel(xlabel, fontsize=32,fontweight='bold')
+    plt.ylabel(ylabel, fontsize=32,fontweight='bold')
+    sns.despine()
+    
+    plt.savefig(fileName,bbox_inches='tight')
 
 
 def main():
@@ -397,7 +422,7 @@ def histogram(inputDirectory, configFile):
             #else:
             trueEvaluation.append([1,y])
                 
-            trueRatio.append(1-w)
+            trueRatio.append(w)
             
     weights,trueEvaluation = zip(*trueEvaluation)
     #print '0 atom large models',problemModels
@@ -480,14 +505,15 @@ def histogram(inputDirectory, configFile):
     plt.ylim(1,1000)
     plt.savefig('{0}/reactionsvsspeciesato.png'.format(directory))
 
-    
+    '''    
     plt.clf()
     plt.hist(trueEvaluation, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
                                 0.8, 0.9, 1.0])
     plt.xlabel('Percentage of mechanistic reactions'.format(len(trueEvaluation)),fontsize=18)    
     plt.ylabel('Number of models',fontsize=18)
     plt.savefig('{0}/atomizationDistroHist.png'.format(directory))
-
+    '''
+    constructHistogram(trueEvaluation, '{0}/atomizationDistroHist.png'.format(directory), 'Mechanistic processes ratio', 'Number of models', bins=10)
     plt.clf()
     #bins=[ 0.,0.18139535,0.3627907,
     #                          0.54418605,0.7255814,0.90697674]
@@ -495,7 +521,7 @@ def histogram(inputDirectory, configFile):
     #                          0.54418605,0.7255814,0.90697674],weights=weights,normed=True)
     #plt.xlabel('Compression Degree ({0} models)'.format(len(trueRatio)),fontsize=18)
     #plt.savefig('compressionDistroHistWeighted.png')
-
+    '''
     plt.clf()
     fig, ax = plt.subplots()
     plt.hist(trueRatio, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
@@ -512,7 +538,9 @@ def histogram(inputDirectory, configFile):
     ax.tick_params(axis='x', pad=10)
     #plt.subplots_adjust(bottom=0.15)
     plt.savefig('{0}/compressionDistroHist.png'.format(directory))
-    
+    '''
+
+    constructHistogram(trueRatio, '{0}/compressionDistroHist.png'.format(directory), 'Compression Degree', 'Number of models', bins=10)
 
 
     plt.clf()
@@ -922,6 +950,7 @@ if __name__ == "__main__":
     #bagOfWords()
     #main2('curated')
     histogram('curated', 'sortedD.dump')
+    histogram('non_curated', 'sortedD.dump')
     #compressionDistroAnalysisCont('curated')
     #rankingAnalysis()
     #print resolveAnnotation('http://identifiers.org/reactome/REACT_9417.3')

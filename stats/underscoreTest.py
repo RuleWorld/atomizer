@@ -7,6 +7,9 @@ import fnmatch
 import pandas
 from scipy.stats import kendalltau
 from scipy import stats
+import argparse
+
+xkcd = False
 
 def getModelStructures(bngxml):
     structures = readBNGXML.parseFullXML(bngxml)
@@ -144,23 +147,27 @@ def batchComparison(directory):
 def createPlots(atomizationDB):
 
     plt.clf()
+
     #sns.set(font_scale=1.5) 
     sns.set_context("paper", font_scale=3)
-    sns.set_style("white")
+    sns.set_style("ticks")
+    if xkcd:
+        plt.xkcd()
 
     prunnedDB =  atomizationDB[atomizationDB.nonatoscore.notnull()]
 
     g = sns.factorplot(x="categorized_nonatoscore", data=prunnedDB, kind="count",
-                   palette="BuGn_d", size=7, aspect=1.7, order=['0', '1-5' , '6-10', '>10'])
+                   palette="BuGn_d", size=7, aspect=0.9, order=['0', '1-5' , '6-10', '>10'])
 
-    plt.xlabel("Number of unatomized species\n in models with complex formation ({0} models)".format(len(prunnedDB)), fontsize=32)
-    plt.ylabel("Number of Models", fontsize=32)
-
+    plt.xlabel("Unatomized species\n ({0} models)".format(len(prunnedDB)), fontsize=32,fontweight='bold')
+    plt.ylabel("Number of Models", fontsize=32,fontweight='bold')
     #g.set_axis_labels("Number of unatomized species\n in models with complex formation ({0} models)".format(len(prunnedDB)), "Number of Models")
 
-
-    g.fig.savefig('underscorebarplot.png',bbox_inches='tight')
-
+    sns.despine()
+    if xkcd:
+        g.fig.savefig('underscorebarplot_xkcd.png',bbox_inches='tight')
+    else:
+        g.fig.savefig('underscorebarplot.png',bbox_inches='tight')
     #nonatoscore = [x for x,y in zip(atomizationDB['nonatoscore'], atomizationDB['nonatoscore'].notnull()) if y]
     #normalized_nonatoscore = [x for x,y in zip(atomizationDB['normalized_nonatoscore'], atomizationDB['normalized_nonatoscore'].notnull()) if y]
 
@@ -177,10 +184,20 @@ def createPlots(atomizationDB):
 
 
     #sns.lmplot("nonatoscore", "y", data=atomizationDB, hue='categorized_effort', fit_reg=False)
+def defineConsole():
+    parser = argparse.ArgumentParser(description='SBML to BNGL translator')
+    parser.add_argument('-i','--input',type=str,help='input SBML model1',required=True)
+    parser.add_argument('-x','--xkcd',action='store_true',help='xkcd type plots')
+    #parser.add_argument('-o','--output-file',type=str,help='output SBML file',required=True)
+    return parser    
+
+
 if __name__ == "__main__":
     #xmlstructures = getModelStructures('curated/BIOMD0000000470.xml.xml')
     #activeMolecules = getActiveMolecules(xmlstructures['rules'])
-
+    parser = defineConsole()
+    namespace = parser.parse_args()
+    xkcd = namespace.xkcd
     directory = 'curated'
     #atomizationDB = batchComparison(directory)
     atomizationDB = pandas.read_hdf('{0}DB.h5'.format(directory), 'atomization')
