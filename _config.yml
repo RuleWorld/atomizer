@@ -1,2 +1,3 @@
-	name: Atomizer
-	markdown: kramdown
+name: Atomizer
+markdown: kramdown
+permalink: /blog/:year/:month/:day/:title
