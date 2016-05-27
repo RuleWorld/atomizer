@@ -7,8 +7,14 @@ title: Atomizer's User manual
 	
 	<ul class="post-list">
   {% assign cat = "installation" %}
-  <h2>Installation</h2>
+  <h2>Setup</h2>
   {% for post in site.categories[cat] %}
     <li><a href="/atomizer{{ post.url }}" title="{{ post.title }}">{{ post.title }}</a></li>
   {% endfor %}
+  {% assign cat = "basic" %}
+  <h2>Basic usage</h2>
+  {% for post in site.categories[cat] %}
+    <li><a href="/atomizer{{ post.url }}" title="{{ post.title }}">{{ post.title }}</a></li>
+  {% endfor %}
+
 </ul>
