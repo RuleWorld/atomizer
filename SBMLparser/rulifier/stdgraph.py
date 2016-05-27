@@ -71,7 +71,9 @@ def createNode(graph, name, graphicsDict, labelGraphicsDict, isGroup, gid):
 
 
 def createBitNode(graph, molecule, nodeList):
-
+    '''
+    creates the bit nodes
+    '''
     gridDict = {1:1, 2:2, 3:3, 4:2,5:3,6:3,7:4,8:4,9:3,10:5,11:4,12:4,13:5,14:5,15:5,16:4,17:5,18:4,19:5,20:5}
 
     for node in nodeList[molecule]:
@@ -93,7 +95,7 @@ def createBitNode(graph, molecule, nodeList):
             else:
                 componentLegend += '/'
         createNode(graph, '{0}_{1}'.format(molecule, '/'.join(nodeId)), {'type': "roundrectangle"}, {'text': nodeName}, 0, graph.node[molecule]['id'])
-    createNode(graph, '{0}_legend'.format(molecule), {}, {'text': componentLegend}, 0, graph.node[molecule]['id'])
+    createNode(graph, '{0}_legend'.format(molecule), {}, {'text': componentLegend, 'fontSize': 20}, 0, graph.node[molecule]['id'])
 
 
 def createBitEdge(graph, molecule, edge):
@@ -163,8 +165,12 @@ def createPDGraphNode(graph, molecule, nodeList):
 def createPDEdge(graph, molecule, edge, edgeList):
     nodeId0 = [x[0] for x in edge[0] if x[1]]
     nodeId1 = [x[0] for x in edge[1] if x[1]]
+
+
     bidirectionalArray = [x for x in edgeList[molecule] if (edge[1],edge[0]) == (x[0], x[1])]
+
     bidirectional = len(bidirectionalArray) > 0
+
 
     if ('{0}_{1}'.format(molecule, '/'.join(nodeId1)), '{0}_{1}'.format(molecule,  '/'.join(nodeId0))) not in graph.edges():
         transDict = {False:'^', True:''}
@@ -180,7 +186,9 @@ def createPDEdge(graph, molecule, edge, edgeList):
         #    differenceText = ['{0}'.format(x[0]) for x in difference]
         
         differencePositive = [x[0] for x in difference if x[1]]
-        differenceNegative = ['^{0}'.format(x[0]) for x in difference if not x[1]]
+        differenceNegative = [x[0] for x in difference if not x[1]]
+
+
         if bidirectional:
             if 'reverse' in edge[2]:
                 differenceText = bidirectionalArray[0][3] + ', ' + edge[3]
@@ -192,10 +200,15 @@ def createPDEdge(graph, molecule, edge, edgeList):
         #differenceText = edge[2].strip('_reverse_')
         differenceText += '\n===\n'
         differenceText = ''
+
+        #if bidirectional and len(differencePositive) < len(differenceNegative):
+        #    differencePositive, differenceNegative = differenceNegative, differencePositive
         if len(differencePositive) > 0 and len(differenceNegative) > 0:
-            differenceText += ', '.join(differencePositive) + '\n___\n' + ', '.join(differenceNegative)
+            differenceText += ', '.join(differencePositive) + '\n___\n' + ', '.join(['^{0}'.format(x) for x in differenceNegative])
         else:
-            differenceText += ', '.join(differencePositive) + ', '.join(differenceNegative)
+            differenceText += ', '.join(differencePositive) + ', '.join(['^{0}'.format(x) for x in differenceNegative])
+
+        # creates the process nodes with text 'differenceText'
         createNode(graph, processNodeName, {'type': "rectangle", 'fill': "#FFFFFF"},
                    {'text': differenceText, "fontStyle": "bold", "fontSize": 20}, 0, graph.node[molecule]['id'])
         if bidirectional:
@@ -222,9 +235,14 @@ def generateSTD(nodeList, edgeList):
 
 
     for molecule in nodeList:
+
         bidirectionalList = []
-        for edge in edgeList[molecule]:
+        cedgeList = list(edgeList[molecule])
+        for edge in cedgeList:
+            if '_reverse' in edge[2]:
+                continue
             if list([edge[0], edge[1]]) not in bidirectionalList:
+
                 bidirectional = createPDEdge(graph, molecule, edge, edgeList)
             if bidirectional:
                 bidirectionalList.append([edge[1],edge[0]])
@@ -240,7 +258,7 @@ def outputGraph(graph, fileName, labelDict):
 import codecs
 
 def generateSTDGML(inputFile):
-    nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=True)
+    nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=False)
     graph = generateSTD(nodeList, edgeList)
     #gml = nx.generate_gml(graph)
     print graph
