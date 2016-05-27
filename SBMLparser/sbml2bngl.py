@@ -11,7 +11,7 @@ import re
 from collections import Counter
 from collections import defaultdict
 import numpy as np
-
+import math as pymath
 from utils.util import logMess, TranslationException
 import libsbml
 
@@ -485,7 +485,7 @@ but reaction is marked as reversible'.format(reactionID))
         # in case a given species was defined as the zero molecule don't include it in the rate correction method
         for x in reaction.getListOfReactants():
             if x.getSpecies() not in ['EmptySet', 'Trash', 'Sink', 'Source'] and x.getStoichiometry() not in [0, '0']:
-                if not x.getConstant():
+                if not x.getConstant() and pymath.isnan(x.getStoichiometry()):
                     logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
                     raise TranslationException(reaction.getId())
                 else:
@@ -493,10 +493,9 @@ but reaction is marked as reversible'.format(reactionID))
                     if speciesName in translator and str(translator[speciesName]) == '0':
                         continue
                     rReactant.append((x.getSpecies(), x.getStoichiometry()))
-
         for x in reaction.getListOfProducts():
             if x.getSpecies() not in ['EmptySet', 'Trash', 'Sink', 'Source'] and x.getStoichiometry() not in [0, '0']:
-                if not x.getConstant():
+                if not x.getConstant() and pymath.isnan(x.getStoichiometry()):
                     logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
                     raise TranslationException(reaction.getId())
                 else:
@@ -600,7 +599,7 @@ but reaction is marked as reversible'.format(reactionID))
         if kineticLaw is None:
             return 1, 1
         rReactant = rProduct = []
-        '''
+        
         for x in reaction.getListOfReactants():
             if x.getSpecies() not in ['EmptySet', 'Trash', 'Source', 'Sink'] \
                         and rElement.getStoichiometry() not in [0, '0']:
@@ -618,7 +617,7 @@ but reaction is marked as reversible'.format(reactionID))
                     return 1, 1
                 else:
                     rProduct.append(x.getSpecies(), x.getStoichiometry())
-        '''
+        
         
         # TODO: For some reason creating a deepcopy of this screws everything up, even
         # though its what we should be doing

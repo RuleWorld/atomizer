@@ -92,7 +92,8 @@ def getStateTransitionDiagram(labels, centers, products, contexts, actions, mole
             finalContext = tmpContext[tmpContext.keys()[0]]
             for idx in range(1, len(tmpContext.keys())):
                 finalContext[tmpContext.keys()[idx]] -= 1
-
+        else:
+            finalContext = {}
         for species in finalContext:
         #for speciesUnit in tmpContext:
         #    for species in tmpContext[speciesUnit]:
