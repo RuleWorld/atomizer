@@ -9,3 +9,11 @@ title: Atomizer's Blog
 	    <li><span>{{ post.categories }}</span> » <a href="/atomizer{{ post.url }}" title="{{ post.title }}">{{ post.title }}</a></li>
 	  {% endfor %}
 	</ul>
+	
+	<ul class="post-list">
+  {% assign cat = "installation" %}
+  <h2>Installtion</h2>
+  {% for mypost in site.categories[cat] %}
+    <li>{{ mypost.title }}</li>
+  {% endfor %}
+</ul>
