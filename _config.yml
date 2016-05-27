@@ -1,3 +1,4 @@
 name: Atomizer
 markdown: kramdown
+permalink: /blog/:categories/:title.html
 
