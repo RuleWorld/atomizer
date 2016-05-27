@@ -1,19 +1,14 @@
 ---
 layout: default
-title: Atomizer's Blog
+title: Atomizer's User manual
 ---
 	<h1>{{ page.title }}</h1>
-	<ul class="posts">
 
-	  {% for post in site.posts %}
-	    <li><span>{{ post.categories }}</span> » <a href="/atomizer{{ post.url }}" title="{{ post.title }}">{{ post.title }}</a></li>
-	  {% endfor %}
-	</ul>
 	
 	<ul class="post-list">
   {% assign cat = "installation" %}
-  <h2>Installtion</h2>
-  {% for mypost in site.categories[cat] %}
-    <li>{{ mypost.title }}</li>
+  <h2>Installation</h2>
+  {% for post in site.categories[cat] %}
+    <li><a href="/atomizer{{ post.url }}" title="{{ post.title }}">{{ post.title }}</a></li>
   {% endfor %}
 </ul>
