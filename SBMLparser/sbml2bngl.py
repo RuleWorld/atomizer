@@ -55,7 +55,7 @@ class SBML2BNGL:
         self.reactionDictionary = {}
         self.speciesAnnotation = None
         self.speciesCompartments = None
-        self.getUnitDefinitions()
+        self.unitDefinitions = self.getUnitDefinitions()
         self.convertSubstanceUnits = False
 
     def reset(self):
@@ -142,9 +142,9 @@ class SBML2BNGL:
         if name == '':
             name = identifier
         if species.isSetInitialConcentration():
-            initialConcentration = species.getInitialConcentration()
+            initialValue = species.getInitialConcentration()
         else:
-            initialConcentration = species.getInitialAmount()
+            initialValue = species.getInitialAmount()
         isConstant = species.getConstant()
         isBoundary = species.getBoundaryCondition()
         # FIXME: this condition means that a variable/species can be changed
@@ -156,7 +156,7 @@ class SBML2BNGL:
             isConstant = True
             if not species.isSetInitialConcentration() \
                 and not species.isSetInitialAmount():
-                initialConcentration = 1
+                initialValue = 1
         compartment = species.getCompartment()
         boundaryCondition = species.getBoundaryCondition()
         standardizedName = standardizeName(name)
@@ -198,7 +198,12 @@ class SBML2BNGL:
 
         values = {}
         values['returnID'] = returnID
-        values['initialConcentration'] = initialConcentration
+        if species.isSetInitialConcentration():
+            values['initialConcentration'] = initialValue
+            values['initialAmount'] = -1
+        elif species.isSetInitialAmount():
+            values['initialAmount'] = initialValue
+            values['initialConcentration'] = -1
         values['isConstant'] = isConstant
         values['isBoundary'] = isBoundary
         values['compartment'] = compartment
@@ -282,7 +287,6 @@ class SBML2BNGL:
             for unit in unitDefinition.getListOfUnits():
                 correctedUnit = libsbml.Unit.convertToSI(unit)
                 #unitList.append({'kind':unit.getKind(), 'scale':unit.getScale(),'multiplier':unit.getMultiplier(), 'exponent': unit.getExponent(), 'name':name})
-
                 for unit2 in correctedUnit.getListOfUnits():
                     name = unit.getName() if unit.getName() else unitDefinition.getName()
                     unitList.append({'kind':unit2.getKind(), 'scale': unit2.getScale(), 'multiplier':unit2.getMultiplier(), 'exponent': unit2.getExponent(), 'name':name})
@@ -602,7 +606,7 @@ but reaction is marked as reversible'.format(reactionID))
         
         for x in reaction.getListOfReactants():
             if x.getSpecies() not in ['EmptySet', 'Trash', 'Source', 'Sink'] \
-                        and rElement.getStoichiometry() not in [0, '0']:
+                        and x.getStoichiometry() not in [0, '0'] and pymath.isnan(x.getStoichiometry()):
                 if not x.getConstant():
                     logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
                     return 1, 1
@@ -611,7 +615,7 @@ but reaction is marked as reversible'.format(reactionID))
 
         for x in reaction.getListOfProducts():
             if x.getSpecies() not in ['EmptySet', 'Trash', 'Source', 'Sink'] \
-                        and rElement.getStoichiometry() not in [0, '0']:
+                        and x.getStoichiometry() not in [0, '0'] and pymath.isnan(x.getStoichiometry()):
                 if not x.getConstant():
                     logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
                     return 1, 1
@@ -741,7 +745,8 @@ but reaction is marked as reversible'.format(reactionID))
         '''
         Private method used by the getCompartments method 
         '''
-        name = compartment.getId()
+        idid = compartment.getId()
+        name = compartment.getName()
         size = compartment.getSize()
         dimensions = compartment.getSpatialDimensions()
         if dimensions in [0, 1]:
@@ -750,7 +755,7 @@ but reaction is marked as reversible'.format(reactionID))
         #if size != 1:
         #    print '!',
         #return name,3,size
-        return name, dimensions, size
+        return idid, dimensions, size, name
         
     def __getRawFunctions(self,function):
         math= function[1].getMath()
@@ -771,11 +776,21 @@ but reaction is marked as reversible'.format(reactionID))
         (compartmentName,dimensions,size)
         '''
         compartments = []
+        unitDefinitions = self.getUnitDefinitions()
+        if 'volume' in unitDefinitions:
+            compartments.append('#volume units: {0}'.format('*'.join([x['name'] for x in unitDefinitions['volume']])))
+        else:
+            compartments.append('#volume units: L')
         for _,compartment in enumerate(self.model.getListOfCompartments()):
             compartmentInfo = self.__getRawCompartments(compartment)
             name = 'cell' if compartmentInfo[0] == '' else compartmentInfo[0]
-            compartments.append("%s  %d  %s" % (name, compartmentInfo[1], compartmentInfo[2]))
+            if name != compartmentInfo[3]:
+                compartments.append("%s  %d  %s #%s" % (name, compartmentInfo[1], compartmentInfo[2], compartmentInfo[3]))
+            else:
+                compartments.append("%s  %d  %s" % (name, compartmentInfo[1], compartmentInfo[2]))
         return compartments
+
+
 
     def updateFunctionReference(self, reaction, updatedReferences):
         newRate = reaction[3]
@@ -1046,10 +1061,25 @@ but reaction is marked as reversible'.format(reactionID))
     def convertToStandardUnits(self, parameterValue, unitDefinition):
 
         for factor in unitDefinition:
-            parameterValue *= 10 ** int(factor['scale'])
-            parameterValue /= int(factor['multiplier'])
-            parameterValue **= int(factor['exponent'])
+            if factor['scale'] != 0:
+                parameterValue *= 10 ** factor['scale']
+            if factor['multiplier'] !=  1:
+                parameterValue *= factor['multiplier']
+            if factor['exponent'] != 1:
+                parameterValue **= factor['exponent']
         return parameterValue
+
+
+    def convertToStandardUnitString(self, parameterValue, unitDefinition):
+        for factor in unitDefinition:
+            if factor['multiplier'] !=  1:
+                parameterValue = '({0} * {1})'.format(parameterValue, factor['multiplier'])
+            if factor['exponent'] != 1:
+                parameterValue = '({0} ^ {1})'.format(parameterValue, factor['exponent'])
+            if factor['scale'] != 0:
+                parameterValue = '({0} * 1e{1})'.format(parameterValue, factor['scale'])
+        return parameterValue
+
 
 
     def __getRawParameters(self, parameter):
@@ -1057,7 +1087,7 @@ but reaction is marked as reversible'.format(reactionID))
         parameterSpecs['id'] = parameter.getId()
         parameterSpecs['value'] = parameter.getValue()
         parameterSpecs['name'] = parameter.getName()
-        parameterSpecs['units'] = parameter.getUnits
+        parameterSpecs['units'] = parameter.getUnits()
 
         return parameterSpecs
 
@@ -1098,6 +1128,18 @@ but reaction is marked as reversible'.format(reactionID))
                 d = {k: default_to_regular(v) for k, v in d.iteritems()}
             return d
 
+        #find concentration units
+        unitDefinitions = self.getUnitDefinitions()
+
+        if 'substance' in unitDefinitions:
+            substance = '*'.join([x['name'] for x in unitDefinitions['substance']])
+        else:
+            substance = 'M'
+        if 'volume' in unitDefinitions:
+            volume = '/'.join([x['name'] for x in unitDefinitions['volume']])
+        else:
+            volume = 'L'
+        concentrationUnits = '{0}/{1}'.format(substance,volume)
         
         moleculesText = []
         speciesText = []
@@ -1112,6 +1154,7 @@ but reaction is marked as reversible'.format(reactionID))
         annotationInfo = {'moleculeTypes': {}, 'species': {}}
         for compartment in self.model.getListOfCompartments():
             compartmentDict[compartment.getId()] = compartment.getSize()
+        speciesText.append('#units: {0}'.format(concentrationUnits))
         for species in self.model.getListOfSpecies():
             rawSpecies = self.getRawSpecies(species, parameters)
             #if rawSpecies['returnID'] in self.boundaryConditionVariables:
@@ -1138,12 +1181,28 @@ but reaction is marked as reversible'.format(reactionID))
             temp = '$' if rawSpecies['isConstant'] != 0 else ''
             tmp = translator[str(rawSpecies['returnID'])] if rawSpecies['returnID'] in translator \
                 else rawSpecies['returnID'] + '()'
-            if rawSpecies['initialConcentration'] >= 0:
+
+            if rawSpecies['initialConcentration'] >= 0 or rawSpecies['initialAmount'] >=0:
                 tmp2 = temp
                 if rawSpecies['identifier'] in self.tags:
                     tmp2 = (self.tags[rawSpecies['identifier']])
-                if rawSpecies['initialConcentration'] > 0.0 or rawSpecies['isConstant']:
+                if rawSpecies['initialAmount'] > 0.0:
+                    speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), rawSpecies['initialAmount'],rawSpecies['returnID'],rawSpecies['identifier']))
+                elif rawSpecies['initialConcentration'] > 0.0:
+                    # convert to molecule counts
+                    #newParameterStr = self.convertToStandardUnitString(rawSpecies['initialConcentration'], unitDefinitions['substance'])
+                    #newParameter = self.convertToStandardUnits(rawSpecies['initialConcentration'], unitDefinitions['substance']) * 6.022e23 #conversion to molecule counts by converting to avogadros number
+                    #get compartment size
+                    #compartmentSize = self.model.getCompartment(rawSpecies['compartment']).getSize()
+                    #newParameter = compartmentSize * newParameter
+
+                    #speciesText.append('{0}:{1}{2} {3} # {4}*6.022e23*{7} #{5} #{6}'.format(tmp2, temp, str(tmp), 
+                    #                                                        newParameter,newParameterStr,rawSpecies['returnID'],
+                    #                                                        rawSpecies['identifier'], compartmentSize))
                     speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), rawSpecies['initialConcentration'],rawSpecies['returnID'],rawSpecies['identifier']))
+
+                elif rawSpecies['isConstant']:
+                    speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 0,rawSpecies['returnID'],rawSpecies['identifier']))
             if rawSpecies['returnID'] == 'e':
                 modifiedName = 'are'
             else:
