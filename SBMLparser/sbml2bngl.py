@@ -462,19 +462,21 @@ but reaction is marked as reversible'.format(reactionID))
         return rateL, rateR, nl, nr
 
     def __getRawRules(self, reaction, symmetryFactors, parameterFunctions, translator):
+
+        zerospecies = ['emptyset','trash','sink','source']
         if self.useID:
             reactant = [(reactant.getSpecies(), reactant.getStoichiometry())
                         for reactant in reaction.getListOfReactants() if
-                        reactant.getSpecies() not in ['EmptySet','Trash','Sink','Source'] and reactant.getStoichiometry() not in [0,'0']]
+                        reactant.getSpecies().lower() not in zerospecies and reactant.getStoichiometry() not in [0,'0']]
             product = [(product.getSpecies(), product.getStoichiometry())
-                       for product in reaction.getListOfProducts() if product.getSpecies()
-                       not in ['EmptySet','Trash','Sink','Source'] and product.getStoichiometry() not in [0,'0']]
+                       for product in reaction.getListOfProducts() if product.getSpecies().lower()
+                       not in zerospecies and product.getStoichiometry() not in [0,'0']]
         else:
             reactant = [(self.speciesDictionary[rElement.getSpecies()], rElement.getStoichiometry(), rElement.getSpecies())
-                        for rElement in reaction.getListOfReactants() if self.speciesDictionary[rElement.getSpecies()] not in ['EmptySet', 'Trash', 'Source', 'Sink']
+                        for rElement in reaction.getListOfReactants() if self.speciesDictionary[rElement.getSpecies()].lower() not in zerospecies
                         and rElement.getStoichiometry() not in [0,'0']]
             product = [(self.speciesDictionary[rProduct.getSpecies()], rProduct.getStoichiometry(), rProduct.getSpecies())
-                       for rProduct in reaction.getListOfProducts() if self.speciesDictionary[rProduct.getSpecies()] not in ['EmptySet', 'Trash', 'Source', 'Sink']
+                       for rProduct in reaction.getListOfProducts() if self.speciesDictionary[rProduct.getSpecies()].lower() not in zerospecies
                        and rProduct.getStoichiometry() not in [0,'0']]
         kineticLaw = reaction.getKineticLaw()
         reversible = reaction.getReversible()
@@ -488,7 +490,7 @@ but reaction is marked as reversible'.format(reactionID))
 
         # in case a given species was defined as the zero molecule don't include it in the rate correction method
         for x in reaction.getListOfReactants():
-            if x.getSpecies() not in ['EmptySet', 'Trash', 'Sink', 'Source'] and x.getStoichiometry() not in [0, '0']:
+            if x.getSpecies().lower() not in zerospecies and x.getStoichiometry() not in [0, '0']:
                 if not x.getConstant() and pymath.isnan(x.getStoichiometry()):
                     logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
                     raise TranslationException(reaction.getId())
@@ -498,7 +500,7 @@ but reaction is marked as reversible'.format(reactionID))
                         continue
                     rReactant.append((x.getSpecies(), x.getStoichiometry()))
         for x in reaction.getListOfProducts():
-            if x.getSpecies() not in ['EmptySet', 'Trash', 'Sink', 'Source'] and x.getStoichiometry() not in [0, '0']:
+            if x.getSpecies().lower() not in zerospecies and x.getStoichiometry() not in [0, '0']:
                 if not x.getConstant() and pymath.isnan(x.getStoichiometry()):
                     logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
                     raise TranslationException(reaction.getId())
@@ -586,7 +588,7 @@ but reaction is marked as reversible'.format(reactionID))
         create symmetry factors for reactions with components and species with
         identical names. This checks for symmetry in the components names then.
         '''
-
+        zerospecies = ['emptyset','trash','sink','source']
         if self.useID:
             reactant = [(rElement.getSpecies(), rElement.getStoichiometry())
             for rElement in reaction.getListOfReactants() if
@@ -605,7 +607,7 @@ but reaction is marked as reversible'.format(reactionID))
         rReactant = rProduct = []
         
         for x in reaction.getListOfReactants():
-            if x.getSpecies() not in ['EmptySet', 'Trash', 'Source', 'Sink'] \
+            if x.getSpecies().lower() not in zerospecies \
                         and x.getStoichiometry() not in [0, '0'] and pymath.isnan(x.getStoichiometry()):
                 if not x.getConstant():
                     logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
@@ -614,7 +616,7 @@ but reaction is marked as reversible'.format(reactionID))
                     rReactant.append(x.getSpecies(), x.getStoichiometry())
 
         for x in reaction.getListOfProducts():
-            if x.getSpecies() not in ['EmptySet', 'Trash', 'Source', 'Sink'] \
+            if x.getSpecies().lower() not in zerospecies \
                         and x.getStoichiometry() not in [0, '0'] and pymath.isnan(x.getStoichiometry()):
                 if not x.getConstant():
                     logMess("ERROR:SIM241", "BioNetGen does not support non constant stoichiometries. Reaction {0} is not correctly translated".format(reaction.getId()))
