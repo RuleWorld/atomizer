@@ -55,12 +55,19 @@ class AtomizerServer(xmlrpc.XMLRPC):
             processDict.pop(s)
         processDict[ticket] = result
 
-    def atomize(self, ticket, xmlFile, atomize):
+    def atomize(self, ticket, xmlFile, atomize, userConf = None):
         reaction = 'config/reactionDefinitions.json'
         try:
             logStream = StringIO.StringIO()
+            if userConf:
+                jsonpointer = tempfile.mkstemp(suffix='.json', text=True)
+                with open(jsonpointer[1], 'w') as f:
+                    f.write(userConf)
+                jsonpointer = jsonpointer[1]
+            else:
+                jsonpointer = None
             result = libsbml2bngl.readFromString(xmlFile,
-                                                 reaction, False, None, atomize, logStream)
+                                                 reaction, False, jsonpointer, atomize, logStream)
 
             if result and atomize:
                 pointer = tempfile.mkstemp(suffix='.bngl', text=True)
@@ -226,10 +233,14 @@ class AtomizerServer(xmlrpc.XMLRPC):
         processDict[counter] = -2
         return counter
 
-    def xmlrpc_atomize(self, bxmlFile, atomize=False, reaction='config/reactionDefinitions.json', species=None):
+    def xmlrpc_atomize(self, bxmlFile, atomize=False, reaction='config/reactionDefinitions.json', species=None, buser = None):
         counter = next_id()
         xmlFile = bxmlFile.data
-        reactor.callInThread(self.atomize, counter, xmlFile, atomize)
+        if buser:
+            user = buser.data
+        else:
+            user = None
+        reactor.callInThread(self.atomize, counter, xmlFile, atomize, user)
         processDict[counter] = -2
         # result = threads.deferToThread(libsbml2bngl.readFromString,xmlFile,
         #                                     reaction,True,None,atomize)
