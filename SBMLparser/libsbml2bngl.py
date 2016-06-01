@@ -180,7 +180,7 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
         finishStreamLog(console)
 
     returnArray = analyzeHelper(document, reactionDefinitions,
-                         useID,'', speciesEquivalence, atomize, translator)
+                         useID,'', speciesEquivalence, atomize, translator, database)
 
     if atomize and onlySynDec:
         returnArray = list(returnArray)
@@ -442,7 +442,7 @@ def postAnalyzeFile(outputFile, bngLocation, database):
 
     # recreate file using information from the post analysis
     returnArray = analyzeHelper(database.document, database.reactionDefinitions, database.useID,
-                                outputFile, database.speciesEquivalence, database.atomize, database.translator)
+                                outputFile, database.speciesEquivalence, database.atomize, database.translator, database)
     with open(outputFile, 'w') as f:
         f.write(returnArray.finalString)
     # recompute bng-xml file
