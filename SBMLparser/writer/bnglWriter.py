@@ -324,7 +324,7 @@ def curateParameters(param):
         param[element] = tmp
     return param
     
-def finalText(comments,param,molecules,species,observables,rules,functions,compartments,fileName):
+def finalText(comments,param,molecules,species,observables,rules,functions,compartments,annotations,fileName):
     #output = open(fileName,'w')
     output = StringIO.StringIO()
     output.write(comments.decode('ascii','ignore'))
@@ -333,7 +333,7 @@ def finalText(comments,param,molecules,species,observables,rules,functions,compa
     output.write(sectionTemplate('parameters',param))
     if len(compartments) > 0:
         output.write(sectionTemplate('compartments',compartments))          
-    output.write(sectionTemplate('molecule types',molecules))
+    output.write(sectionTemplate('molecule types',molecules, annotations['moleculeTypes']))
     output.write(sectionTemplate('seed species',species))
     output.write(sectionTemplate('observables',observables))
     if len(functions) > 0:
@@ -348,9 +348,15 @@ def finalText(comments,param,molecules,species,observables,rules,functions,compa
     #output.close()
     
     return output.getvalue()
-def sectionTemplate(name,content):
+def sectionTemplate(name,content,annotations={}):
     section = 'begin %s\n' % name
-    temp = ['\t%s\n' % line for line in content]
+    temp  = []
+    for line in content:
+        if line in annotations:
+            for ann in annotations[line]:
+                temp.append('\t%s\n' % ann)
+        temp.append('\t%s\n' % line)
+    #temp = ['\t%s\n' % line for line in content]
     section += ''.join(temp)
     section += 'end %s\n' % name
     return section
