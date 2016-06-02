@@ -661,6 +661,8 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     compartments = parser.getCompartments()
     functions = []
     assigmentRuleDefinedParameters = []
+
+    sbmlfunctions = parser.getSBMLFunctions()
     reactionParameters, rules, rateFunctions = parser.getReactions(translator, len(compartments) > 1,
                                                                    atomize=atomize, parameterFunctions=artificialObservables, database=database)
 
@@ -748,7 +750,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             
 
     functions.extend(aRules)
-    sbmlfunctions = parser.getSBMLFunctions()
     #print functions
     processFunctions(functions,sbmlfunctions,artificialObservables,rateFunctions)
     for interation in range(0,3):
@@ -805,7 +806,9 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     
 
-    finalString = writer.finalText(meta, param + reactionParameters, molecules, initialConditions, list(OrderedDict.fromkeys(observables)), list(OrderedDict.fromkeys(rules)),functions,compartments,outputFile)
+    finalString = writer.finalText(meta, param + reactionParameters, molecules, initialConditions, 
+                                   list(OrderedDict.fromkeys(observables)), list(OrderedDict.fromkeys(rules)), functions, compartments,
+                                   annotationInfo, outputFile)
     
     logMess('INFO:SUM001','File contains {0} molecules out of {1} original SBML species'.format(len(molecules), len(observables)))
 
@@ -835,7 +838,7 @@ def processFile(translator, parser, outputFile):
     param, rules, functions = parser.getReactions(translator, True)
     param += param2
     writer.finalText(param, molecules, species, observables, rules,
-                     functions, compartments, outputFile)
+                     functions, compartments, {}, outputFile)
 
    
 def BNGL2XML():
