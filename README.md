@@ -1,4 +1,4 @@
-Project for the translation of SBML files into BNGL files 
+Project for the translation of SBML files into BNGL files. You can find more information about the project [here](https://ruleworld.github.io/atomizer/).
 
 [![Build Status](https://travis-ci.org/RuleWorld/atomizer.svg?branch=master)](https://travis-ci.org/RuleWorld/atomizer) [![Build status](https://ci.appveyor.com/api/projects/status/rb4sci41f2fy62il?svg=true)](https://ci.appveyor.com/project/jjtapia/atomizer)
 
