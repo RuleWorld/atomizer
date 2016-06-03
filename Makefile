@@ -11,12 +11,12 @@ all:
 	fi ;
 ifeq ($(OS),Windows_NT)
 ifeq ($(shell uname -o),Cygwin)
-		python pyinstaller2/pyinstaller.py sbmlTranslator.spec;
+		python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec;
 else
-		python pyinstaller2/pyinstaller.py sbmlTranslator_windows.spec ;
+		python pyinstaller2/pyinstaller.py utils/sbmlTranslator_windows.spec ;
 endif
 else
-	python pyinstaller2/pyinstaller.py sbmlTranslator.spec ;
+	python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec ;
 endif
 
 
