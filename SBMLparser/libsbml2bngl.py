@@ -474,7 +474,7 @@ def postAnalyzeString(outputFile,bngLocation, database):
     return returnArray    
 
 def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, outputFile,
-                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False):
+                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False, noConversion=False):
     '''
     one of the library's main entry methods. Process data from a file
     '''
@@ -494,6 +494,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
         print 'File {0} could not be recognized as a valid SBML file'.format(bioNumber)
         return
     parser =SBML2BNGL(document.getModel(),useID)
+    parser.setConversion(not noConversion)
     database = structures.Databases()
     database.assumptions = defaultdict(set)
     database.forceModificationFlag = True
@@ -533,6 +534,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     database.useID = useID
     database.speciesEquivalence = speciesEquivalence
     database.atomize = atomize
+    database.isConversion = not noConversion
     returnArray = analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator, database)
     with open(outputFile, 'w') as f:
         f.write(returnArray.finalString)
@@ -622,6 +624,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     useArtificialRules = False
     parser = SBML2BNGL(document.getModel(), useID)
+    parser.setConversion(database.isConversion)
     #database = structures.Databases()
     database.assumptions = defaultdict(set)
     #translator,log,rdf = m2c.transformMolecules(parser,database,reactionDefinitions,speciesEquivalence)
@@ -635,7 +638,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     #else:
     #    translator={}
     
-    parser = SBML2BNGL(document.getModel(), useID)
     #except:
     #    print 'failure'
     #    return None,None,None,None
@@ -662,7 +664,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     functions = []
     assigmentRuleDefinedParameters = []
 
-    sbmlfunctions = parser.getSBMLFunctions()
     reactionParameters, rules, rateFunctions = parser.getReactions(translator, len(compartments) > 1,
                                                                    atomize=atomize, parameterFunctions=artificialObservables, database=database)
 
@@ -748,9 +749,11 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             logMess('WARNING:SIM101','{0} reported as species, but usage is ambiguous.'.format(flag) )
             artificialObservables.pop(flag)
             
+    sbmlfunctions = parser.getSBMLFunctions()
 
     functions.extend(aRules)
     #print functions
+
     processFunctions(functions,sbmlfunctions,artificialObservables,rateFunctions)
     for interation in range(0,3):
         for sbml2 in sbmlfunctions:

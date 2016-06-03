@@ -70,17 +70,21 @@ class SBML2BNGL:
         self.model = model
         self.tags = {}
         self.speciesUnits = {}
-
+        self.isConversion = True
         self.boundaryConditionVariables = []
         self.speciesDictionary = {}
         self.speciesMemory = []
         self.speciesAnnotationDict = None
-        self.getSpecies()
         self.reactionDictionary = {}
         self.speciesAnnotation = None
         self.speciesCompartments = None
         self.unitDefinitions = self.getUnitDefinitions()
         self.convertSubstanceUnits = False
+
+        self.getSpecies()
+        
+    def setConversion(self,conversion):
+        self.isConversion = conversion
 
     def reset(self):
         self.tags = {}
@@ -1271,28 +1275,29 @@ but reaction is marked as reversible'.format(reactionID))
                 if rawSpecies['initialAmount'] > 0.0:
                     speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), rawSpecies['initialAmount'],rawSpecies['returnID'],rawSpecies['identifier']))
                 elif rawSpecies['initialConcentration'] > 0.0:
-                    # convert to molecule counts
-                    if 'substance' in unitDefinitions:
-                        newParameterStr = self.convertToStandardUnitString(rawSpecies['initialConcentration'], unitDefinitions['substance'])
-                        newParameter = self.convertToStandardUnits(rawSpecies['initialConcentration'], unitDefinitions['substance']) #conversion to moles
+                    if self.isConversion:
+                        # convert to molecule counts
+                        if 'substance' in unitDefinitions:
+                            newParameterStr = self.convertToStandardUnitString(rawSpecies['initialConcentration'], unitDefinitions['substance'])
+                            newParameter = self.convertToStandardUnits(rawSpecies['initialConcentration'], unitDefinitions['substance']) #conversion to moles
+                        else:
+                            newParameter = rawSpecies['initialConcentration']
+                            newParameterStr = str(rawSpecies['initialConcentration'])
+                        newParameter = newParameter * 6.022e23 # convertion to molecule counts                        
+                        #get compartment size
+                        compartmentSize = self.model.getCompartment(rawSpecies['compartment']).getSize()
+                        newParameter = compartmentSize * newParameter
+                        if unitFlag:
+                            speciesText.append('{0}:{1}{2} {3} # {4}mol/L * 6.022e23/mol *{7}L #{5} #{6}'.format(tmp2, temp, str(tmp), 
+                                                                                    newParameter,newParameterStr,rawSpecies['returnID'],
+                                                                                    rawSpecies['identifier'], compartmentSize, concentrationUnits))
+                            unitFlag = False
+                        else:
+                            speciesText.append('{0}:{1}{2} {3} #original {4}{8}  #{5} #{6}'.format(tmp2, temp, str(tmp), 
+                                                                                    newParameter,rawSpecies['initialConcentration'],rawSpecies['returnID'],
+                                                                                    rawSpecies['identifier'], compartmentSize, concentrationUnits))
                     else:
-                        newParameter = rawSpecies['initialConcentration']
-                        newParameterStr = str(rawSpecies['initialConcentration'])
-                    newParameter = newParameter * 6.022e23 # convertion to molecule counts                        
-                    #get compartment size
-                    compartmentSize = self.model.getCompartment(rawSpecies['compartment']).getSize()
-                    newParameter = compartmentSize * newParameter
-                    if unitFlag:
-                        speciesText.append('{0}:{1}{2} {3} # {4}mol/L * 6.022e23/mol *{7}L #{5} #{6}'.format(tmp2, temp, str(tmp), 
-                                                                                newParameter,newParameterStr,rawSpecies['returnID'],
-                                                                                rawSpecies['identifier'], compartmentSize, concentrationUnits))
-                        unitFlag = False
-                    else:
-                        speciesText.append('{0}:{1}{2} {3} #original {4}{8}  #{5} #{6}'.format(tmp2, temp, str(tmp), 
-                                                                                newParameter,rawSpecies['initialConcentration'],rawSpecies['returnID'],
-                                                                                rawSpecies['identifier'], compartmentSize, concentrationUnits))
-
-                    #speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), rawSpecies['initialConcentration'],rawSpecies['returnID'],rawSpecies['identifier']))
+                        speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), rawSpecies['initialConcentration'],rawSpecies['returnID'],rawSpecies['identifier']))
 
                 elif rawSpecies['isConstant']:
                     speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 0,rawSpecies['returnID'],rawSpecies['identifier']))
