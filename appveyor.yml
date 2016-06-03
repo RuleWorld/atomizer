@@ -13,7 +13,7 @@ install:
   - choco sources add -n "msft" -s "https://go.microsoft.com/fwlink/?LinkID=230477"
   - choco install libxml2
   - choco install libxslt
-  - choco install strawberrypearl
+  - choco install strawberryperl
   - "SET PATH=C:\\strawberry\\perl\\bin;C:\\strawberry\\perl\\site\\bin;C:\\strawberry\\c\\bin;%PATH%"
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "%PYTHON%\\python.exe -m pip install --disable-pip-version-check --user --upgrade pip"

@@ -7,7 +7,7 @@ DIST = ./dist
 
 all:
 	if ! test -d pyinstaller2 ; then \
-		unzip pyinstaller2.zip;   \
+		unzip utils/pyinstaller2.zip;   \
 	fi ;
 ifeq ($(OS),Windows_NT)
 ifeq ($(shell uname -o),Cygwin)
