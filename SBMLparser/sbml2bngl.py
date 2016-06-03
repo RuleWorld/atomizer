@@ -409,6 +409,11 @@ class SBML2BNGL:
         #unroll sbml functions
         mathstring =  unrollSBMLFunction(mathstring, sbmlFunctions)
 
+        temp = libsbml.parseFormula(mathstring)
+        # if we could parse back after all those modifications...
+        if temp:
+            math = temp
+
         moleFlag = False
         if any([element[0] in self.speciesUnits for element in rReactant]):
             for element in rReactant:
@@ -426,7 +431,6 @@ class SBML2BNGL:
         #    print self.unitDefinitions['substance']
         #divide by avogadros number to get volume per number per second units
 
-        math = libsbml.parseFormula(mathstring)
         removedCompartments = [x for x in removedCompartments if x not in compartmentList]
         if reversible:
             if math.getCharacter() == '-':
