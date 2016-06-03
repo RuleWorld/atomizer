@@ -412,7 +412,7 @@ class SBML2BNGL:
         moleFlag = False
         if any([element[0] in self.speciesUnits for element in rReactant]):
             for element in rReactant:
-                if element[0] in self.speciesUnits:
+                if element[0] in self.speciesUnits and self.speciesUnits[element[0]] in self.unitDefinitions:
                     if self.unitDefinitions[self.speciesUnits[element[0]]] == 23:
                         moleFlag = True
                     else:
