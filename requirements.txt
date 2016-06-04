@@ -4,3 +4,4 @@ setuptools==19.2
 lxml
 pyyaml
 python-libsbml
+nose
