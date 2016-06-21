@@ -235,6 +235,10 @@ class SBML2BNGL:
         elif species.isSetInitialAmount():
             values['initialAmount'] = initialValue
             values['initialConcentration'] = -1
+        else:
+            values['initialAmount'] = -1
+            values['initialConcentration'] = -1
+
         values['isConstant'] = isConstant
         values['isBoundary'] = isBoundary
         values['compartment'] = compartment
@@ -1267,7 +1271,6 @@ but reaction is marked as reversible'.format(reactionID))
             temp = '$' if rawSpecies['isConstant'] != 0 else ''
             tmp = translator[str(rawSpecies['returnID'])] if rawSpecies['returnID'] in translator \
                 else rawSpecies['returnID'] + '()'
-
             if rawSpecies['initialConcentration'] >= 0 or rawSpecies['initialAmount'] >=0:
                 tmp2 = temp
                 if rawSpecies['identifier'] in self.tags:
