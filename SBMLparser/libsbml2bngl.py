@@ -167,6 +167,7 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
     database.atomize = atomize
     database.speciesEquivalence = speciesEquivalence
     database.pathwaycommons = True
+    database.isConversion = True
     #if pathwaycommons:
     #    database.pathwaycommons = True
     namingConventions = resource_path('config/namingConventions.json')
@@ -922,7 +923,7 @@ def main():
     #cycles 18,108,109,255,268,392
     import progressbar
     progress = progressbar.ProgressBar()
-    sbmlFiles = getFiles('XMLExamples/non_curated', 'xml')
+    sbmlFiles = getFiles('XMLExamples/curated', 'xml')
     for bioIdx in progress(range(len(sbmlFiles))):
         bioNumber = sbmlFiles[bioIdx]
         
@@ -940,16 +941,14 @@ def main():
         #rlength, reval, reval2, clength,rdf = analyzeFile('XMLExamples/curated/BIOMD%010i.xml' % bioNumber, 
         #                                                  reactionDefinitions,False,'complex/output' + str(bioNumber) + '.bngl',
         #                                                    speciesEquivalence=spEquivalence,atomize=True)
-
         try:
-	    fileName = bioNumber.split('/')[-1]
+    	    fileName = bioNumber.split('/')[-1]
             rlength = reval = reval2 = slength = None
             analysisResults = analyzeFile(bioNumber, resource_path('config/reactionDefinitions.json'),
                 False,resource_path('config/namingConventions.json'),
                 #'/dev/null',
                 'complex2/' + fileName +  '.bngl',
                 speciesEquivalence=None,atomize=True,bioGrid=False)
-
             #rlength, slength,reval, reval2, clength,rdf, _, _ = analysisResults
             #print '++++',bioNumber,rlength,reval,reval2,clength
                                                                 
@@ -1197,14 +1196,14 @@ if __name__ == "__main__":
     #identifyNamingConvention()
     #processDatabase()
     
-    main2()
+    #main2()
     '''    
     analyzeFile('../XMLExamples/curated/BIOMD0000000007.xml', resource_path('config/reactionDefinitions.json'),
                     False, resource_path('config/namingConventions.json'),
                     'BIOMD0000000027.xml' + '.bngl', 
                     speciesEquivalence=None,atomize=True,bioGrid=False)
     '''
-    #main()
+    main()
     #processFile3('XMLExamples/noncurated/MODEL2463576061.x5ml')
     #processFile3('XMLExamples/jws/dupreez2.xml')
     #processFile3('XMLExamples/non_curated/MODEL1012220002.xml') 
