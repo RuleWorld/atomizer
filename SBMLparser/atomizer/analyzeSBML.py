@@ -457,7 +457,7 @@ class SBMLAnalyzer:
                                 #we stil ahve to check that they both reference the same database
                                 if len(baseDB.intersection(modDB)) > 0:
 
-                                    logMess('ERROR:ANN202', '{0} can be mapped to {1} through naming conventions but the annotation information does not match'.format(particle, comparisonParticle))
+                                    logMess('ERROR:ANN202', '{0}:{1}:can be mapped through naming conventions but the annotation information does not match'.format(particle, comparisonParticle))
                                     continue
 
                         addToDependencyGraph(dependencyGraph,particle,[comparisonParticle])
@@ -478,13 +478,13 @@ class SBMLAnalyzer:
                                 baseSet = set([y  for x in annotationDict[particle] for y in annotationDict[particle][x]])
                                 modSet = set([y  for x in annotationDict[comparisonParticle] for y in annotationDict[comparisonParticle][x]])
                                 if len(baseSet.intersection(modSet)) == 0:
-                                    logMess('ERROR:ANN202', '{0} can be mapped to {1} through naming conventions but the annotation information does not match'.format(particle,comparisonParticle))
+                                    logMess('ERROR:ANN202', '{0}:{1}:can be mapped through naming conventions but the annotation information does not match'.format(particle,comparisonParticle))
                                     break
                             addToDependencyGraph(dependencyGraph, particle, [common_root])
                             addToDependencyGraph(dependencyGraph, comparisonParticle, [common_root])
                             addToDependencyGraph(dependencyGraph, common_root, [])
 
-                            logMess('INFO:LAE006', '{0} and {1} can be mapped together through new common molecule {2} by existing naming conventions'.format(particle, comparisonParticle, common_root))
+                            logMess('INFO:LAE006', '{0}:{1}:can be mapped together through new common molecule {2} by existing naming conventions'.format(particle, comparisonParticle, common_root))
                             break
 
 
@@ -1386,7 +1386,7 @@ class SBMLAnalyzer:
                         if tuple(sorted([x[0] for x in reaction],key=len)) not in equivalenceTranslator['{0}'.format(fuzzyKey)]:
                             equivalenceTranslator['{0}'.format(fuzzyKey)].append(tuple(sorted([x[0] for x in reaction],key=len)))
                         return
-                    logMess('INFO:LAE004', 'added induced naming convention {0}'.format(str(reaction)))
+                    logMess('INFO:LAE004', '{0}:{1}:added induced naming convention'.format(reaction[0][0],reaction[1][0]))
                     equivalenceTranslator['{0}'.format(fuzzyKey)] = []
                     if fuzzyKey == '0':
                         tmpState = 'ON'

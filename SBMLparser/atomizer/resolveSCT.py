@@ -418,7 +418,6 @@ tmp,removedElement,tmp3))
 
 
     # initialize and remove zero elements
-
     database.prunnedDependencyGraph, database.weights, unevenElementDict, database.artificialEquivalenceTranslator = \
         consolidateDependencyGraph(database.dependencyGraph, equivalenceTranslator,
                                    database.eequivalenceTranslator, database.sbmlAnalyzer, database)
@@ -445,7 +444,6 @@ def bindingReactionsAnalysis(dependencyGraph, reaction, classification):
                 atoAux.addToDependencyGraph(dependencyGraph, element, reaction[0])
             elif len(reaction[0]) == 1 and element not in reaction[1]:
                 atoAux.addToDependencyGraph(dependencyGraph, element, reaction[1])
-
 
 
 def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, logResults=True,tentativeFlag=False):
@@ -501,7 +499,7 @@ def fillSCTwithAnnotationInformation(orphanedSpecies, annotationDict, database, 
     if logResults:
         for x in [y for y in exactMatches if len(exactMatches[y]) > 0]:
             if not tentativeFlag:
-                logMess('INFO:ANN001', '{0}: can be the same as {1} according to annotation information. No action was taken'.format(
+                logMess('INFO:ANN001', '{0}:{1}: there is a direct equivalence between these sets according to annotation information. No action was taken'.format(
                     x, exactMatches[x]))
             else:
 
@@ -875,12 +873,12 @@ this the correct behavior or provide an alternative for {0}'.format(reactant, tm
                 namingTmpCandidates = selectBestCandidate(
                     reactant, [candidate[0]], dependencyGraph, sbmlAnalyzer)[0]
                 if not namingTmpCandidates:
-                    logMess('ERROR:SCT211', '{0}:Cannot converge to solution, conflicting definitions {1}={2}'.format(
+                    logMess('ERROR:SCT211', '{0}:{1}:{2}:Cannot converge to solution, conflicting definitions'.format(
                             reactant, tmpCandidates, originalTmpCandidates))                    
                     return None, None, None
                 if not any([sorted(subcandidate) == sorted(namingTmpCandidates[0]) for subcandidate in tmpCandidates]):
                     if loginformation:
-                        logMess('WARNING:SCT112', '{0}:Stoichiometry analysis result in non self-consistent definitions but conflicts with lexical analysis stoichiometry({1})!= naming({2}). Selecting lexical analysis'.format(reactant,
+                        logMess('WARNING:SCT112', '{0}:Stoichiometry analysis:{1}:results in non self-consistent definitions and conflicts with lexical analysis:{2}:Selecting lexical analysis'.format(reactant,
                                                                                                                                                                                                                                           tmpCandidates, namingTmpCandidates))
                     atoAux.addAssumptions('lexicalVsstoch', (reactant, ('lexical', str(
                         namingTmpCandidates)), ('stoch', str(tmpCandidates)), ('original', str(originalTmpCandidates))), database.assumptions)
@@ -893,7 +891,7 @@ this the correct behavior or provide an alternative for {0}'.format(reactant, tm
                 sortedCandidates = sorted([([y for y in x if y in reactant], i) for i, x in enumerate(
                     tmpCandidates)], key=lambda z: [len(z[0]), sum([len(w) for w in z[0]])], reverse=True)
                 if loginformation:
-                    logMess('WARNING:SCT113', '{0}:candidates {1} agree on the basic components but naming conventions cannot determine  specific modifications. Selecting {2} based on longest partial match'.format(
+                    logMess('WARNING:SCT113', '{0}:candidates:{1}:agree on the basic components but naming conventions cannot determine  specific modifications. Selecting:{2}:based on longest partial match'.format(
                         reactant, tmpCandidates, tmpCandidates[sortedCandidates[0][1]]))
                 replacementCandidate = [tmpCandidates[sortedCandidates[0][1]]]
                 atoAux.addAssumptions('lexicalVsstoch', (reactant, ('current', str(replacementCandidate)), ('alternatives', str(
@@ -910,7 +908,7 @@ this the correct behavior or provide an alternative for {0}'.format(reactant, tm
                     tmpCandidates = [tmpCandidates[0]]
                 else:
                     if loginformation:
-                        logMess('ERROR:SCT211', '{0}:Cannot converge to solution, conflicting definitions {1}={2}'.format(
+                        logMess('ERROR:SCT211', '{0}:{1}:{2}:Cannot converge to solution, conflicting definitions'.format(
                         reactant, tmpCandidates, originalTmpCandidates))
                     return None, None, None
         elif reactant in database.alternativeDependencyGraph and loginformation:
@@ -935,7 +933,7 @@ this the correct behavior or provide an alternative for {0}'.format(reactant, tm
 
                         else:
                             database.alternativeDependencyGraph[reactant] = namingtmpCandidates
-                            logMess('WARNING:SCT111', '{0}:conflicting definitions between stoichiometry ({1}) and naming conventions {2}. Choosing the latter'.format(
+                            logMess('WARNING:SCT111', '{0}:stoichiometry analysis:{1}:conflicts with and naming conventions:{2}:Selecting lexical analysis'.format(
                                     reactant, tmpCandidates[0], database.alternativeDependencyGraph[reactant]))
                     tmpCandidates = namingtmpCandidates
                     atoAux.addAssumptions('lexicalVsstoch', (reactant, ('stoch', str(tmpCandidates)), ('lexical', str(

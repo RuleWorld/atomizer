@@ -226,8 +226,8 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser, compositionEnt
             # @FIXME: getNamedMolecule should never receive parameters that cause it to return null, but somehow that's what is happening
             # when you receive a malformed user definition file. The error
             # should be caught way before we reach this point
-            tmpComplexSubset1 = [getNamedMolecule(totalComplex[0], element[
-                                                  0]) for element in dbPair if getNamedMolecule(totalComplex[0], element[0]) is not None]
+            tmpComplexSubset1 = [getNamedMolecule(totalComplex[0], element[0]) 
+                                 for element in dbPair if getNamedMolecule(totalComplex[0], element[0]) is not None]
             if not tmpComplexSubset1:
                 tmpComplexSubset1 = [getNamedMolecule(totalComplex[0], element[
                                                       1]) for element in dbPair if getNamedMolecule(totalComplex[0], element[1]) is not None]
@@ -239,7 +239,8 @@ def solveComplexBinding(totalComplex, pathwaycommonsFlag, parser, compositionEnt
 
             mol1 = getBiggestMolecule(tmpComplexSubset1)
             mol2 = getBiggestMolecule(tmpComplexSubset2)
-            logMess('INFO:ATO002', "According to BioGrid/Pathwaycommons there's more than one way to bind {0} and {1} together: {2}. Defaulting to {3}-{4}".format(names1, names2, dbPair,
+            #was ATO002
+            logMess('WARNING:ATO111', "{0}-{1}:The two pairs can bind in these ways according to BioGrid/Pathwaycommons:{2}:Defaulting to:('{3}', '{4}')".format(names1, names2, dbPair,
                                                                                                                                                                    mol1.name, mol2.name))
 
         else:
@@ -623,6 +624,7 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
     # how do things bind together?
     moleculePairsList = getComplexationComponents2(
         element[0], species, bioGridFlag, pathwaycommonsFlag, parser, bondSeeding, bondExclusion, database)
+
     #moleculeCount = Counter([y for x in moleculePairsList for y in x])
     # print moleculeCount
     #moleculePairsList = [sorted(x) for x in moleculePairsList]
@@ -762,8 +764,8 @@ def atomize(dependencyGraph, weights, translator, reactionProperties,
                 redrawflag = True
                 logMess('INFO:ATO031','Determining that {0} binds together based on frequency of the bond in the reaction network.'.format(bindingPair))
     for trouble in bindingTroubleLog:
-        logMess('ERROR:ATO202','{0}:We need information to resolve the bond structure of these complexes . \
-Please choose among the possible binding candidates that had the most observed frequency in the reaction network or provide a new one:{1}'.format(bindingTroubleLog[trouble],trouble))
+        logMess('ERROR:ATO202','{0}:{1}:We need information to resolve the bond structure of these complexes . \
+Please choose among the possible binding candidates that had the most observed frequency in the reaction network or provide a new one'.format(bindingTroubleLog[trouble],trouble))
 
     
 
@@ -939,7 +941,7 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     propagateChanges(database.translator, database.prunnedDependencyGraph)
     
     #check for isomorphism
-    #sanityCheck(database.translator)
+    sanityCheck(database.translator)
     '''
     pr.disable()
     s = StringIO.StringIO()
