@@ -158,10 +158,10 @@ def setupLog(fileName, level):
 
 
 def setupStreamLog(console):
-    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    formatter = logging.Formatter('%(name)-10s:%(levelname)-8s:%(message)s')
     # tell the handler to use this format
     console.setFormatter(formatter)
-    logging.getLogger('').addHandler(console)
+    logging.getLogger().addHandler(console)
 
     # set a format which is simpler for console use
     #formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
@@ -175,7 +175,7 @@ def setupStreamLog(console):
     #logging.basicConfig(stream=stream, level=level, filemode='w')
 
 def finishStreamLog(console):
-    logging.getLogger('').removeHandler(console)
+    logging.getLogger().removeHandler(console)
 
 
 def logMess(logType, logMessage):
@@ -183,6 +183,7 @@ def logMess(logType, logMessage):
     level = logType.split(':')[0]
     module = logType.split(':')[1]
     logger = logging.getLogger(module)
+
     if level == 'INFO':
         logger.info(logMessage)
     elif level == 'DEBUG':
@@ -193,7 +194,6 @@ def logMess(logType, logMessage):
         logger.critical(logMessage)
     elif level == 'ERROR':
         logger.error(logMessage)
-
 
 def testBNGFailure(fileName):
     with open(os.devnull, "w") as f:

@@ -145,7 +145,7 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
     console = None
     if loggingStream:
         console = logging.StreamHandler(loggingStream)
-        console.setLevel(logging.WARNING)
+        console.setLevel(logging.DEBUG)
 
         setupStreamLog(console)
 
@@ -1203,7 +1203,7 @@ if __name__ == "__main__":
                     'BIOMD0000000027.xml' + '.bngl', 
                     speciesEquivalence=None,atomize=True,bioGrid=False)
     '''
-    main()
+    main2()
     #processFile3('XMLExamples/noncurated/MODEL2463576061.x5ml')
     #processFile3('XMLExamples/jws/dupreez2.xml')
     #processFile3('XMLExamples/non_curated/MODEL1012220002.xml') 

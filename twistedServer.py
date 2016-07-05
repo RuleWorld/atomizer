@@ -78,7 +78,7 @@ class AtomizerServer(xmlrpc.XMLRPC):
             else:
                 result = result.finalString
             self.addToDict(ticket, [result, logStream.getvalue()])
-            print 'success', ticket, result
+            print 'success', ticket
         except:
             self.addToDict(ticket, -5)
             print 'failure', ticket
