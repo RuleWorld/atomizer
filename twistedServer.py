@@ -10,7 +10,7 @@ import os
 import sys
 # Restrict to a particular path.
 from twisted.web import xmlrpc, server
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 import threading
 import SBMLparser.utils.consoleCommands as consoleCommands
 
@@ -47,6 +47,10 @@ def next_id():
 processDict = {}
 
 
+
+def freeQueue(ticket):
+    processDict.pop(ticket)
+
 class AtomizerServer(xmlrpc.XMLRPC):
 
     def addToDict(self, ticket, result):
@@ -82,6 +86,9 @@ class AtomizerServer(xmlrpc.XMLRPC):
         except:
             self.addToDict(ticket, -5)
             print 'failure', ticket
+        finally:
+            task.deferLater(reactor, 600,  freeQueue, ticket)
+
 
     def extractMoleculeTypes(self,ticket,bnglContents, bnglContents2):
 
@@ -134,6 +141,8 @@ class AtomizerServer(xmlrpc.XMLRPC):
         except:
             self.addToDict(ticket,-5)
             print 'failure',ticket
+        finally:
+            task.deferLater(reactor, 600,  freeQueue, ticket)
             
 
 
@@ -214,6 +223,8 @@ class AtomizerServer(xmlrpc.XMLRPC):
         except:
             self.addToDict(ticket,-5)
             print 'failure',ticket
+        finally:
+            task.deferLater(reactor, 600,  freeQueue, ticket)
 
     def xmlrpc_generateGraph(self, bbnglFile, graphtype):
         counter = next_id()
@@ -275,7 +286,8 @@ class AtomizerServer(xmlrpc.XMLRPC):
 
     def xmlrpc_getDict(self, ticketNumber):
         if ticketNumber in processDict:
-            return processDict.pop(ticketNumber)
+            #return processDict.pop(ticketNumber)
+            return processDict[ticketNumber]
         else:
             return -1
 
