@@ -843,10 +843,13 @@ this the correct behavior or provide an alternative for {0}'.format(reactant, tm
                             
                         if not database.softConstraints:
                             if loginformation:
-                                logMess('ERROR:SCT212', '{0}:Atomizer needs user information to determine which element is being modified among component species {1}={2}.'.format(
-                                reactant, candidates, tmpCandidates))
+                                modification = sbmlAnalyzer.findMatchingModification(reactant, candidates[0][0])
+                                modification = modification[0] if modification else 'mod'
+                                logMess('ERROR:SCT212', '{1}:{0}:Atomizer needs user information to determine which element is being modified among component species:{2}:{3}'.format(
+                                reactant, candidates[0], tmpCandidates[0], modification))
+                                
                             return None, None, None
-                        # print database.userLabelDictionary')
+                        
                     # return [tmpCandidates[0]], unevenElements
 
         elif len(tmpCandidates) > 1:
@@ -934,7 +937,7 @@ this the correct behavior or provide an alternative for {0}'.format(reactant, tm
                         else:
                             database.alternativeDependencyGraph[reactant] = namingtmpCandidates
                             logMess('WARNING:SCT111', '{0}:stoichiometry analysis:{1}:conflicts with and naming conventions:{2}:Selecting lexical analysis'.format(
-                                    reactant, tmpCandidates[0], database.alternativeDependencyGraph[reactant]))
+                                    reactant, tmpCandidates, database.alternativeDependencyGraph[reactant]))
                     tmpCandidates = namingtmpCandidates
                     atoAux.addAssumptions('lexicalVsstoch', (reactant, ('stoch', str(tmpCandidates)), ('lexical', str(
                         namingtmpCandidates)), ('original', str(originalTmpCandidates))), database.assumptions)
