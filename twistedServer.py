@@ -78,11 +78,12 @@ class AtomizerServer(xmlrpc.XMLRPC):
                 with open(pointer[1], 'w') as f:
                     f.write(result.finalString)
                 print pointer[1]
-                result = libsbml2bngl.postAnalyzeString(pointer[1], bngDistro, result.database)
+                bnglresult = libsbml2bngl.postAnalyzeString(pointer[1], bngDistro, result.database)
             else:
-                result = result.finalString
-            self.addToDict(ticket, [result, logStream.getvalue()])
+                bnglresult = result.finalString
+            self.addToDict(ticket, [bnglresult, logStream.getvalue(), {'finalspecies':result.database.species, 'rawreactions':result.database.rawreactions}])
             print 'success', ticket
+
         except:
             self.addToDict(ticket, -5)
             print 'failure', ticket

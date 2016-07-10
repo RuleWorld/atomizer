@@ -896,6 +896,7 @@ but reaction is marked as reversible'.format(reactionID))
         functionTitle = 'functionRate'
 
         self.unitDefinitions = self.getUnitDefinitions()
+        database.rawreactions = []
         if len(self.model.getListOfReactions()) == 0:
             logMess('WARNING:SIM104', 'Model contains no natural reactions, all reactions are produced by SBML rules')
         for index, reaction in enumerate(self.model.getListOfReactions()):
@@ -906,6 +907,7 @@ but reaction is marked as reversible'.format(reactionID))
 
             try:
                 rawRules = self.__getRawRules(reaction, [sl, sr], parameterFunctions, translator, sbmlfunctions)
+                database.rawreactions.append(rawRules)
             except TranslationException as e:
                 if(database and database.ignore):
                     reactions.append('#Reaction {0} is not correctly translated. check log for details'.format(e.value))

@@ -1,6 +1,5 @@
 from pyparsing import Word, Suppress, Optional, alphanums, Group, ZeroOrMore
-import marshal
-import functools
+from utils.util import pmemoize as memoize
 
 class CycleError(Exception):
 
@@ -15,16 +14,6 @@ class CycleError(Exception):
         self.memory = memory
 
 
-def memoize(obj):
-    cache = obj.cache = {}
-
-    @functools.wraps(obj)
-    def memoizer(*args, **kwargs):
-        key = marshal.dumps([args, kwargs])
-        if key not in cache:
-            cache[key] = obj(*args, **kwargs)
-        return cache[key]
-    return memoizer
 
 
 def addToDependencyGraph(dependencyGraph, label, value):

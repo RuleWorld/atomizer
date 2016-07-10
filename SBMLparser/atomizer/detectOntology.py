@@ -15,19 +15,7 @@ import pickle
 from os import listdir
 from os.path import isfile, join
 import numpy as np
-import functools
-
-
-def memoize(obj):
-    cache = obj.cache = {}
-
-    @functools.wraps(obj)
-    def memoizer(*args, **kwargs):
-        key = str(args) + str(kwargs)
-        if key not in cache:
-            cache[key] = obj(*args, **kwargs)
-        return cache[key]
-    return memoizer
+from utils.util import pmemoize as memoize
 
 @memoize
 def levenshtein(s1, s2):
@@ -134,7 +122,6 @@ def defineEditDistanceMatrix3(speciesName, similarityThreshold=4, parallel=False
                 differenceList.append(tuple([x for x in difference if '+' in x]))
     return namePairs, differenceList, ''
 
-@memoize
 def defineEditDistanceMatrix(speciesName, similarityThreshold=4, parallel=False):
     '''
     obtains a distance matrix and a pairs of elements that are close

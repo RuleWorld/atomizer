@@ -20,23 +20,12 @@ import itertools
 import math
 from collections import Counter
 import re
+from utils.util import pmemoize as memoize
+
 '''
 This file in general classifies rules according to the information contained in
 the json config file for classyfying rules according to their reactants/products
 '''
-import functools
-import marshal
-
-
-def memoize(obj):
-    cache = obj.cache = {}
-    @functools.wraps(obj)
-    def memoizer(*args, **kwargs):
-        key = marshal.dumps([args, kwargs])
-        if key not in cache:
-            cache[key] = obj(*args, **kwargs)
-        return cache[key]
-    return memoizer
 
 
 @memoize
@@ -691,7 +680,6 @@ class SBMLAnalyzer:
                         #    break
                     molecules = [commonRoot, reactant, product]
                     namePairs, differenceList, _ = detectOntology.defineEditDistanceMatrix([commonRoot, reactant], similarityThreshold=10)
-
                     namePairs2, differenceList2, _ = detectOntology.defineEditDistanceMatrix([commonRoot, product], similarityThreshold=10)
                     namePairs.extend(namePairs2)
                     #print namePairs, reactant, product
@@ -1518,13 +1506,11 @@ class SBMLAnalyzer:
      
             flag = True
             
-    
             if matching:
                 for reactant,matches in zip(reaction[1],matching):
                     for match in matches:
                         pair = list(match)
                         pair.sort(key=len)
-
                         fuzzyList = self.processAdHocNamingConventions(pair[0],
                                             pair[1],localSpeciesDict,False,strippedMolecules)
                         for fuzzyReaction,fuzzyKey,fuzzyDifference in fuzzyList:
@@ -1532,6 +1518,7 @@ class SBMLAnalyzer:
                                 flag= False
                                 #logMess('Warning:ATOMIZATION','We could not  a meaningful \
                                 #mapping in {0} when lexically analyzing {1}.'.format(pair,reactant))
+                            
                             createArtificialNamingConvention(fuzzyReaction,
                                                                  fuzzyKey, fuzzyDifference)
                     if flag and sorted([x[1] for x in matches]) not in lexicalDependencyGraph[reactant]:
@@ -1547,7 +1534,6 @@ class SBMLAnalyzer:
                                     else:
                                         lexicalDependencyGraph[x[0]] = [[x[1]]]
                                         lexicalDependencyGraph[x[1]] = []
-
         translationKeys.extend(newTranslationKeys)
         for species in localSpeciesDict:
             speciesName =  localSpeciesDict[species][localSpeciesDict[species].keys()[0]][0][0]

@@ -174,6 +174,7 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
     
     if atomize:
         translator,onlySynDec = mc.transformMolecules(parser,database,reactionDefinitions,namingConventions,speciesEquivalence,bioGrid)
+        database.species = translator.keys()
     else:    
         translator={} 
     #logging.getLogger().flush()
@@ -186,6 +187,7 @@ def readFromString(inputString,reactionDefinitions,useID,speciesEquivalence=None
     if atomize and onlySynDec:
         returnArray = list(returnArray)
     returnArray = AnalysisResults(*(list(returnArray[0:-2]) + [database] + [returnArray[-1]]))
+
     return returnArray
 
 def processFunctions(functions,sbmlfunctions,artificialObservables,tfunc):
@@ -1018,11 +1020,12 @@ def main():
     '''
             
 def main2():
-    with open('../XMLExamples/curated/BIOMD0000000048.xml','r') as f:
+    with open('../XMLExamples/curated/BIOMD0000000163.xml','r') as f:
         st = f.read()
         import StringIO
         stringBuffer = StringIO.StringIO()
-        readFromString(st, resource_path('config/reactionDefinitions.json'),False,None,True,stringBuffer)  
+        jsonPointer = 'reactionDefinitions/speciesEquivalence163.json'
+        readFromString(st, resource_path('config/reactionDefinitions.json'),False,jsonPointer,True,stringBuffer)  
         print stringBuffer.getvalue()
 
 

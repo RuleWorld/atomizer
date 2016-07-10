@@ -571,6 +571,7 @@ class Databases:
         self.assumptions = defaultdict(set)
         self.softConstraints = False
         self.constructedSpecies = set([])
+        self.processName = ''
         
     def getRawDatabase(self):
         return self.rawDatabase

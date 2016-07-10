@@ -25,19 +25,6 @@ from atomizerUtils import BindingException
 import resolveSCT
 import atomizationAux as atoAux
 
-def memoize(obj):
-    cache = obj.cache = {}
-
-    @functools.wraps(obj)
-    def memoizer(*args, **kwargs):
-        key = marshal.dumps([args, kwargs])
-        if key not in cache:
-            cache[key] = obj(*args, **kwargs)
-        return cache[key]
-    return memoizer
-
-
-
 def isInComplexWith(moleculeSet, parser=None):
     """
     given a list of binding candidates, it gets the uniprot ID from annotation and queries
@@ -502,8 +489,9 @@ def createCatalysisRBM(dependencyGraph, element, translator, reactionProperties,
                 species = createEmptySpecies(baseName)
 
                 componentStateArray.append(['{0}'.format(tmp), tmp])
-                logMess('WARNING:LAE002', 'adding forced transformation: {0}:{1}:{2}'.format(
-                    baseName, dependencyGraph[element[0]], element[0]))
+                if not (element[0] in database.userLabelDictionary and database.userLabelDictionary[element[0]][0][0] == baseName):
+                    logMess('WARNING:LAE002', 'adding forced transformation: {0}:{1}:{2}'.format(
+                        baseName, dependencyGraph[element[0]][0][0], element[0]))
                 # return
             # bail out if we couldn't figure out what modification it is
             elif classifications is None:
@@ -850,21 +838,21 @@ def propagateChanges(translator, dependencyGraph):
 
 
 
-def sanityCheck(translator):
+def sanityCheck(database):
     '''
     checks for critical atomization errors like isomorphism
     '''
-    stringrep = {x: str(translator[x]) for x in translator}
+    stringrep = {x: str(database.translator[x]) for x in database.translator}
     repeats = set()
-    for key in range(0, len(translator.keys()) - 1):
-        for key2 in range(key + 1, len(translator.keys())):
-            if stringrep[translator.keys()[key]] == stringrep[translator.keys()[key2]]:
-                repeats.add((translator.keys()[key], translator.keys()[key2]))
+    for key in range(0, len(database.translator.keys()) - 1):
+        for key2 in range(key + 1, len(database.translator.keys())):
+            if stringrep[database.translator.keys()[key]] == stringrep[database.translator.keys()[key2]]:
+                repeats.add((database.translator.keys()[key], database.translator.keys()[key2]))
     for repeat in repeats:
-        logMess('ERROR:SCT241', 'Elements {0} and {1} produce\
-            the same translation. Emptying {1}.'.format(repeat[0], repeat[1]))
-        if max(repeat) in translator:
-            translator.pop(max(repeat))
+        temp = sorted(repeat)
+        logMess('ERROR:SCT241', '{0}:{1}:produce the same translation:{2}:{1}:was empied'.format(temp[0], temp[1], database.prunnedDependencyGraph[temp[0]][0]))
+        if temp[1] in database.translator:
+            database.translator.pop(repeat[1])
 
 
 def transformMolecules(parser, database, configurationFile, namingConventions,
@@ -875,7 +863,7 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     containing an atomized version of the model
     Args:
         parser: data structure containing the reactions and species we will use
-        database: data structure containing the result of the outgoing translation
+        database: data structure containining the result of the outgoing translation
         configurationFile:
         speciesEquivalences: predefined species
     """
@@ -885,8 +873,9 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     pr.enable()
     '''
     database.parser = parser
-    database = resolveSCT.createSpeciesCompositionGraph(parser, database, configurationFile, namingConventions,
-                                             speciesEquivalences=speciesEquivalences, bioGridFlag=bioGridFlag)
+    sctsolver = resolveSCT.SCTSolver(database)
+    database = sctsolver.createSpeciesCompositionGraph(parser, configurationFile, namingConventions,
+                                                speciesEquivalences=speciesEquivalences, bioGridFlag=bioGridFlag)
 
     for element in database.artificialEquivalenceTranslator:
         if element not in database.eequivalenceTranslator:
@@ -933,7 +922,6 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
 
     database.weights = sorted(
         database.weights, key=lambda rule: (rule[1], len(rule[0])))
-
     atomize(database.prunnedDependencyGraph, database.weights, database.translator, database.reactionProperties,
             database.eequivalenceTranslator2, bioGridFlag, database.sbmlAnalyzer, database, parser)
     onlySynDec = len(
@@ -941,7 +929,7 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     propagateChanges(database.translator, database.prunnedDependencyGraph)
     
     #check for isomorphism
-    sanityCheck(database.translator)
+    sanityCheck(database)
     '''
     pr.disable()
     s = StringIO.StringIO()
