@@ -149,7 +149,6 @@ def reactionBasedAtomizationDistro(directory):
             atomizationDB.set_value(xml, 'yild', yieldValue)
             atomizationDB.set_value(xml, 'syndel', syndelValue)
             atomizationDB.set_value(xml, 'numspecies', len(observables))
-
             validFiles += 1
         except IOError:
             print 'io'
@@ -190,16 +189,16 @@ def constructPlots(atomizationDB):
 if __name__ == "__main__":
     folder = 'curated'
     # calculate atomization information
-    #atomizationDB = reactionBasedAtomizationDistro(folder)
-    #atomizationDB.to_hdf('{0}DB.h5'.format(folder),'atomization')
+    atomizationDB = reactionBasedAtomizationDistro(folder)
+    atomizationDB.to_hdf('{0}DB.h5'.format(folder),'atomization')
 
     outputDir = 'testCurated'
     # read info
-    atomizationDB = pandas.read_hdf('{0}DB.h5'.format(folder), 'atomization')
+    #atomizationDB = pandas.read_hdf('{0}DB.h5'.format(folder), 'atomization')
 
     
     # construct plots
-    constructPlots(atomizationDB)
+    #constructPlots(atomizationDB)
 
     #testSet = list(atomizationDB.query('(yild < 0.6) & (syndel > 0.8)').index)
     #testSet = ['XMLExamples/{0}'.format(x[:-4]) for x in testSet]

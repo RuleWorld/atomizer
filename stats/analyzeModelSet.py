@@ -218,7 +218,8 @@ def reactionBasedAtomizationFile(xmlFile,outputDataFrame,options):
 
         #outputDataFrame = outputDataFrame.set_value(xmlFile,'score',score)
         #outputDataFrame = outputDataFrame.set_value(xmlFile,'lenght',len(rules))
-        return xmlFile,score,len(reactions),len(molecules)*1.0/readBNGXML.getNumObservablesXML(xmlFile)
+        ccompression = len(molecules)*1.0/readBNGXML.getNumObservablesXML(xmlFile) if readBNGXML.getNumObservablesXML(xmlFile) > 0 else 1
+        return xmlFile,score,len(reactions),ccompression
         #ratomizationDict['score'] = score
         #ratomizationDict['weight'] = weight
         #ratomizationDict['length'] = len(rules)

@@ -120,5 +120,6 @@ def getModelAnnotationFromFolder(directory):
         pickle.dump(annotationDict,f)
 
 if __name__ == "__main__":
-    getModelAnnotationFromFolder('XMLExamples/curated')
-    #print getModelAnnotationFromFile('XMLExamples/curated/BIOMD0000000019.xml')
+    getAnnotationFromFolder('XMLExamples/curated')
+    #getModelAnnotationFromFolder('XMLExamples/curated')
+    ##print getModelAnnotationFromFile('XMLExamples/curated/BIOMD0000000019.xml')

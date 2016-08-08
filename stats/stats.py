@@ -166,7 +166,7 @@ def resolveAnnotation(annotation):
         resolveAnnotation.db = {}
         resolveAnnotation.ch = bioservices.ChEBI(verbose=False)
         resolveAnnotation.uni = bioservices.UniProt(verbose=False)
-        resolveAnnotation.k = bioservices.kegg.KEGGParser(verbose=False)
+        resolveAnnotation.k = bioservices.kegg.KEGG(verbose=False)
         resolveAnnotation.qg = bioservices.QuickGO(verbose=False)
         resolveAnnotation.db['http://identifiers.org/uniprot/P62988'] = 'http://identifiers.org/uniprot/P62988'
         resolveAnnotation.db['http://identifiers.org/uniprot/P06842'] = 'http://identifiers.org/uniprot/P06842'
@@ -183,6 +183,8 @@ def resolveAnnotation(annotation):
         if 'obo.go' in annotation or '/go/GO' in annotation:
 
             res = resolveAnnotation.qg.Term(tAnnotation)
+            if type(res) == int:
+                return annotation, ''
             res = bioservices.Service('name').easyXML(res)            
             tmp = res.findAll('name')
             finalArray = []
@@ -200,8 +202,10 @@ def resolveAnnotation(annotation):
         elif 'kegg' in annotation:
             
             data = resolveAnnotation.k.get(tAnnotation)
+            if type(data) == int:
+                return annotation, ''
             dict_data =  resolveAnnotation.k.parse(data)
-            resolveAnnotation.db[annotation] = dict_data['name']
+            resolveAnnotation.db[annotation] = dict_data['NAME']
             finalAnnotation = resolveAnnotation.db[annotation]
             
         elif 'uniprot' in annotation:
@@ -254,7 +258,7 @@ def main2(directory):
     #go database
     print '---'    
     annotationArray = defaultdict(list)
-    with open('{0}/annotations.dump'.format(directory),'rb') as f:
+    with open('{0}/annotationDictionary.dump'.format(directory),'rb') as f:
         ar = pickle.load(f)
     modelAnnotations = Counter()
 
@@ -262,21 +266,30 @@ def main2(directory):
     futures = []
 
     for idx, element in enumerate(ar):
-        for index in element:
-            for annotation in element[index]:
+        for annarray in ar[element]:
+            for annotation in ar[element][annarray]:
                     annotationSet.add(annotation)
     print len(annotationSet)
+    
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         for annotation in annotationSet:
             futures.append(executor.submit(resolveAnnotation, annotation))
         for future in concurrent.futures.as_completed(futures):
             resolvedAnnotation = future.result()
-            if type(resolvedAnnotation) is list:
+            if type(resolvedAnnotation[1]) is list:
                 annotationArray[resolvedAnnotation[0]].extend(resolvedAnnotation[1])
             else:
                 annotationArray[resolvedAnnotation[0]].append(resolvedAnnotation[1])
-    
+    '''
+    for annotation in annotationSet:
+        resolvedAnnotation = resolveAnnotation(annotation)
+        if type(resolvedAnnotation) is list:
+            annotationArray[resolvedAnnotation[0]].extend(resolvedAnnotation[1])
+        else:
+            annotationArray[resolvedAnnotation[0]].append(resolvedAnnotation[1])
+
         #annotationArray.append(modelAnnotations)
+    '''
     with open('parsedAnnotations.dump','wb') as f:
         pickle.dump(annotationArray,f)
 
@@ -361,7 +374,7 @@ def compressionDistroAnalysisCont():
 
 
 def getColourTemp(maxVal, minVal, actual):
-    midVal = (maxVal - minVal)/2;
+    midVal = (maxVal - minVal)/2
     intB = 0
 
     if (actual >= midVal):
@@ -948,9 +961,9 @@ def compareConventions(name1,name2):
         
 if __name__ == "__main__":
     #bagOfWords()
-    #main2('curated')
-    histogram('curated', 'sortedD.dump')
-    histogram('non_curated', 'sortedD.dump')
+    main2('XMLExamples/curated')
+    #histogram('curated', 'sortedD.dump')
+    #histogram('non_curated', 'sortedD.dump')
     #compressionDistroAnalysisCont('curated')
     #rankingAnalysis()
     #print resolveAnnotation('http://identifiers.org/reactome/REACT_9417.3')
