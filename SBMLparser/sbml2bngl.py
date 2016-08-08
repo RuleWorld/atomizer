@@ -10,11 +10,9 @@ log = {'species': [], 'reactions': []}
 import re
 from collections import Counter
 from collections import defaultdict
-import numpy as np
 import math as pymath
 from utils.util import logMess, TranslationException
 import libsbml
-
 
 def factorial(x):
     temp = x
@@ -379,7 +377,7 @@ class SBML2BNGL:
                 rateR = 'if({0}>0, {1}/{0},0)'.format(element, rateR)
 
         numFactors = max(math.getNumChildren(), len(ifStack))
-        if np.isinf(highStoichoiMetryFactor):
+        if pymath.isinf(highStoichoiMetryFactor):
             rateR = '{0} * 1e20'.format(rateR)
             logMess('ERROR:SIM204','Found usage of "inf" inside function {0}'.format(rateR))
         elif highStoichoiMetryFactor != 1:

@@ -6,7 +6,6 @@ Created on Sat Oct 19 15:19:35 2013
 """
 import pprint
 import libsbml
-import numpy as np
 import difflib
 from collections import Counter
 import json

@@ -14,7 +14,6 @@ from optparse import OptionParser
 import atomizer.moleculeCreation as mc
 import sys
 from os import listdir
-import numpy as np
 import re
 import pickle
 from copy import copy

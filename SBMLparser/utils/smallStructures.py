@@ -252,7 +252,7 @@ class Species:
         Sort molecules by number of components, then number of bonded components, then the negative sum of the bond index, then number
         of active states, then string length
         """
-	self.molecules.sort(key=lambda molecule: (len(molecule.components),
+        self.molecules.sort(key=lambda molecule: (len(molecule.components),
                                                   -min([int(y) if y not in ['?','+'] else 999 for x in molecule.components for y in x.bonds] + [999]),
                                                   -len([x for x in molecule.components if len(x.bonds) > 0]),
                                                   -len([x for x in molecule.components if x.activeState not in [0, '0']]),
