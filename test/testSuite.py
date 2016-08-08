@@ -137,9 +137,9 @@ class AtomizationTestCase(ParametrizedTestCase):
         bnglValues, atol, validHeaders = bnglExecution('output{0}'.format(self.param[1]), settings)
         referenceValues = parseCSV(
             '{0}/{1}/{1}-results.csv'.format(self.param[0], self.param[1]), validHeaders)
-        print '---', float(atol), ((bnglValues - referenceValues)**2).mean()
+        print '---', float(atol), (((bnglValues - referenceValues)**2).mean())**0.5
         self.assertAlmostEqual(
-            ((bnglValues - referenceValues)**2).mean(), 0, delta=float(atol))
+            (((bnglValues - referenceValues)**2).mean())**0.5, 0, delta=float(atol))
         dirs = [f for f in os.listdir(
             os.path.join(pathname, 'tmp')) if self.param[1] in f]
         for element in dirs:
