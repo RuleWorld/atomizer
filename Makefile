@@ -1,4 +1,6 @@
-SHELL = /bin/sh
+
+
+SHELL = /bin/bash
 BUILD = ./build
 DIST = ./dist
 
@@ -9,6 +11,10 @@ all:
 	if ! test -d pyinstaller2 ; then \
 		unzip utils/pyinstaller2.zip;   \
 	fi ;
+	virtualenv venv
+	source venv/bin/activate
+	pip install --user -r requirements.txt
+
 ifeq ($(OS),Windows_NT)
 ifeq ($(shell uname -o),Cygwin)
 		python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec;
@@ -18,7 +24,7 @@ endif
 else
 	python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec ;
 endif
-
+	deactivate
 
 install:
 	mkdir -p bin
@@ -49,6 +55,10 @@ clean:
 	if test -d test/BioNetGen-2.2.6-stable; then \
 		rm -rf test/BioNetGen-2.2.6-stable;	\
 	fi
+	if test -d venv; then \
+		rm -rf venv;	\
+	fi
+
 	find . -name '*.pyc' -delete
 
 	

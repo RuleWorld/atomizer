@@ -1,7 +1,7 @@
 os:
 - linux
 - osx
-language: python
+language: c++
 python:
 - '2.7'
 addons:
@@ -21,7 +21,7 @@ cache: pip
 before_install:
 - source osx_install.sh
 - sudo -H pip install -U pip wheel
-- pip install -r requirements.txt
+- sudo pip install -r requirements.txt
 before_deploy:
 - cd dist; python changeFilename.py; cd ..
 deploy:
