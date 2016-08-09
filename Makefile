@@ -17,14 +17,25 @@ all:
 
 ifeq ($(OS),Windows_NT)
 ifeq ($(shell uname -o),Cygwin)
-		python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec;
+		virtualenv --no-site-packages venv
+		source venv/bin/activate
+		pip install --user -r requirements.txt
+		python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec ;
+		deactivate
 else
+		virtualenv --no-site-packages venv
+		venv/scripts/activate.bat
+		pip install --user -r requirements.txt
 		python pyinstaller2/pyinstaller.py utils/sbmlTranslator_windows.spec ;
+		venv/scripts/deactivate.bat
 endif
 else
+	virtualenv --no-site-packages venv
+	source venv/bin/activate
+	pip install --user -r requirements.txt
 	python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec ;
-endif
 	deactivate
+endif
 
 install:
 	mkdir -p bin
@@ -40,7 +51,10 @@ endif
 
 
 test:
-	cd SBMLparser; PYTHONPATH=$PYTHONPATH:. nosetests --with-doctest; cd ../test; tar xfj bionetgen-2.2.6.tar.bz2; tar xfj testsuite.tar.bz2; python testSuite.py;
+	cd SBMLparser; PYTHONPATH=$PYTHONPATH:. nosetests --with-doctest; cd ..;
+ifeq ($(shell uname -s),Linux)
+	cd test; tar xfj bionetgen-2.2.6.tar.bz2; tar xfj testsuite.tar.bz2; python testSuite.py;
+endif
 
 clean:
 	if test -d ${BUILD} ; then \

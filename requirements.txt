@@ -6,3 +6,4 @@ pyyaml
 python-libsbml
 nose
 pylru
+progressbar
