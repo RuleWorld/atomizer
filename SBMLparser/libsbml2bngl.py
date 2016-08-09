@@ -775,13 +775,13 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     functions = unrollFunctions(functions)
     rules = changeRates(rules, aParameters)
-    if len(compartments) > 1 and 'cell 3 1.0' not in compartments:
-        compartments.append('cell 3 1.0')
+    if len(compartments) > 1 and 'cell  3  1.0' not in compartments:
+        compartments.append('cell  3  1.0')
 
     #sbml always has the 'cell' default compartment, even when it
     #doesn't declare it
     elif len(compartments) == 0 and len(molecules) != 0:
-        compartments.append('cell 3 1.0')
+        compartments.append('cell  3 1 .0')
     
     
     if len(artificialRules) + len(rules) == 0:
