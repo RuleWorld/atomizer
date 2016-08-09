@@ -21,7 +21,6 @@ cache: pip
 before_install:
 - source osx_install.sh
 - sudo -H pip install -U pip wheel
-- sudo pip install -r requirements.txt
 before_deploy:
 - cd dist; python changeFilename.py; cd ..
 deploy:
