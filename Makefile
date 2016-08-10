@@ -11,23 +11,13 @@ all:
 	if ! test -d pyinstaller2 ; then \
 		unzip utils/pyinstaller2.zip;   \
 	fi ;
-	virtualenv --no-site-packages venv
-	source venv/bin/activate
-	pip install --user -r requirements.txt
+
 
 ifeq ($(OS),Windows_NT)
 ifeq ($(shell uname -o),Cygwin)
-		virtualenv --no-site-packages venv
-		source venv/bin/activate
-		pip install --user -r requirements.txt
-		python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec ;
-		deactivate
+	python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec ;
 else
-		virtualenv --no-site-packages venv
-		venv/scripts/activate.bat
-		pip install --user -r requirements.txt
-		python pyinstaller2/pyinstaller.py utils/sbmlTranslator_windows.spec ;
-		venv/scripts/deactivate.bat
+	python pyinstaller2/pyinstaller.py utils/sbmlTranslator_windows.spec ;
 endif
 else
 	virtualenv --no-site-packages venv
