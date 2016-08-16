@@ -81,41 +81,41 @@ def gml2cyjson(gmlText, graphtype=None):
                     colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
             # non modification component
             else:
-                if 'gid' in gmlText.node[gmlText.node[node]] and 'gid' in gmlText.node[gmlText.node[node]['gid']]:
+                if 'gid' in gmlText.node[node] and 'gid' in gmlText.node[gmlText.node[node]['gid']]:
                     colorDict[str(node)] = '#bbff99'
-                elif 'gid' in gmlText.node[gmlText.node[node]]:
+                elif 'gid' in gmlText.node[node]:
                     colorDict[str(node)] = '#ffffb3'
                 else:
                     colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
-            continue
-        #others
-        if 'gid' in gmlText.node[node]:
-            tmp['data']['parent'] =  str(gmlText.node[node]['gid'])
-            if str(gmlText.node[node]['gid']) not in colorDict:
-                if 'gid' in gmlText.node[str(gmlText.node[node]['gid'])]:
-                    if str(gmlText.node[str(gmlText.node[node]['gid'])]['gid']) not in colorDict:
-                        if graphtype in ['regulatory', 'std']:
-                            newColor = gmlText.node[node]['graphics']['fill']
+        else:
+            #others
+            if 'gid' in gmlText.node[node]:
+                tmp['data']['parent'] =  str(gmlText.node[node]['gid'])
+                if str(gmlText.node[node]['gid']) not in colorDict:
+                    if 'gid' in gmlText.node[str(gmlText.node[node]['gid'])]:
+                        if str(gmlText.node[str(gmlText.node[node]['gid'])]['gid']) not in colorDict:
+                            if graphtype in ['regulatory', 'std']:
+                                newColor = gmlText.node[node]['graphics']['fill']
+                            else:
+                                newColor = '#%02X%02X%02X' % (r(), r(), r())
+                            colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])] = newColor
+                            colorDict[str(gmlText.node[node]['gid'])] = newColor
                         else:
-                            newColor = '#%02X%02X%02X' % (r(), r(), r())
-                        colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])] = newColor
-                        colorDict[str(gmlText.node[node]['gid'])] = newColor
+                            colorDict[str(gmlText.node[node]['gid'])] = colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])]
                     else:
-                        colorDict[str(gmlText.node[node]['gid'])] = colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])]
-                else:
-                    if graphtype == ['regulatory', 'std']:
-                        colorDict[str(gmlText.node[node]['gid'])] = gmlText.node[node]['graphics']['fill']
-                    else:
-                        colorDict[str(gmlText.node[node]['gid'])] = '#%02X%02X%02X' % (r(), r(), r())
+                        if graphtype == ['regulatory', 'std']:
+                            colorDict[str(gmlText.node[node]['gid'])] = gmlText.node[node]['graphics']['fill']
+                        else:
+                            colorDict[str(gmlText.node[node]['gid'])] = '#%02X%02X%02X' % (r(), r(), r())
 
-            colorDict[str(node)] = colorDict[str(gmlText.node[node]['gid'])]
+                colorDict[str(node)] = colorDict[str(gmlText.node[node]['gid'])]
 
 
-        if str(node) not in colorDict:
-            if graphtype == 'regulatory':
-                colorDict[str(node)] = gmlText.node[node]['graphics']['fill']
-            else:    
-                colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
+            if str(node) not in colorDict:
+                if graphtype == 'regulatory':
+                    colorDict[str(node)] = gmlText.node[node]['graphics']['fill']
+                else:    
+                    colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
 
         #contact map colors
 
