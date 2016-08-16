@@ -266,17 +266,17 @@ import codecs
 def generateSTDGML(inputFile, simplifiedText=False):
     nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=False)
     graph = generateSTD(nodeList, edgeList, simplifiedText=False)
-    #gml = nx.generate_gml(graph)
-    print graph
-    nx.write_gml(graph,inputFile+'_std.gml')
-    #with open(inputFile+'.gml','r') as f:
+    gml = nx.generate_gml(graph)
+    #print graph
+    #nx.write_gml(graph,inputFile+'_std.gml')
+    #with open(inputFile+'_std.gml','r') as f:
     #    gml = f.read()
     #gml = codecs.open(inputFile + '.gml', 'r','utf-8')
     #gml = ''.join(gml)
     #return gml.read()
     #return graph
     #return ''.join(gml)
-
+    return gml
 if __name__ == "__main__":
     
     parser = defineConsole()
