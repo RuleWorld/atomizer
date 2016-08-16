@@ -266,7 +266,8 @@ import codecs
 def generateSTDGML(inputFile, simplifiedText=False):
     nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=False)
     graph = generateSTD(nodeList, edgeList, simplifiedText)
-    gml = nx.generate_gml(graph)
+    #graph = nx.convert_node_labels_to_integers(graph)
+    #gml = nx.generate_gml(graph)
     #print graph
     #nx.write_gml(graph,inputFile+'_std.gml')
     #with open(inputFile+'_std.gml','r') as f:
@@ -276,7 +277,9 @@ def generateSTDGML(inputFile, simplifiedText=False):
     #return gml.read()
     #return graph
     #return ''.join(gml)
-    return gml
+    #gmlstr =  ''.join(gml)
+    #gmlstr = gmlstr.encode('utf-8')
+    return graph
 if __name__ == "__main__":
     
     parser = defineConsole()

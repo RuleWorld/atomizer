@@ -61,14 +61,18 @@ def gml2cyjson(gmlText, graphtype=None):
     #    gmlText.node[nd].pop('id')
     #jsgrph = json_graph.node_link_data(gmlText)
     colorDict = {}
-    shapeDict = {'roundrectangle':'rectangle','hexagon':'octagon'}
-    for node in gmlText.node:
+    shapeDict = {'roundrectangle':'rectangle','hexagon':'octagon', 'rectangle':'rectangle'}
+    idxDict = {}
+    for idx, node in enumerate(gmlText.node):
+
         if gmlText.node[node] == {}:
             continue
         tmp = {'data':{}}
         tmp['data']['id'] = str(node)
-        tmp['data']['label'] = str(gmlText.node[node]['label'])
-        
+        if 'label' in gmlText.node[node]:
+            tmp['data']['label'] = str(gmlText.node[node]['label'])
+        elif 'text' in gmlText.node[node]['LabelGraphics']:
+            tmp['data']['label'] = gmlText.node[node]['LabelGraphics']['text'].encode('utf-8')
         #color picking
         #for contact maps
         if graphtype == 'contactmap':
@@ -92,13 +96,32 @@ def gml2cyjson(gmlText, graphtype=None):
                     colorDict[str(node)] = '#805500'
                 else:
                     colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
+        elif graphtype == 'std':
+            idxDict[node] = gmlText.node[node]['id']
+            tmp['data']['id'] = int(gmlText.node[node]['id'])
+
+            if 'gid' in gmlText.node[node]:
+                tmp['data']['parent'] =  str(gmlText.node[node]['gid'])
+
+            if 'fill' in gmlText.node[node]['graphics']:
+                if 'isGroup' in gmlText.node[node]:
+                    tmp['data']['label'] = str(node)
+                    colorDict[str(node)] = '#cccccc'
+                else:
+                    colorDict[str(node)] = '#5cd685'
+            else:
+                if 'isGroup' not in gmlText.node[node]:
+                    colorDict[str(node)] = '#5c85d6'
+                else:
+                    tmp['data']['label'] = str(node)                    
+                    colorDict[str(node)] = '#cccccc'
         else:
             #others
             if 'gid' in gmlText.node[node]:
                 tmp['data']['parent'] =  str(gmlText.node[node]['gid'])
                 if str(gmlText.node[node]['gid']) not in colorDict:
-                    if 'gid' in gmlText.node[str(gmlText.node[node]['gid'])]:
-                        if str(gmlText.node[str(gmlText.node[node]['gid'])]['gid']) not in colorDict:
+                    if 'gid' in gmlText.node[gmlText.node[node]['gid']]:
+                        if str(gmlText.node[gmlText.node[node]['gid']]['gid']) not in colorDict:
                             if graphtype in ['regulatory', 'std']:
                                 newColor = gmlText.node[node]['graphics']['fill']
                             else:
@@ -135,8 +158,9 @@ def gml2cyjson(gmlText, graphtype=None):
                 tmp = {'data':{}}
                 
 
-                if graphtype in ['regulatory', 'std']:
+                if graphtype in ['regulatory']:
                     if 'graphics' in gmlText.edge[link][dlink]:
+
                         if gmlText.edge[link][dlink]['graphics']['arrow'] == 'first':
                             tmp['data']['source'] = int(dlink)
                             tmp['data']['target'] = int(link)
@@ -160,8 +184,8 @@ def gml2cyjson(gmlText, graphtype=None):
                                 tmp['data']['faveColor'] = gmlText.edge[link][dlink][multiedge]['graphics']['fill']
                                 jsonDict['elements']['edges'].append(copy(tmp))
                 else:
-                    tmp['data']['source'] = int(link)
-                    tmp['data']['target'] = int(dlink)
+                    tmp['data']['source'] = idxDict[link] if link in idxDict else link
+                    tmp['data']['target'] = idxDict[dlink] if dlink in idxDict else dlink
                     tmp['data']['id'] = '{0}_{1}'.format(tmp['data']['source'], tmp['data']['target'])
                     tmp['data']['faveColor'] = colorDict[str(link)]
                     jsonDict['elements']['edges'].append(tmp)
