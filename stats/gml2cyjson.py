@@ -79,16 +79,17 @@ def gml2cyjson(gmlText, graphtype=None):
             if 'isGroup' in gmlText.node[node] and gmlText.node[node]['isGroup'] == 1:
                 # it is a modification site
                 if 'gid' in gmlText.node[node]:
-                    colorDict[str(node)] = '#bf80ff'
+                    colorDict[str(node)] = '#990099'
                 # molecule container
                 else:
                     colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
             # non modification component
             else:
                 if 'gid' in gmlText.node[node] and 'gid' in gmlText.node[gmlText.node[node]['gid']]:
-                    colorDict[str(node)] = '#bbff99'
+                    #we dont care about explicitly showing states, they are dumb anyway
+                    continue
                 elif 'gid' in gmlText.node[node]:
-                    colorDict[str(node)] = '#ffffb3'
+                    colorDict[str(node)] = '#805500'
                 else:
                     colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
         else:
