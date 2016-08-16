@@ -70,7 +70,7 @@ def createNode(graph, name, graphicsDict, labelGraphicsDict, isGroup, gid):
     return idNumber
 
 
-def createBitNode(graph, molecule, nodeList):
+def createBitNode(graph, molecule, nodeList, simplifiedText):
     '''
     creates the bit nodes
     '''
@@ -83,10 +83,16 @@ def createBitNode(graph, molecule, nodeList):
         for idx, bit in enumerate(node):
             componentLegend += bit[0]
             if bit[1]:
-                nodeName += u"\u25CF "
+                if simplifiedText:
+                    nodeName += "o"
+                else:
+                    nodeName += u"\u25CF "
                 nodeId.append(bit[0])
             else:
-                nodeName += u"\u25CB "
+                if simplifiedText:
+                    nodeName += "x"
+                else:
+                    nodeName += u"\u25CB "
                 #nodeName += u"\u00B7 "
             if (idx+1)%gridDict[len(node)] == 0 and idx+1 != len(node):
                 nodeName.strip(' ')
@@ -223,7 +229,7 @@ def createPDEdge(graph, molecule, edge, edgeList):
                            graphics={'fill': '#000000', 'targetArrow': "standard", "width": 3})
     return bidirectional
 
-def generateSTD(nodeList, edgeList):
+def generateSTD(nodeList, edgeList, simplifiedText=False):
     graph = nx.DiGraph()
     globalLabelDict = {}
     for molecule in nodeList:
@@ -231,7 +237,7 @@ def generateSTD(nodeList, edgeList):
                    {'fontSize': 24, 'fontStyle': "bold", 'alignment': "right", 'autoSizePolicy': "node_size"}, 1, 0)
 
         #globalLabelDict.update(createPDLabelNode(graph, molecule, nodeList))
-        createBitNode(graph,molecule,nodeList)
+        createBitNode(graph,molecule,nodeList, simplifiedText)
 
 
     for molecule in nodeList:
@@ -257,9 +263,9 @@ def outputGraph(graph, fileName, labelDict):
 
 import codecs
 
-def generateSTDGML(inputFile):
+def generateSTDGML(inputFile, simplifiedText=False):
     nodeList, edgeList = std.getContextRequirements(inputFile, excludeReverse=False)
-    graph = generateSTD(nodeList, edgeList)
+    graph = generateSTD(nodeList, edgeList, simplifiedText=False)
     #gml = nx.generate_gml(graph)
     print graph
     nx.write_gml(graph,inputFile+'_std.gml')
