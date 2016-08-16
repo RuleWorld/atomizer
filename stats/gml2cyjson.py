@@ -72,6 +72,10 @@ def gml2cyjson(gmlText, graphtype=None):
         #color picking
         #for contact maps
         if graphtype == 'contactmap':
+            # hierarchy
+            if 'gid' in gmlText.node[node]:
+                tmp['data']['parent'] =  str(gmlText.node[node]['gid'])
+            # colors
             if 'isGroup' in gmlText.node[node] and gmlText.node[node]['isGroup'] == 1:
                 # it is a modification site
                 if 'gid' in gmlText.node[node]:
