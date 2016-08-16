@@ -81,10 +81,12 @@ def gml2cyjson(gmlText, graphtype=None):
                     colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
             # non modification component
             else:
-                if 'gid' in gmlText.node[gmlText.node[node]['gid']]:
+                if 'gid' in gmlText.node[gmlText.node[node]] and 'gid' in gmlText.node[gmlText.node[node]['gid']]:
                     colorDict[str(node)] = '#bbff99'
-                else:
+                elif 'gid' in gmlText.node[gmlText.node[node]]:
                     colorDict[str(node)] = '#ffffb3'
+                else:
+                    colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
             continue
         #others
         if 'gid' in gmlText.node[node]:
