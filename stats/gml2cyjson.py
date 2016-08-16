@@ -69,6 +69,24 @@ def gml2cyjson(gmlText, graphtype=None):
         tmp['data']['id'] = str(node)
         tmp['data']['label'] = str(gmlText.node[node]['label'])
         
+        #color picking
+        #for contact maps
+        if graphtype == 'contactmap':
+            if 'isGroup' in gmlText.node[node] and gmlText.node[node]['isGroup'] == 1:
+                # it is a modification site
+                if 'gid' in gmlText.node[node]:
+                    colorDict[str(node)] = '#bf80ff'
+                # molecule container
+                else:
+                    colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
+            # non modification component
+            else:
+                if 'gid' in gmlText.node[gmlText.node[node]['gid']]:
+                    colorDict[str(node)] = '#bbff99'
+                else:
+                    colorDict[str(node)] = '#ffffb3'
+            continue
+        #others
         if 'gid' in gmlText.node[node]:
             tmp['data']['parent'] =  str(gmlText.node[node]['gid'])
             if str(gmlText.node[node]['gid']) not in colorDict:
@@ -87,12 +105,18 @@ def gml2cyjson(gmlText, graphtype=None):
                         colorDict[str(gmlText.node[node]['gid'])] = gmlText.node[node]['graphics']['fill']
                     else:
                         colorDict[str(gmlText.node[node]['gid'])] = '#%02X%02X%02X' % (r(), r(), r())
+
             colorDict[str(node)] = colorDict[str(gmlText.node[node]['gid'])]
+
+
         if str(node) not in colorDict:
             if graphtype == 'regulatory':
                 colorDict[str(node)] = gmlText.node[node]['graphics']['fill']
-            else:
+            else:    
                 colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
+
+        #contact map colors
+
         tmp['data']['faveColor'] = colorDict[str(node)]
         tmp['data']['faveShape'] = shapeDict[gmlText.node[node]['graphics']['type']] if 'type' in gmlText.node[node]['graphics'] else 'rectangle'
         
@@ -175,5 +199,6 @@ if __name__ == '__main__':
 
     s = nx.read_gml(namespace.input)    
     graph = gml2cyjson(s,namespace.type)
+    #print graph
 
 
