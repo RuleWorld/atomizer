@@ -69,6 +69,7 @@ def gml2cyjson(gmlText, graphtype=None):
             continue
         tmp = {'data':{}}
         tmp['data']['id'] = str(node)
+        tmp['data']['width'] = 'label.length * 10'
         if 'label' in gmlText.node[node]:
             tmp['data']['label'] = str(gmlText.node[node]['label'])
         elif 'text' in gmlText.node[node]['LabelGraphics']:
@@ -108,10 +109,10 @@ def gml2cyjson(gmlText, graphtype=None):
                     tmp['data']['label'] = str(node)
                     colorDict[str(node)] = '#cccccc'
                 else:
-                    colorDict[str(node)] = '#5cd685'
+                    colorDict[str(node)] = '#eeeeee'
             else:
                 if 'isGroup' not in gmlText.node[node]:
-                    colorDict[str(node)] = '#5c85d6'
+                    colorDict[str(node)] = '#99bbff'
                 else:
                     tmp['data']['label'] = str(node)                    
                     colorDict[str(node)] = '#cccccc'

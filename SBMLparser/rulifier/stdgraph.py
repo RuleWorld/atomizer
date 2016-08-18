@@ -286,7 +286,8 @@ if __name__ == "__main__":
     namespace = parser.parse_args()
     inputFile = namespace.input
 
-    gmlgraph =  generateSTDGML(inputFile)
+    graph =  generateSTDGML(inputFile)
+    nx.write_gml(graph, inputFile+'_std.gml')
     #print gmlgraph[0:400]
     #nxgml = nx.parse_gml(gmlgraph)   
     #import gml2cyjson
