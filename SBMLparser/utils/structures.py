@@ -119,15 +119,18 @@ class Species:
                 
     def extend(self,species,update=True):
         if(len(self.molecules) == len(species.molecules)):
-            
             list1 = sorted(self.molecules,key=lambda x:len(x.components))
             list1 = sorted(list1,key=lambda x:x.name)
             list2 = sorted(species.molecules,key=lambda x:len(x.components))
             list2 = sorted(list2,key=lambda x:x.name)
             
             for (selement,oelement) in zip(list1,list2):
+               
+                cocomponents = Counter([x.name for x in oelement.components])
                 for component in oelement.components:
-                    if component.name not in [x.name for x in selement.components]:
+                    refcomponents = Counter([x.name for x in selement.components])
+                    # theres not enough components in the base molecule of type 'component'
+                    if refcomponents[component.name] < cocomponents[component.name]:
                         selement.components.append(component)
                     else:
                         for element in selement.components:
