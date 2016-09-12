@@ -61,38 +61,93 @@ def gml2cyjson(gmlText, graphtype=None):
     #    gmlText.node[nd].pop('id')
     #jsgrph = json_graph.node_link_data(gmlText)
     colorDict = {}
-    shapeDict = {'roundrectangle':'rectangle','hexagon':'octagon'}
-    for node in gmlText.node:
+    shapeDict = {'roundrectangle':'rectangle','hexagon':'octagon', 'rectangle':'rectangle'}
+    idxDict = {}
+    for idx, node in enumerate(gmlText.node):
+
         if gmlText.node[node] == {}:
             continue
         tmp = {'data':{}}
         tmp['data']['id'] = str(node)
-        tmp['data']['label'] = str(gmlText.node[node]['label'])
-        
-        if 'gid' in gmlText.node[node]:
-            tmp['data']['parent'] =  str(gmlText.node[node]['gid'])
-            if str(gmlText.node[node]['gid']) not in colorDict:
-                if 'gid' in gmlText.node[str(gmlText.node[node]['gid'])]:
-                    if str(gmlText.node[str(gmlText.node[node]['gid'])]['gid']) not in colorDict:
-                        if graphtype in ['regulatory', 'std']:
-                            newColor = gmlText.node[node]['graphics']['fill']
-                        else:
-                            newColor = '#%02X%02X%02X' % (r(), r(), r())
-                        colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])] = newColor
-                        colorDict[str(gmlText.node[node]['gid'])] = newColor
-                    else:
-                        colorDict[str(gmlText.node[node]['gid'])] = colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])]
+        tmp['data']['width'] = 'label.length * 10'
+        if 'label' in gmlText.node[node]:
+            tmp['data']['label'] = str(gmlText.node[node]['label'])
+        elif 'text' in gmlText.node[node]['LabelGraphics']:
+            tmp['data']['label'] = gmlText.node[node]['LabelGraphics']['text'].encode('utf-8')
+        #color picking
+        #for contact maps
+        if graphtype == 'contactmap':
+            # hierarchy
+            if 'gid' in gmlText.node[node]:
+                tmp['data']['parent'] =  str(gmlText.node[node]['gid'])
+            # colors
+            if 'isGroup' in gmlText.node[node] and gmlText.node[node]['isGroup'] == 1:
+                # it is a modification site
+                if 'gid' in gmlText.node[node]:
+                    colorDict[str(node)] = '#990099'
+                # molecule container
                 else:
-                    if graphtype == ['regulatory', 'std']:
-                        colorDict[str(gmlText.node[node]['gid'])] = gmlText.node[node]['graphics']['fill']
-                    else:
-                        colorDict[str(gmlText.node[node]['gid'])] = '#%02X%02X%02X' % (r(), r(), r())
-            colorDict[str(node)] = colorDict[str(gmlText.node[node]['gid'])]
-        if str(node) not in colorDict:
-            if graphtype == 'regulatory':
-                colorDict[str(node)] = gmlText.node[node]['graphics']['fill']
+                    colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
+            # non modification component
             else:
-                colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
+                if 'gid' in gmlText.node[node] and 'gid' in gmlText.node[gmlText.node[node]['gid']]:
+                    #we dont care about explicitly showing states, they are dumb anyway
+                    continue
+                elif 'gid' in gmlText.node[node]:
+                    colorDict[str(node)] = '#805500'
+                else:
+                    colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
+        elif graphtype == 'std':
+            idxDict[node] = gmlText.node[node]['id']
+            tmp['data']['id'] = int(gmlText.node[node]['id'])
+
+            if 'gid' in gmlText.node[node]:
+                tmp['data']['parent'] =  str(gmlText.node[node]['gid'])
+
+            if 'fill' in gmlText.node[node]['graphics']:
+                if 'isGroup' in gmlText.node[node]:
+                    tmp['data']['label'] = str(node)
+                    colorDict[str(node)] = '#cccccc'
+                else:
+                    colorDict[str(node)] = '#eeeeee'
+            else:
+                if 'isGroup' not in gmlText.node[node]:
+                    colorDict[str(node)] = '#99bbff'
+                else:
+                    tmp['data']['label'] = str(node)                    
+                    colorDict[str(node)] = '#cccccc'
+        else:
+            #others
+            if 'gid' in gmlText.node[node]:
+                tmp['data']['parent'] =  str(gmlText.node[node]['gid'])
+                if str(gmlText.node[node]['gid']) not in colorDict:
+                    if 'gid' in gmlText.node[gmlText.node[node]['gid']]:
+                        if str(gmlText.node[gmlText.node[node]['gid']]['gid']) not in colorDict:
+                            if graphtype in ['regulatory', 'std']:
+                                newColor = gmlText.node[node]['graphics']['fill']
+                            else:
+                                newColor = '#%02X%02X%02X' % (r(), r(), r())
+                            colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])] = newColor
+                            colorDict[str(gmlText.node[node]['gid'])] = newColor
+                        else:
+                            colorDict[str(gmlText.node[node]['gid'])] = colorDict[str(gmlText.node[str(gmlText.node[node]['gid'])]['gid'])]
+                    else:
+                        if graphtype == ['regulatory', 'std']:
+                            colorDict[str(gmlText.node[node]['gid'])] = gmlText.node[node]['graphics']['fill']
+                        else:
+                            colorDict[str(gmlText.node[node]['gid'])] = '#%02X%02X%02X' % (r(), r(), r())
+
+                colorDict[str(node)] = colorDict[str(gmlText.node[node]['gid'])]
+
+
+            if str(node) not in colorDict:
+                if graphtype == 'regulatory':
+                    colorDict[str(node)] = gmlText.node[node]['graphics']['fill']
+                else:    
+                    colorDict[str(node)] = '#%02X%02X%02X' % (r(), r(), r())
+
+        #contact map colors
+
         tmp['data']['faveColor'] = colorDict[str(node)]
         tmp['data']['faveShape'] = shapeDict[gmlText.node[node]['graphics']['type']] if 'type' in gmlText.node[node]['graphics'] else 'rectangle'
         
@@ -104,8 +159,9 @@ def gml2cyjson(gmlText, graphtype=None):
                 tmp = {'data':{}}
                 
 
-                if graphtype in ['regulatory', 'std']:
+                if graphtype in ['regulatory']:
                     if 'graphics' in gmlText.edge[link][dlink]:
+
                         if gmlText.edge[link][dlink]['graphics']['arrow'] == 'first':
                             tmp['data']['source'] = int(dlink)
                             tmp['data']['target'] = int(link)
@@ -129,8 +185,8 @@ def gml2cyjson(gmlText, graphtype=None):
                                 tmp['data']['faveColor'] = gmlText.edge[link][dlink][multiedge]['graphics']['fill']
                                 jsonDict['elements']['edges'].append(copy(tmp))
                 else:
-                    tmp['data']['source'] = int(link)
-                    tmp['data']['target'] = int(dlink)
+                    tmp['data']['source'] = idxDict[link] if link in idxDict else link
+                    tmp['data']['target'] = idxDict[dlink] if dlink in idxDict else dlink
                     tmp['data']['id'] = '{0}_{1}'.format(tmp['data']['source'], tmp['data']['target'])
                     tmp['data']['faveColor'] = colorDict[str(link)]
                     jsonDict['elements']['edges'].append(tmp)
@@ -175,5 +231,6 @@ if __name__ == '__main__':
 
     s = nx.read_gml(namespace.input)    
     graph = gml2cyjson(s,namespace.type)
+    #print graph
 
 

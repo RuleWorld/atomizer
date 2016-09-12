@@ -660,12 +660,14 @@ class SBMLAnalyzer:
         # for now im just going with a simple heuristic that if the species name
         # is long enough, and the changes from a to be are all about modification
         longEnough = 3
-        if (len(reactant) >= longEnough or reactant in moleculeSet) and len(differenceList) > 0 and len(reactant) >= len(differenceList[0]):
+
+        if len(differenceList) > 0 and ((len(reactant) >= longEnough and len(reactant) >= len(differenceList[0])) or reactant in moleculeSet):
             # one is strictly a subset of the other a,a_b
             if len([x for x in differenceList[0] if '-' in x]) == 0:
                 return [[[[reactant], [product]], ''.join([x[-1] for x in differenceList[0]]), differenceList[0]]]
             # string share a common subset but they contain mutually exclusive appendixes: a_b,a_c
             else:
+
                 commonRoot = detectOntology.findLongestSubstring(reactant, product)
 
                 if len(commonRoot) > longEnough or commonRoot in moleculeSet:

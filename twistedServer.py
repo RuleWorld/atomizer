@@ -212,16 +212,22 @@ class AtomizerServer(xmlrpc.XMLRPC):
                 xmlFileName = pointer[1].split('.')[0] + '.xml'
                 xmlFileName = xmlFileName.split(os.sep)[-1]
 
-                gmlGraph = stdgraph.generateSTDGML(xmlFileName)
-                os.remove('{0}.gml'.format(xmlFileName))
-                #result = gml2cyjson(gmlGraph, graphtype=graphtype)
-                #jsonStr = json.dumps(result, indent=1, separators=(',', ': '))
+                graph = stdgraph.generateSTDGML(xmlFileName)
+                gmlGraph = networkx.generate_gml(graph)
 
-                #result = {'jsonStr': jsonStr, 'gmlStr': gmlGraph}
 
-                self.addToDict(ticket, ''.join(gmlGraph))
+                #os.remove('{0}.gml'.format(xmlFileName))
+                result = gml2cyjson(graph, graphtype=graphtype)
+                jsonStr = json.dumps(result, indent=1, separators=(',', ': '))
+
+                result = {'jsonStr': jsonStr, 'gmlStr': ''.join(gmlGraph)}
+
+                #self.addToDict(ticket, ''.join(gmlGraph))
+                self.addToDict(ticket, result)
                 print 'success', ticket
         except:
+            import traceback
+            traceback.print_exc()
             self.addToDict(ticket,-5)
             print 'failure',ticket
         finally:

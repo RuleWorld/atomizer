@@ -425,7 +425,6 @@ def postAnalysisHelper(outputFile, bngLocation, database):
     contextAnalysis = postAnalysis.ModelLearning(bngxmlFile)
     # analysis of redundant bonds
     deleteBonds = contextAnalysis.analyzeRedundantBonds(database.assumptions['redundantBonds'])
-
     for molecule in database.assumptions['redundantBondsMolecules']:
         if molecule[0] in deleteBonds:
             for bond in deleteBonds[molecule[0]]:
@@ -502,6 +501,8 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     database.forceModificationFlag = True
     database.pathwaycommons = pathwaycommons
     database.ignore = ignore
+    database.assumptions = defaultdict(set)
+
 
     bioGridDict = {}
     if bioGrid:
@@ -537,7 +538,9 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     database.speciesEquivalence = speciesEquivalence
     database.atomize = atomize
     database.isConversion = not noConversion
+
     returnArray = analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator, database)
+
     with open(outputFile, 'w') as f:
         f.write(returnArray.finalString)
     #with open('{0}.dict'.format(outputFile),'wb') as f:
@@ -628,7 +631,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     parser = SBML2BNGL(document.getModel(), useID)
     parser.setConversion(database.isConversion)
     #database = structures.Databases()
-    database.assumptions = defaultdict(set)
+    #database.assumptions = defaultdict(set)
     #translator,log,rdf = m2c.transformMolecules(parser,database,reactionDefinitions,speciesEquivalence)
         
     #try:
