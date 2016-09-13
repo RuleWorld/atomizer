@@ -13,9 +13,7 @@ all:
 	fi ;
 
 
-virtualenv --no-site-packages venv
-source venv/bin/activate
-pip install --user -r requirements.txt
+
 
 ifeq ($(OS),Windows_NT)
 ifeq ($(shell uname -o),Cygwin)
@@ -24,9 +22,13 @@ else
 	python pyinstaller2/pyinstaller.py utils/sbmlTranslator_windows.spec ;
 endif
 else
+	virtualenv --no-site-packages venv
+	source venv/bin/activate
+	pip install --user -r requirements.txt
 	python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec ;
+	deactivate
 endif
-deactivate
+
 
 install:
 	mkdir -p bin
