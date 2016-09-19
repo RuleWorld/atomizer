@@ -860,10 +860,10 @@ but reaction is marked as reversible'.format(reactionID))
         for _,compartment in enumerate(self.model.getListOfCompartments()):
             compartmentInfo = self.__getRawCompartments(compartment)
             name = 'cell' if compartmentInfo[0] == '' else compartmentInfo[0]
-            if name != compartmentInfo[3]:
-                compartments.append("%s  %d  %s #%s" % (name, compartmentInfo[1], compartmentInfo[2], compartmentInfo[3]))
+            if name != compartmentInfo[3] and compartmentInfo[3] != '':
+                compartments.append("%s %d %s #%s" % (name, compartmentInfo[1], compartmentInfo[2], compartmentInfo[3]))
             else:
-                compartments.append("%s  %d  %s" % (name, compartmentInfo[1], compartmentInfo[2]))
+                compartments.append("%s %d %s" % (name, compartmentInfo[1], compartmentInfo[2]))
         return compartments
 
 
