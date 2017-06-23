@@ -56,18 +56,18 @@ build_script:
   - perl .make_html.pl  --platform Win32
 
 artifacts:
-  - path: '.\dist\sbmlTranslator.exe'
+  - path: '.\dist\Atomizer-Win32.html'
+    name: AtomizerHtmlWin32
+  - path: '.\dist\Atomizer-Win64.html'
+    name: AtomizerHtmlWin64
+  - path: '.\dist\sbmlTranslator-Win64.exe'
     name: sbmlTranslator   
-  - path: '.\sbmlTranslator.exe'
+  - path: '.\dist\sbmlTranslator-Win32.exe'
     name: sbmlTranslatorWin32
   - path: '.\dist\Atomizer-source-Win64.zip'
     name: AtomizerZipWin64
   - path: '.\dist\Atomizer-source-Win32.zip'
     name: AtomizerZipWin32
-  - path: '.\dist\Atomizer-Win32.html'
-    name: AtomizerHtmlWin32
-  - path: '.\dist\Atomizer-Win64.html'
-    name: AtomizerHtmlWin64
    
    
 notifications:
