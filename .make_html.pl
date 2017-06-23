@@ -114,11 +114,11 @@ open(FNEW,">$ofile_name");
   print FNEW "access to the latest build for ".$platform.", please click here: <br>\n";
   print FNEW "<center><h1>\n";
   if ($travis_os eq 'Win32') {
-    print FNEW "<a href=\"../sbmlTranslator.exe\">\n";
-    print FNEW              "sbmlTranslator-Win32.exe</a>\n";
+    print FNEW "<a href=\"sbmlTranslator-Win32.exe\">\n";
+    print FNEW           "sbmlTranslator-Win32.exe</a>\n";
   }
   if ($travis_os eq 'Win64') {
-    print FNEW "<a href=\"sbmlTranslator.exe\">\n";
+    print FNEW "<a href=\"sbmlTranslator-Win64.exe\">\n";
     print FNEW           "sbmlTranslator-Win64.exe</a>\n";
   }
   if ($travis_os eq 'osx') {
