@@ -60,7 +60,7 @@ if ($platform eq "linux") {
   
     if ($platform eq "Win32") {
       $zip_type = ".zip";  $travis_os = "Win32";
-      system('copy  .\Win32_archive\sbmlTranslator.exe  .\dist\sbmlTranslator-Win32.exe');      
+      system('copy  .\Win32\sbmlTranslator.exe  .\dist\sbmlTranslator-Win32.exe');      
       my $archive_file = "./dist/Atomizer-source-Win32".$zip_type;
       
       print "\nCreating Atomizer-".$platform.".exe source archive:\n";
