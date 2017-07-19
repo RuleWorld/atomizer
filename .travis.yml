@@ -38,7 +38,7 @@ env:
 #- cd dist; python changeFilename.py; cd ..
 
 
-script: make; make install; make test; cp ./dist/sbmlTranslator ./dist/sbmlTranslator-$TRAVIS_OS_NAME 
+script: make; make install; make test; cp ./dist/sbmlTranslator ./dist/sbmlTranslator-$TRAVIS_OS_NAME ; pwd
 
 #deploy:
 #  skip_cleanup: true 
@@ -57,8 +57,8 @@ notifications:
 
 after_success:
   - perl .make_tar.pl  --platform $TRAVIS_OS_NAME
-  - "curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME         -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/"  
-  - "curl -T ./dist/Atomizer-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/"  
+  - "curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME         -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/" -v  
+  - "curl -T ./dist/Atomizer-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/" -v  
 
  
 #    The FTP_USER and FTP_PASSWORD strings are actually defined in the env: global: -secure: strings above.  Those strings
