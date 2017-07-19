@@ -41,7 +41,7 @@ env:
 script: make; make install; make test; cp ./dist/sbmlTranslator ./dist/sbmlTranslator-$TRAVIS_OS_NAME ; pwd
 
 #deploy:
-#  skip_cleanup: true 
+# skip_cleanup: true 
  
 notifications:
   slack: 
