@@ -53,14 +53,8 @@ build_script:
   - make test
   - perl .make_tar.pl   --platform Win64  
   - perl .make_tar.pl   --platform Win32
-  - perl .make_html.pl  --platform Win64
-  - perl .make_html.pl  --platform Win32
 
 artifacts:
-  - path: '.\dist\Atomizer-Win32.html'
-    name: AtomizerHtmlWin32
-  - path: '.\dist\Atomizer-Win64.html'
-    name: AtomizerHtmlWin64
   - path: '.\dist\sbmlTranslator-Win64.exe'
     name: sbmlTranslator   
   - path: '.\dist\sbmlTranslator-Win32.exe'
@@ -87,7 +81,7 @@ notifications:
 deploy:
   provider: FTP
   protocol: ftp
-  host: ftp.midcapsignals.com/midcap/d_appveyor/
-  username: roberthclark
+  host: ftp.drivehq.com/d_data/d_appveyor/
+  username: 15260
   password:
-    secure: K22E4pSAup6/htlGmoSBMw==
+    secure: aeh68ucxtH3lcVxawmcx8g==
