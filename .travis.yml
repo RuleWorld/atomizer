@@ -31,26 +31,17 @@ before_install:
 
 env:
   global:
-    - secure: "M5hBkNygj5p2Uazb1OuOxw/Z36Iaz1FwPN0JL4PCaocyMlR082anZepjUHEGZy6wuMNu0PN4+x4SzIVnSGBn8Vu4kL+CGxpeyvpdIpP2ZqJcsZLv1GQYSh0ykjBPBIoLkETu8CKkJuhQx1r8MDHAAg6aBxaAKaAuPj0Bd7BqcnIad/R2tETPGMUCEmE0f344EBCL0DH5XmrPSusa0BPYwQlScdJjStYrbj4KRAuRbqja7XZ4hoMXzKhRSKjdVe+4d024VTNnJ5HO/kOQ3fvR7+Q/UubFd19uFDDVZ8yOzCTWAahx0pzyHZN+HK5/4muewDMoebmgLA/0QVJ9IagQ8k26uZ3Q276+3Yx/UQHLOEIidcqwK99Bs7Z/J7wPvRs+UWfEfzKIOIWPDXoKyZpuxRBe/6DLnyjELEm8/kQ+zJ59mWM5c6PKVtqweCdeUiBttaodPid9k3dKtktilnP6IZiGT4oM1qaJJc1EY8FfT/g67xR1g0Zyn1aeapLQ5dPCs/9u4GYaPlcN4CF9JnE+6uirRB1IevSMh6Ken0bR3h0w3KZaNUp1/l7FtJuwtnwGtApk96BuNV3biwZgp53+1yG/b6WS1MfLI80tyO8uldVE0TfdHU4GtnpsqggaFZYypgF/6gq/YXI0L6gqgd6kjcU97PKtBuLlYo79mSU0DqI="
-    - secure: "mBI2ds0URvBDhBl+eDJVEOMmT9RJrjhHc7nHft/8c9iwvpcSJj6yg/rYlqqXJPMGO5SeRgxAluhSwMkDV+n7JijIl9+UxoULeg85YK0n5SgVk8lx/xqCE3kGFxpy21n++PRlURhxcBcCMS1pYg9XodIrMEWhNsYyoN2fDdNfkjqptw2bYC2HEzDA5WaNYwQAyD2u36TVFettiVjBJ0DBXBO+yd77AuV9fXfduWc9NLeHQTN3JWdOXo4iaY9z+1tj5zGmhkg92GIEEWAG2xGLuJNNBIV0ZNx0OovHf32M+mIWoMuJtAEjPJfSkzJAUv6gdaipdN7LS2pSVHDs6Oji9lqktDWs6zPT9mpi6r4+ukq88C1hCeYlXI4hwVi2MSSd5z8zR6p55UYNA2NflwgWRSuKRbyQ2gI0uCDLV7bKmcSe4BcWIh8M9yK+BWnffPaL9ODrkKx9l6xdl4GqsMnUdLy8oDKMiyRLKkW96LTMZSiNOpJIw2y4tum7Q/ke2CUmruCbbwGlT9fqonXvVN9JUonnzmjd+YwOu+vQDiYI45Y955ebcwdpo7Le490niJpwgI8O1KG/pjR5Qt+fzWpWChKZx2cIRtE8uVLl3maWHByFMxZ1hehIZjgONvxOMKwHEGr284LVUeOLai6v/ckivbA76dmsKwrgiH9SiqIGv4s="
+    - secure: "jq9RObKHDfQzACQCHWoZ/aJrjHw0T2n3vC565NN7FiPEsuPrR8cYLzXqNTl3KtTzD1IQrzpGYwW3qYaEVa8yqRWsGMvuIWptC+mcz2FtSLaePe7Rq9nikPByTbqT539kJn17wU1Q6NJEqbfykbBiopdbBvx1CnJLjCiZiGTZaNADbiRiQbOQ3dq6m1bJVM/dDTIuuxL0yDVAMWkdluEt3eT2pE1twGXVO22rwrMLSTRIkw/KjriBk/FCE2oEJ9RqwAWRRuzAwfWcG4/GziKP5PMFdAGHkECMBpmdpBjWMPcRsOmXpWCJgVqT7No6kcUB2+2tjJOrGGHEIzh0NyHn3IibcLeFCXSHiD1rLS/fz6wi9nwkqsA20QEgeEUTpEG0CkVk0GpvsuWhnDJ98ntckGGYMsDamLF5nyBPyVAN0Q8dAvuZHgv+XAupIUXfn6MlR37vwOy4Vf8cqGclCwh7koym6cp/mERELaxpmqEZbkr6hdp3+7MXZ2sw4lVaFn7Um6eYlgZs1TLfYsn8NGQF+TUVcprHLjM+/CtFIfJOkuZSL7KDje9pXHJdwhG7dyK65kY+u2O9XkJkwol61OiVeRfEIa3Z4TYuB8jKn/pdvEhuDFvjJaimBc9OTbE5gKQdyGyf2JyH5Rw7JVS/VNIReUI3+64df9ekMYsULcIgIHo="
+    - secure: "vta5PH1ZqG5m57Se3WzxjCWHJwubnfSUUjT6UejYBd4OwaoIXzR4DKE74BSZEs+UY4D1Lxue1Mksbtw5AWvj8FJ6pgkSMOLbyXl6L4c0z74FlavMMASPKDVgEhpDfvZpAfBi5qJewte76rICZpAa894g2prc/L6T0vf/XTY4esRu6BYLjfHGZG2ERyOcERZkVJJDGQTo3DBxAAWtinQyf/IPqvwmbfw1XcRfXHHb5+XeooAZMfPcaroqBRQjrnuiUwI7XMW4c8p/4/1pups6S+p6qP9bHTj/kg0HiSdfDZwrawo8XpDPjpssPHQseOqSbr7Tbej5nxVzUmkfsTbZrw/aSnmuI53t+U9wF1i6KwqHc/ChO1md4qBHV6WgvVYbXFjRDibAVwchfyOS0G3KMYY1SWhlm7YQ4sNf9vIHQVEoeG0WpqIc7j3ok8XNfol3CSLbQWWp4NPgv5Jh3GQGjnARti952HjaOhaKmesNphogkWQagi7ketzbR+Jj7gKLHKLNoTyMlK+BzCqNnX1A9tTe7xY3+Q3u/A/418ejr7Xm00O6Lckpi1t2SsFSwTbfIYDHnGtW5Ro/mzQPWKHgctdBTFXRT711+tv9HFY9w7Pb81489xZP8eu+wwpTgodSQjM7F5iSyWjV5nQ79+iJCNh+tifgRyhjcQ+SAPLzz5w="
 
 #before_deploy:
 #- cd dist; python changeFilename.py; cd ..
 
 
-script: make; make install; make test; cp ./dist/sbmlTranslator ./dist/sbmlTranslator-$TRAVIS_OS_NAME ;  pwd ; ls ./dist
+script: make; make install; make test; cp ./dist/sbmlTranslator ./dist/sbmlTranslator-$TRAVIS_OS_NAME 
 
 #deploy:
-#   skip_cleanup: true
-
-
-after_success:
-  - perl .make_tar.pl  --platform $TRAVIS_OS_NAME
-  - perl .make_html.pl --platform $TRAVIS_OS_NAME
-  - "curl -T ./dist/Atomizer-$TRAVIS_OS_NAME.html          -u $FTP_USER:$FTP_PASSWORD ftp://ftp.midcapsignals.com/midcap/d_travis/"  
-  - "curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME         -u $FTP_USER:$FTP_PASSWORD ftp://ftp.midcapsignals.com/midcap/d_travis/"  
-  - "curl -T ./dist/Atomizer-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.midcapsignals.com/midcap/d_travis/"  
-
+#   skip_cleanup: true 
  
 notifications:
   slack: 
@@ -62,13 +53,23 @@ notifications:
       - "To package Atomizer, please make a small modification to BioNetGen:"
       - "Goto: https://github.com/RuleWorld/bionetgen"
       - "Build details:  %{build_url} "
-#deploy:
-#  provider: gcs
-#  access_key_id: GOOGHK4SCMDVVDNXWLUF 	
-#  secret_access_key: 5+9g20s/y5pwm1Pt22RVb60pD8bNXqPgDLM6cs9m 	
-#  bucket: travis-rhclark-sbmltranslator
-#  skip_cleanup: true
-#  acl: public_read
-#  local_dir: dist
-#  on:
-#all_branches: true
+
+
+after_success:
+  - perl .make_tar.pl  --platform $TRAVIS_OS_NAME
+  - "curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME         -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/"  
+  - "curl -T ./dist/Atomizer-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/"  
+
+ 
+#    The FTP_USER and FTP_PASSWORD strings are actually defined in the env: global: -secure: strings above.  Those strings
+#  Were generated using a program that may be installed on Linux.  Documentation can be found at: https://docs.travis-ci.com/user/encryption-keys/
+#  To make a long story short, the program may be installed on Linux with:      gem install travis
+#  the command to generate the FTP_PASSWORD string is
+#
+#              travis encrypt  FTP_USER="password" --skip-version-check -r RuleWorld/nfsim
+#
+#  The password should be surroundedd by double quotes, and the -r parameter indicates the repository for which the password
+#  will be used.
+# 
+ 
+ 
