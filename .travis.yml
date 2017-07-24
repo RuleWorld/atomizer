@@ -2,6 +2,8 @@ os:
   - linux  
   - osx
 
+#  This causes Ubuntu 12 to be loaded.  Remove it to get the latest version of Ubuntu
+dist: precise
 
 language: c++
 python:
