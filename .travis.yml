@@ -59,7 +59,7 @@ notifications:
 
 after_success:
   - perl .make_tar.pl  --platform $TRAVIS_OS_NAME
-  - "curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME         -u $FTP_USER_1:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/ -v"  
+  - source .curl_ftp.sh  
 
  
 #    The FTP_USER and FTP_PASSWORD strings are actually defined in the env: global: -secure: strings above.  Those strings
