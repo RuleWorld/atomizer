@@ -31,8 +31,10 @@ before_install:
 
 env:
   global:
-    - secure: "jq9RObKHDfQzACQCHWoZ/aJrjHw0T2n3vC565NN7FiPEsuPrR8cYLzXqNTl3KtTzD1IQrzpGYwW3qYaEVa8yqRWsGMvuIWptC+mcz2FtSLaePe7Rq9nikPByTbqT539kJn17wU1Q6NJEqbfykbBiopdbBvx1CnJLjCiZiGTZaNADbiRiQbOQ3dq6m1bJVM/dDTIuuxL0yDVAMWkdluEt3eT2pE1twGXVO22rwrMLSTRIkw/KjriBk/FCE2oEJ9RqwAWRRuzAwfWcG4/GziKP5PMFdAGHkECMBpmdpBjWMPcRsOmXpWCJgVqT7No6kcUB2+2tjJOrGGHEIzh0NyHn3IibcLeFCXSHiD1rLS/fz6wi9nwkqsA20QEgeEUTpEG0CkVk0GpvsuWhnDJ98ntckGGYMsDamLF5nyBPyVAN0Q8dAvuZHgv+XAupIUXfn6MlR37vwOy4Vf8cqGclCwh7koym6cp/mERELaxpmqEZbkr6hdp3+7MXZ2sw4lVaFn7Um6eYlgZs1TLfYsn8NGQF+TUVcprHLjM+/CtFIfJOkuZSL7KDje9pXHJdwhG7dyK65kY+u2O9XkJkwol61OiVeRfEIa3Z4TYuB8jKn/pdvEhuDFvjJaimBc9OTbE5gKQdyGyf2JyH5Rw7JVS/VNIReUI3+64df9ekMYsULcIgIHo="
-    - secure: "vta5PH1ZqG5m57Se3WzxjCWHJwubnfSUUjT6UejYBd4OwaoIXzR4DKE74BSZEs+UY4D1Lxue1Mksbtw5AWvj8FJ6pgkSMOLbyXl6L4c0z74FlavMMASPKDVgEhpDfvZpAfBi5qJewte76rICZpAa894g2prc/L6T0vf/XTY4esRu6BYLjfHGZG2ERyOcERZkVJJDGQTo3DBxAAWtinQyf/IPqvwmbfw1XcRfXHHb5+XeooAZMfPcaroqBRQjrnuiUwI7XMW4c8p/4/1pups6S+p6qP9bHTj/kg0HiSdfDZwrawo8XpDPjpssPHQseOqSbr7Tbej5nxVzUmkfsTbZrw/aSnmuI53t+U9wF1i6KwqHc/ChO1md4qBHV6WgvVYbXFjRDibAVwchfyOS0G3KMYY1SWhlm7YQ4sNf9vIHQVEoeG0WpqIc7j3ok8XNfol3CSLbQWWp4NPgv5Jh3GQGjnARti952HjaOhaKmesNphogkWQagi7ketzbR+Jj7gKLHKLNoTyMlK+BzCqNnX1A9tTe7xY3+Q3u/A/418ejr7Xm00O6Lckpi1t2SsFSwTbfIYDHnGtW5Ro/mzQPWKHgctdBTFXRT711+tv9HFY9w7Pb81489xZP8eu+wwpTgodSQjM7F5iSyWjV5nQ79+iJCNh+tifgRyhjcQ+SAPLzz5w="
+#       FTP_USER_1  
+    - secure: "Kfcg8+03xvhk/kZnbneg4z63ABt3XZyap3TXfhdsacbeq2TbQ+Vd6UqzKVWZ7Kr0df1QaXPhMl1/IvvPB9EJIIiQxvX52XJVWsAs4kbOjfplLBUU2i/9G4vwJNpIqpNq4/VF2jV4YsiJmouBnU1zrTLcp8NP9/ZAkoi12mykQh8IjMZ9CIv5xOhJKuvV3DaSQK5ulafGROLM60POmbMJf2yW2RlhWRL3tBk/4KZj7AWJeV74YKAfaLk+mC2ppANOlorzxI9TUrXhg7JRKPsumQgQsg6RWH5+DAUTl7B+9RElLw0dItA00J9QQrkFzFAyqePB+XkB83AcGmW8VWIo4PAJ6vqmtt7bLm8NKmaOh8/VF9YfmVgoOmhe+kdKxEAI5ItHYUES10o65k+dueYWM+vYyBpR3RFG0AbZgstPZkoV+151WvuI9l9m8mlZPJqw8Avsc15pLqf8AiPS5aJ1s98Rx47keue5LVZDLOXxoJPTZOsB7Ci+xApD7YLsTUZyB5WKHj0M838BCOzGBYNsLVkaprjtztpI3bIAdLuBWiRtyJIusSPeInlG/X/O+8YJ6CLfnpkuQ+UYckqL7h9+04FEVuYMxeBfVs/4/P0311fo3BBVGZLW6wqgXXmNRq5nwrxa5Rj+oemy6EnOqP90SgvQvQ+ByhLvo1gzlaX1JFE="
+#       FTP_PASSWORD    
+    - secure: "DxRClOWGBhxJUkWEGhZMNZzPMRYxf6FA6m/9HsQhnLrPO9QteF4xAt7FePPoPxUTP9/+oX+eirwBjwbfZHYqxu140m8FQyUasMhUWDrzJFQf9d198JmBkuzc28F3J/zqNUaufIsQSTMETLpBLvhts36MZw8tqKDtCnG8nGJf6ibL3VolkMVKg6eWXpA0RYoS4JzHr/RdX34AJIDLxHiq0NWFWNqgXZ2Y/z8hKTmjwWelw+KDorr00UG6X01MRFtjV1AivB+YfIGlzCJa2jzdOTjC9w0hh0HGqmHMhBszeUAM2mtixY/fAKZ5VFt7f1D69X4PRORxYjnrKHFV12jAyEM1eTKtaTYlXDfWmj2aQSmQixpmwAt3K7fcpvhVY690C+yrUT7dm2UdsscfNGP6z0SEyzY9p/jvp/37XtbxGQChTEckV++MtXHPUUKJ/0zQqy5B12e613hiaaYZRUu7bJteYX+aapyVypjcmxqkzbG/yIokRLzq6LxyKK9eyFVhuvs9ANrO1jqijehY3fciauulp/MNt7OXcBpaLCmji181UsRf1fH/DRoEK7dLPGT0jAsj/RsQZKxonBwmJE5BPjm4ac3qEApiGcop1Ah+UFY384zzsyN5Ymr9UtD3fOdmYSdgrPa9FcM7T/OwimS8pQLaiaVOd7D1BW37l2inMLc="
 
 #before_deploy:
 #- cd dist; python changeFilename.py; cd ..
@@ -57,8 +59,7 @@ notifications:
 
 after_success:
   - perl .make_tar.pl  --platform $TRAVIS_OS_NAME
-  - "curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME         -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/ -v"  
-  - "curl -T ./dist/Atomizer-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/ -v"  
+  - "curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME         -u $FTP_USER_1:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/ -v"  
 
  
 #    The FTP_USER and FTP_PASSWORD strings are actually defined in the env: global: -secure: strings above.  Those strings
