@@ -1,16 +1,11 @@
+
 if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-
-curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_0:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
-#curl -T ./dist/NFsim-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/
-
+  curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_0:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
+  #curl -T ./dist/NFsim-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/
 else
-
-curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_1:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
-#curl -T ./dist/NFsim-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/
-
+  curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_1:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
+  #curl -T ./dist/NFsim-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/
 fi
-
-
 
 
 #    The FTP_USER and FTP_PASSWORD strings are actually defined in the env: global: -secure: strings in travis.yml.  Those strings
