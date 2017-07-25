@@ -55,8 +55,8 @@ build_script:
 artifacts:
   - path: '.\dist\sbmlTranslator-Win64.exe'
     name: sbmlTranslator   
-  - path: '.\dist\sbmlTranslator-Win32.exe'
-    name: sbmlTranslatorWin32
+#  - path: '.\dist\sbmlTranslator-Win32.exe'
+#    name: sbmlTranslatorWin32
    
    
 notifications:
