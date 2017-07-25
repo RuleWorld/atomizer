@@ -51,18 +51,12 @@ build_script:
   - make
   - make install
   - make test
-  - perl .make_tar.pl   --platform Win64  
-  - perl .make_tar.pl   --platform Win32
 
 artifacts:
   - path: '.\dist\sbmlTranslator-Win64.exe'
     name: sbmlTranslator   
   - path: '.\dist\sbmlTranslator-Win32.exe'
     name: sbmlTranslatorWin32
-  - path: '.\dist\Atomizer-source-Win64.zip'
-    name: AtomizerZipWin64
-  - path: '.\dist\Atomizer-source-Win32.zip'
-    name: AtomizerZipWin32
    
    
 notifications:
@@ -82,7 +76,7 @@ deploy:
   provider: FTP
   protocol: ftp
   host: ftp.drivehq.com/d_data/d_appveyor/
-  username: 15260
+  username: 15263
   password:
     secure: aeh68ucxtH3lcVxawmcx8g==
 
