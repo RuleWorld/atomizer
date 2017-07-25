@@ -37,6 +37,7 @@ ifeq ($(OS),Windows_NT)
 	    cp  ${DIST}/sbmlTranslator bin/sbmlTranslator.exe;
     else
 	    cp  ${DIST}/sbmlTranslator.exe bin/sbmlTranslator.exe;
+	    cp  ${DIST}/sbmlTranslator.exe ${DIST}/sbmlTranslator-Win64.exe;
     endif
 else
 	cp  ${DIST}/sbmlTranslator bin/sbmlTranslator;
