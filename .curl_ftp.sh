@@ -1,10 +1,8 @@
 
 if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-  curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_0:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
-  #curl -T ./dist/NFsim-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/
+  curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_4:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
 else
   curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_1:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
-  #curl -T ./dist/NFsim-source-$TRAVIS_OS_NAME.tar.gz -u $FTP_USER:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/
 fi
 
 
@@ -19,3 +17,10 @@ fi
 #  will be used.
 #
 
+#  The  -r  parameter is important.  The parameter should be set as follows for the various build processes:
+#     Atomizer:    -r  RuleWorld/atomizer
+#     NFsim:       -r  RuleWorld/nfsim
+#     BioNetGen:   -r  RuleWorld/bionetgen
+#  There is no need to specify a subdirectory when setting -r  For example, much of the build process for BioNetGen
+#  occurs in the  bng2  subdirectory of BioNetGen.  But you will get an error if you use   -r RuleWorld/bionetgen/bng2  
+#  to generate a password that will be used in that subdirectory.
