@@ -50,6 +50,9 @@ cache:
 build_script:
   - make
   - make install
+#  This next statement makes sense only for the 64 bit build.  The 32 bit build doesn't exist yet, so an existing 32 bit
+#  executable from the BioNetGen 2.2.6 build will be used instead.
+  - CMD:  copy .\dist\sbmlTranslator.exe  .\dist\sbmlTranslator-Win64.exe 
   - make test
 
 artifacts:
