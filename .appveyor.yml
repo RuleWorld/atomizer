@@ -51,7 +51,6 @@ build_script:
   - make
   - make install
   - make test
-  - CMD: type /cygdrive/c/projects/bionetgen-dioqs/bng2/BioNetGen-2.3.0/Validate/test_sbml_flat.log  
 
 artifacts:
   - path: '.\dist\sbmlTranslator-Win64.exe'
