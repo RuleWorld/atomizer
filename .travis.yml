@@ -57,6 +57,8 @@ notifications:
     template:
       - "Atomizer build: %{result} in %{duration}"
       - "Build: <%{build_url}|#%{build_number}> (<%{compare_url}|%{commit}>) Author: %{author}"      
+      - "To download the Atomizer executable, "
+      - "Goto: https://rawgit.com/RuleWorld/atomizer/master/.Atomizer_Beta.html"
       - "To package Atomizer, please make a small modification to BioNetGen:"
       - "Goto: https://github.com/RuleWorld/bionetgen"
       - "Build details:  %{build_url} "
