@@ -67,7 +67,7 @@ notifications:
        "<{{buildUrl}}|{{projectName}} build {{status}}> on {{commitDate}}:_{{commitMessage}}_\n
         Build: {{buildVersion}} (<{{commitUrl}}|{{commitId}}>)   Author: {{commitAuthor}}\n         
         Download Executable Here:\n
-        <https://rawgit.com/RuleWorld/Atomizer/master/.Atomizer_Beta.html|https://rawgit.com/RuleWorld/Atomizer/master/.Atomizer_Beta.html>\n
+        <https://rawgit.com/RuleWorld/atomizer/master/.Atomizer_Beta.html|https://rawgit.com/RuleWorld/atomizer/master/.Atomizer_Beta.html>\n
         Build Details:\n
         <{{buildUrl}}|{{buildUrl}}>"
    
