@@ -8,3 +8,5 @@ nose
 pylru
 progressbar
 bioservices
+enum
+xlwt
