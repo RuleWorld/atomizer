@@ -28,8 +28,6 @@ cache: pip
 before_install:
   - source osx_install.sh
   - sudo -H pip install -U pip wheel
-  - pip install bioservices
-
 
 
 env:
