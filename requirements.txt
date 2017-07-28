@@ -7,3 +7,4 @@ python-libsbml
 nose
 pylru
 progressbar
+bioservices
