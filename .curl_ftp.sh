@@ -1,8 +1,8 @@
 
 if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-  curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_4:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
+  curl -v -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_4:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
 else
-  curl -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_5:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
+  curl -v -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_5:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
 fi
 
 
