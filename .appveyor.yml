@@ -75,10 +75,10 @@ notifications:
 deploy:
   provider: FTP
   protocol: ftp
-  host: ftp.drivehq.com/d_data/d_appveyor/
-  username: 15263
+  host: ftp.box.com/BioNetGen_Beta/d_data/d_appveyor/
+  username: roc60@pitt.edu
   password:
-    secure: aeh68ucxtH3lcVxawmcx8g==
+    secure: Pkm2pZETP0TuR6288x+1Ww==
 
 #  To encrypt the password for FTP, do the following:
 #  1) Log on to Appveyor 
