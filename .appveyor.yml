@@ -74,7 +74,7 @@ notifications:
 
 deploy:
   provider: FTP
-  protocol: ftp
+  protocol: ftps
   host: ftp.box.com/BioNetGen_Beta/d_data/d_appveyor/
   username: roc60@pitt.edu
   password:
