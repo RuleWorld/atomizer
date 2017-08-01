@@ -1,9 +1,5 @@
 
-if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-  curl -v -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_4:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
-else
-  curl -v -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME               -u $FTP_USER_5:$FTP_PASSWORD ftp://ftp.drivehq.com/d_data/d_travis/  
-fi
+curl -v -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME    -u $FTP_USER:$FTP_PASSWORD ftp://ftp.box.com/BioNetGen_Beta/d_data/d_travis/  
 
 
 #    The FTP_USER and FTP_PASSWORD strings are actually defined in the env: global: -secure: strings in travis.yml.  Those strings
