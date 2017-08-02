@@ -1,5 +1,5 @@
 
-curl -v   --ftp-ssl  -u $FTP_USER:$FTP_PASSWORD  -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME  ftp://ftp.box.com/BioNetGen_Beta/d_data/d_travis/  
+curl -v   --ftp-ssl  -u $FTP_USER:$FTP_PASSWORD  -T ./dist/sbmlTranslator-$TRAVIS_OS_NAME  ftp://ftp.midcapsignals.com/BioNetGen_Beta/d_travis/  
 
 
 #    The FTP_USER and FTP_PASSWORD strings are actually defined in the env: global: -secure: strings in travis.yml.  Those strings
