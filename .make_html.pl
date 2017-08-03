@@ -8,7 +8,8 @@
 #   NFsim distribution.
 #
 # OPTIONS:
-#   --platform   PLAT  : Choices are Linux, MacOSX, Windows
+#   --platform   PLAT  : Choices are linux, osx, Win32, Win64
+#   --version    VER   : Format:  2.3.0
 
 
 use strict;
@@ -32,9 +33,11 @@ my $path_to_version_file = '.';
 
 
 GetOptions( 'help|h'        => sub { display_help(); exit(0); },
-            'platform=s'    => \$platform);
+            'platform=s'    => \$platform,
+            'version=s'     => \$version);
 
     print "platform: $platform\n";
+    print "version:  $version\n";
     &write_html($platform,$version);
 
 exit;
@@ -44,27 +47,23 @@ exit;
 # ########################################################################
 sub write_html {
   my $travis_os   = $_[0];
+  my $ver         = $_[1];
 
   print " OS passed in by Travis/Appveyor ".$travis_os."\n";
 
   my $x_exe      = '';
   my $zip_type   = '';
-  my $ofile_name = '';
   if ($travis_os eq "linux") {
-    $zip_type = ".tar.gz";  $platform = "Linux";
-    $ofile_name = "./dist/Atomizer-".$travis_os.".html";
+    $zip_type = "tar.gz";  $platform = "Linux";
   } else {
     if ($travis_os eq "osx") {
-      $zip_type = ".tar.gz";  $platform = "MacOSX";
-      $ofile_name = "./dist/Atomizer-".$travis_os.".html";
+      $zip_type = "tar.gz";  $platform = "MacOSX";
     } else {
       if ($travis_os eq "Win32") {
-        $zip_type = ".zip";  $platform = "Win32";  $x_exe = '.exe';
-        $ofile_name = "./dist/Atomizer-".$travis_os.".html";
+        $zip_type = "zip";  $platform = "Win32";  $x_exe = '.exe';
       } else {
         if ($travis_os eq "Win64") {
-          $zip_type = ".zip";  $platform = "Win64";  $x_exe = '.exe';
-          $ofile_name = "./dist/Atomizer-".$travis_os.".html";
+          $zip_type = "zip";  $platform = "Win64";  $x_exe = '.exe';
         } else {
           print "Invalid platform: ".$travis_os."\n";
           exit;
@@ -74,6 +73,8 @@ sub write_html {
   }
   
 
+  my $base_name = "BioNetGen-".$ver."-".$platform;
+  my $ofile_name = "./BioNetGen-".$platform.".html";
 
 my $date_stamp; my $sec; my $min; my $hour; my $mday; my $mon; my $year; my $wday; my $yday; my $isdst;
 open(FNEW,">$ofile_name");
@@ -97,7 +98,7 @@ open(FNEW,">$ofile_name");
   print FNEW "<body bgcolor=\"LightSkyBlue\">\n";
 
   print FNEW "<font size=\"4\">\n"; 
-  print FNEW "<center><h1>".$platform." Beta Site for Atomizer</h1></center>\n";
+  print FNEW "<center><h1>BioNetGen Beta Site for ".$platform."</h1></center>\n";
   print FNEW "<br>\n";
   print FNEW "<font color=\"red\">WARNING:</font> This is not the download \n";
   print FNEW "site for BioNetGen.  If you wish to download the latest \n";
@@ -110,35 +111,14 @@ open(FNEW,">$ofile_name");
   ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime(time);
   $date_stamp          = sprintf "%4d-%02d-%02d %02d:%02d\n",$year+1900,$mon+1,$mday,$hour-4,$min;
 
-  print FNEW "If you are an Atomizer developer, and you wish to get \n";
+  print FNEW "If you are a BioNetGen developer, and you wish to get \n";
   print FNEW "access to the latest build for ".$platform.", please click here: <br>\n";
   print FNEW "<center><h1>\n";
-  if ($travis_os eq 'Win32') {
-    print FNEW "<a href=\"sbmlTranslator-Win32.exe\">\n";
-    print FNEW           "sbmlTranslator-Win32.exe</a>\n";
-  }
-  if ($travis_os eq 'Win64') {
-    print FNEW "<a href=\"sbmlTranslator-Win64.exe\">\n";
-    print FNEW           "sbmlTranslator-Win64.exe</a>\n";
-  }
-  if ($travis_os eq 'osx') {
-    print FNEW "<a href=\"sbmlTranslator-osx\">\n";
-    print FNEW           "sbmlTranslator-osx</a>\n";
-  }
-  if ($travis_os eq 'linux') {
-    print FNEW "<a href=\"sbmlTranslator-linux\">\n";
-    print FNEW           "sbmlTranslator-linux</a>\n";
-  }
+
+  print FNEW "<a href=\"".$base_name.".".$zip_type."\">\n";
+  print FNEW              $base_name.".".$zip_type."</a>\n";
+
   print FNEW "</h1></center>\n";
-  print FNEW "<center>\n";
-  print FNEW "<a href=\"NFsim-".$travis_os.$x_exe."\">\n";
-  print FNEW "Time Stamp: ".$date_stamp."</a>\n";
-  print FNEW "</center>\n";
-  if (($travis_os eq "linux") or ($travis_os eq "osx")) {
-    print FNEW "<br>\n";
-    print FNEW "<center> Dont forget that after doing the download, you will need to do: \n";
-    print FNEW "<font color=\"red\"> chmod +x sbmlTranslator-".$travis_os."</center>";
-  }
   print FNEW "<br>\n";
   print FNEW "<br>\n";
 
@@ -162,9 +142,10 @@ SYNOPSIS:
    make_html.pl [OPTS] 
 DESCRIPTION:
    Create an html page that provides a link to the latest generated
-   NFsim distribution.
+   BioNetGen distribution.
 OPTIONS:
-   --platform   PLAT  : Choices are Linux, MacOSX, Windows
+   --platform   PLAT  : Choices are linux, osx, Win32, Win64
+   --version    VER   : Format:   2.3.1
 END_HELP
 
 }
