@@ -22,11 +22,7 @@ else
 	python pyinstaller2/pyinstaller.py utils/sbmlTranslator_windows.spec ;
 endif
 else
-	virtualenv --no-site-packages venv
-	source venv/bin/activate
-	pip install --user -r requirements.txt
-	python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec ;
-	deactivate
+	./build_sbmlTranslator_linux.sh
 endif
 
 
