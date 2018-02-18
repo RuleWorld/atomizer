@@ -11,12 +11,12 @@ else
     
     brew update
     brew install python
-    brew tap homebrew/science
     brew install libxml2
     brew install libxslt
     brew install libzip
-    brew install libsbml
-    brew install lib32z1 lib32z1-dev
-    brew link --overwrite python
-    /usr/local/bin/pip install numpy
+    #brew install lib32z1 lib32z1-dev
+    #brew link --overwrite python
+    brew unlink python && brew link python
+    pip install numpy
+    pip install python-libsbml
 fi
