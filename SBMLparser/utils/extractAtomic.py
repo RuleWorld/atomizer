@@ -102,7 +102,7 @@ if __name__ == "__main__":
             tproductElements, tactionNames, tlabelArray = extractTransformations(
                 [rule], True)
         if rule[0].label == '_reverse_v7':
-            print str(rule[0])
-            print ttransformationContext
-            print tproductElements
+            print(str(rule[0]))
+            print(ttransformationContext)
+            print(tproductElements)
             raise Exception

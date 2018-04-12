@@ -1,7 +1,8 @@
 from utils import readBNGXML
 import argparse
 from collections import defaultdict
-from cStringIO import StringIO
+# from cStringIO import StringIO
+from io import StringIO
 from utils import extractAtomic
 from copy import deepcopy
 import networkx as nx
@@ -64,7 +65,7 @@ def askQuestions(inputfile, molecule, center, context=None):
                 ruleArray.append(str(rule[0]).split(':')[0])
                 contextArray.append([y for x in ttransformationContext for y in x if context in y and molecule in y])
             else:
-                print rule
+                print(rule)
     return ruleArray, contextArray
 
 
@@ -189,7 +190,7 @@ def analyzeDependencies(componentStateCollection, state, moleculeName, molecules
 
         if stateSize == len(componentStateCollection[componentName]):
             dependencies[moleculeName]['independent'].add((state, componentName))
-            # print moleculeName,state,componentName,componentStateCollection[componentName]
+            # print(moleculeName,state,componentName,componentStateCollection[componentName])
         elif len(componentStateCollection[componentName]) == 1:
             activeState = list(componentStateCollection[componentName])[0]
             if isActive((state[1], state[2])) and isActive(activeState):
@@ -198,7 +199,7 @@ def analyzeDependencies(componentStateCollection, state, moleculeName, molecules
                 dependencies[moleculeName]['nullrequirement'].add((((componentName, activeState[0], activeState[1])), state))
 
             # elif (not isActive((state[1], state[2]))) and isActive(activeState):
-            #    print moleculeName, componentName,activeState,state
+            #    print(moleculeName, componentName,activeState,state)
                 #dependencies[moleculeName]['nullrequirement'].add(((state, (componentName, activeState[0], activeState[1]))))
 
 
@@ -387,24 +388,24 @@ def getContextRequirements(inputfile, collapse=True, motifFlag=False, excludeRev
 
     #molecule1 = 'socs3'
     #molecule2 = 'shp2'
-    #print molecule1,molecule2
+    #print(molecule1,molecule2)
     #print('---',reactionCenterStateDictionary['gp130%0'][(molecule1,1,'')][molecule2])
     #print('---',reactionCenterStateDictionary['gp130%0'][(molecule2,1,'')][molecule1])
     #print(reactionCenterStateDictionary['STAT3%0'][('astmod',0,'AST')])
-    #print '++++'
+    #print('++++')
 
-    # print reactionCenterStateDictionary['Ras%0'][('Ras_GTPmod',0,'Ras_GTP')]['Ras_GDPmod']
+    # print(reactionCenterStateDictionary['Ras%0'][('Ras_GTPmod',0,'Ras_GTP')]['Ras_GDPmod'])
     backupstatedictionary = deepcopy(reactionCenterStateDictionary)
-    # print reactionCenterStateDictionary['EGFR%1'][('_Pmod',0,'_P')]
-    # print reactionCenterStateDictionary['EGFR%0'][('_Pmod',0,'_P')]
+    # print(reactionCenterStateDictionary['EGFR%1'][('_Pmod',0,'_P')])
+    # print(reactionCenterStateDictionary['EGFR%0'][('_Pmod',0,'_P')])
     # return
     # chemicalStates = getChemicalStates(rules)
     # totalStateDictionary = sortChemicalStates(chemicalStates)
-    # print reactionCenterStateDictionary['Shc%0'][('egfr', 0, '')]['mmod']
+    # print(reactionCenterStateDictionary['Shc%0'][('egfr', 0, '')]['mmod'])
     requirementDependencies = detectDependencies(reactionCenterStateDictionary, molecules)
 
 
-    #print requirementDependencies['JAK']['requirement']
+    #print(requirementDependencies['JAK']['requirement'])
     # repression
     for molecule in reactionCenterStateDictionary:
         moleculeName = molecule.split('%')[0]
@@ -432,7 +433,7 @@ def getContextRequirements(inputfile, collapse=True, motifFlag=False, excludeRev
 
     if motifFlag:
         # double interactions
-        print doubleActionDict['gp130']
+        print(doubleActionDict['gp130'])
         multiInteractionDict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         doubleInteractions = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         for molecule in [x for x in requirementDependencies if x in doubleActionDict]:
@@ -512,11 +513,11 @@ if __name__ == "__main__":
     parser = defineConsole()
     namespace = parser.parse_args()
     inputFile = namespace.input
-    # print askQuestions(inputFile, 'EGFR', 'shc','grb2')
+    # print(askQuestions(inputFile, 'EGFR', 'shc','grb2'))
     dependencies, backup, _, _ = getContextRequirements(inputFile, collapse=True, motifFlag=True)
 
-    # print dependencies
+    # print(dependencies)
     # print(dict(dependencies['EGFR']))
-    # print backup
-    # print printDependencyLog(dependencies)
+    # print(backup)
+    # print(printDependencyLog(dependencies))
     

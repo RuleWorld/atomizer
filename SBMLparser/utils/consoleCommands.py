@@ -95,4 +95,4 @@ def generateGraph(bnglFile,graphType,options=[]):
     
     
 if __name__ == "__main__":      
-    print bngl2xml('/tmp/tmpIhm3Ej.bngl')
+    print(bngl2xml('/tmp/tmpIhm3Ej.bngl'))
