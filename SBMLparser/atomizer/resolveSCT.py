@@ -1,11 +1,11 @@
 import marshal
 import functools
-import analyzeSBML
+from . import analyzeSBML
 from collections import Counter, defaultdict
 import itertools
 from copy import deepcopy, copy
 from utils.util import logMess, memoize
-import atomizationAux as atoAux
+from . import atomizationAux as atoAux
 import utils.pathwaycommons as pwcm
 
 

@@ -140,7 +140,7 @@ def defineEditDistanceMatrix(speciesName, similarityThreshold=4, parallel=False)
         for future in concurrent.futures.as_completed(futures):
             idx3,row = future.result()
             counter.remove(idx3)
-            print len(counter)
+            print(len(counter))
             scoreMatrix[idx3] = row
     '''
 
@@ -183,7 +183,7 @@ def analyzeNamingConventions(speciesName, ontologyFile, ontologyDictionary={}, s
     for key in tmp:
         tmp[key] = ontology['patterns'][key]
     keys = [''.join(x).replace('+ ', '') for x in keys]
-    # print ontology
+    # print(ontology)
 
     return pairClassification, keys, tmp
 
@@ -205,7 +205,7 @@ def databaseAnalysis(directory, outputFile):
     differenceCounter = Counter()
     fileDict = {}
     for xml in xmlFiles:
-        print xml
+        print(xml)
         reader = libsbml.SBMLReader()
         document = reader.readSBMLFromFile(directory + xml)
         model = document.getModel()
@@ -262,11 +262,11 @@ def analyzeTrends(inputFile):
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(keys)
     data = pd.DataFrame(keys)
-    #print data.to_excel('name.xls')
+    #print(data.to_excel('name.xls'))
     
     #for element in keys:
-    #    print '------------------'
-    #    print element
+    #    print('------------------')
+    #    print(element)
     #    pp.pprint(dictionary[element[0]])
 '''
 

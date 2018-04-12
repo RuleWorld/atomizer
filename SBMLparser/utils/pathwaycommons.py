@@ -1,8 +1,8 @@
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import functools
 import marshal
-from util import logMess
+from .util import logMess
 import json
 def memoize(obj):
     cache = obj.cache = {}
@@ -42,16 +42,16 @@ def queryBioGridByName(name1, name2, organism, truename1,truename2):
         xparams = 'geneList={0}&includeInteractors=false&accesskey=59764eb62ca572de5949062a1ba75e5d&format=json&taxId={1}'.format('|'.join([name1,name2]),'|'.join(organism))
         
         try:
-            response = urllib2.urlopen(url, xparams).read()
-        except urllib2.HTTPError:
+            response = urllib.request.urlopen(url, xparams).read()
+        except urllib.error.HTTPError:
             logMess('ERROR:MSC02', 'A connection could not be established to biogrid while testing with taxon {1} and genes {0}'.format('|'.join([name1, name2]), '|'.join(organism)))
             return False
 
     if not response:
         xparams = 'geneList={0}&includeInteractors=false&accesskey=59764eb62ca572de5949062a1ba75e5d&format=json'.format('|'.join([name1,name2]))        
         try:
-            response = urllib2.urlopen(url, xparams).read()
-        except urllib2.HTTPError:
+            response = urllib.request.urlopen(url, xparams).read()
+        except urllib.error.HTTPError:
             logMess('ERROR:MSC02', 'A connection could not be established to biogrid')
             return False
     results = json.loads(response)
@@ -88,16 +88,16 @@ def queryActiveSite(nameStr,organism):
             organismExtract = list(organism)[0].split('/')[-1]
             xparams = 'query={0}+AND+organism:{1}&columns=entry name,id,feature(ACTIVE SITE)&format=tab&limit=5&sort=score'.format(nameStr, organismExtract)
             try:
-                response = urllib2.urlopen(url, xparams).read()
-            except urllib2.HTTPError:
+                response = urllib.request.urlopen(url, xparams).read()
+            except urllib.error.HTTPError:
                 logMess('ERROR:MSC03', 'A connection could not be established to uniprot')
 
         if response in ['', None]:
             url = 'http://www.uniprot.org/uniprot/?'
             xparams = 'query={0}&columns=entry name,id,feature(ACTIVE SITE)&format=tab&limit=5&sort=score'.format(nameStr)
             try:
-                response = urllib2.urlopen(url, xparams).read()
-            except urllib2.HTTPError:
+                response = urllib.request.urlopen(url, xparams).read()
+            except urllib.error.HTTPError:
                 logMess('ERROR:MSC03', 'A connection could not be established to uniprot')
     if not response:
         return response
@@ -114,8 +114,8 @@ def name2uniprot(nameStr, organism):
         organismExtract = list(organism)[0].split('/')[-1]
         xparams = 'query={0}+AND+organism:{1}&columns=entry name,id&format=tab&limit=5&sort=score'.format(nameStr, organismExtract)
         try:
-            response = urllib2.urlopen(url, xparams).read()
-        except urllib2.HTTPError:
+            response = urllib.request.urlopen(url, xparams).read()
+        except urllib.error.HTTPError:
             logMess('ERROR:MSC03', 'A connection could not be established to uniprot')
             return None
 
@@ -123,8 +123,8 @@ def name2uniprot(nameStr, organism):
         url = 'http://www.uniprot.org/uniprot/?'
         xparams = 'query={0}&columns=entry name,id&format=tab&limit=5&sort=score'.format(nameStr)
         try:
-            response = urllib2.urlopen(url, xparams).read()
-        except urllib2.HTTPError:
+            response = urllib.request.urlopen(url, xparams).read()
+        except urllib.error.HTTPError:
             return None
     parsedData = [x.split('\t') for x in response.split('\n')][1:]
     return [x[1] for x in parsedData if len(x) == 2 and any(nameStr.lower() in z for z in [y.lower() for y in x[0].split('_')])]
@@ -141,8 +141,8 @@ def getReactomeBondByUniprot(uniprot1, uniprot2):
     xparams = '{0}&{1}&kind=PATHSFROMTO&format=EXTENDED_BINARY_SIF'.format(source, target)
     # query reactome
     try:
-        response = urllib2.urlopen(url, xparams).read()
-    except urllib2.HTTPError:
+        response = urllib.request.urlopen(url, xparams).read()
+    except urllib.error.HTTPError:
         #logMess('ERROR:pathwaycommons','A connection could not be established to pathwaycommons')
         return None
     # divide by line
@@ -200,10 +200,10 @@ def isInComplexWith(name1, name2, sbmlURI=[], sbmlURI2=[], organism=None):
 if __name__ == "__main__":
     #pass
     #results =  isInComplexWith('Crk','Ras')
-    #print getReactomeBondByName('EGF', 'Grb2', [], [])
-    print queryActiveSite('EGF', '')
-    #print getReactomeBondByName('EGF', 'EGF', ['P07522'], ['P07522'])
-    #print name2uniprot('MEKK1')
-    #print results
-    #print getReactomeBondByUniprot('Q9QX70','Q9QX70')
-    #print getReactomeBondByUniprot('P07522','P07522')
+    #print(getReactomeBondByName('EGF', 'Grb2', [], []))
+    print((queryActiveSite('EGF', '')))
+    #print(getReactomeBondByName('EGF', 'EGF', ['P07522'], ['P07522']))
+    #print(name2uniprot('MEKK1'))
+    #print(results)
+    #print(getReactomeBondByUniprot('Q9QX70','Q9QX70'))
+    #print(getReactomeBondByUniprot('P07522','P07522'))

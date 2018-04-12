@@ -11,7 +11,7 @@ import json
 import itertools
 import utils.structures as st
 from copy import deepcopy,copy
-import detectOntology
+from . import detectOntology
 import re
 import difflib
 from utils.util import logMess
@@ -393,9 +393,9 @@ class SBMLAnalyzer:
             # can you break it down into small bites?
             if '_' in particle:
                 splitparticle = particle.split('_')
-                #print '---',splitparticle
+                #print('---',splitparticle)
                 splitparticle = [x for x in splitparticle if x]
-                #print splitparticle
+                #print(splitparticle)
 
                 basicElements,composingElements = analyzeByParticle(splitparticle,species)
 
@@ -478,7 +478,7 @@ class SBMLAnalyzer:
 
 
         #if len(additionalHandling) > 0:
-            #print self.findClosestModification(set(additionalHandling),species)
+            #print(self.findClosestModification(set(additionalHandling),species))
         return dependencyGraph,equivalenceTranslator
 
     
@@ -653,8 +653,8 @@ class SBMLAnalyzer:
             return [[[[reactant], [product]], None, None]]
 
         namePairs, differenceList, _ = detectOntology.defineEditDistanceMatrix(molecules, similarityThreshold=similarityThreshold)
-        #print '+++',namePairs,differenceList
-        #print '---',detectOntology.defineEditDistanceMatrix2(molecules,similarityThreshold=similarityThreshold)
+        #print('+++',namePairs,differenceList)
+        #print('---',detectOntology.defineEditDistanceMatrix2(molecules,similarityThreshold=similarityThreshold))
 
         # FIXME:in here we need a smarter heuristic to detect actual modifications
         # for now im just going with a simple heuristic that if the species name
@@ -684,7 +684,7 @@ class SBMLAnalyzer:
                     namePairs, differenceList, _ = detectOntology.defineEditDistanceMatrix([commonRoot, reactant], similarityThreshold=10)
                     namePairs2, differenceList2, _ = detectOntology.defineEditDistanceMatrix([commonRoot, product], similarityThreshold=10)
                     namePairs.extend(namePairs2)
-                    #print namePairs, reactant, product
+                    #print(namePairs, reactant, product)
                     #XXX: this was just turning the heuristic off
                     #for element in namePairs:
                         # supposed modification is actually a pre-existing species. if that happens then refuse to proceeed
@@ -763,7 +763,7 @@ class SBMLAnalyzer:
                     #reactant.remove(reactant[idx])
                 else:
                     return None,closeMatch
-                    #print '****',reactant[idx],closeMatch,difflib.get_close_matches(reactant[idx],strippedMolecules)
+                    #print('****',reactant[idx],closeMatch,difflib.get_close_matches(reactant[idx],strippedMolecules))
             else:
                 mcloseMatch = get_close_matches(reactant,strippedMolecules)
                 #for close in mcloseMatch:
@@ -782,7 +782,7 @@ class SBMLAnalyzer:
         treactant = [rp]
         tproduct = pp
         pidx = product.index(pp[0])
-        #print reactant,rself.breakByActionableUnit([reactant,product],strippedMolecules)
+        #print(reactant,rself.breakByActionableUnit([reactant,product],strippedMolecules))
         while idx + idx2 <= len(reactant):
             treactant2 = reactant[idx:min(len(reactant), idx + idx2)]
             #if treactant2 != tproduct2:
@@ -885,7 +885,7 @@ class SBMLAnalyzer:
             while idx + 1 < len(reactant):
                 idx += 1
                 for stoch2, product in enumerate(productString):
-                    #print idx2,product in enumerate(element3):
+                    #print(idx2,product in enumerate(element3):)
                     rp, pp = self.compareStrings(reactant[idx], product, strippedMolecules)
                     if rp and rp != pp[0]:
                         pairedMolecules[stoch2].append((rp, pp[0]))
@@ -1303,7 +1303,7 @@ class SBMLAnalyzer:
             if len(scoreDict) > 0:
                 actionableList.append(list(scoreDict[0][0]))
             else:
-                print actionableList
+                print(actionableList)
                 raise Exception
         return actionableList
 
@@ -1319,16 +1319,16 @@ class SBMLAnalyzer:
         tmpReactant = [[list(itertools.ifilter(lambda y:len([x for x in intermediateVector[0] if y in x]) == 1, reactant))] for reactant in validCandidatesReactants]
         tmpProduct = [[list(itertools.ifilter(lambda y:len([x for x in intermediateVector[0] if y in x]) == 1, reactant))] for reactant in validCandidatesProducts]
 
-        #print validCandidatesReactants,validCandidatesProducts,intermediateVector
-        #print '......',reaction
-        #print '\t......',validCandidatesReactants,validCandidatesProducts
+        #print(validCandidatesReactants,validCandidatesProducts,intermediateVector)
+        #print('......',reaction)
+        #print('\t......',validCandidatesReactants,validCandidatesProducts)
 
         #find biggest subset of actionable units
 
         reactantList = self.findBiggestActionable(reaction[0],validCandidatesReactants)
         productList = self.findBiggestActionable(reaction[1],validCandidatesProducts)
 
-        #print '\t\t+++++',reactantList,productList
+        #print('\t\t+++++',reactantList,productList)
         return reactantList,productList
 
     def testAgainstExistingConventions(self, fuzzyKey, modificationList, threshold=4):
@@ -1365,7 +1365,7 @@ class SBMLAnalyzer:
             if fuzzyKey and fuzzyKey.strip('_').lower() not in [x.lower() for x in strippedMolecules]:
                 # if our state isnt yet on the dependency graph preliminary data structures
                 if '{0}'.format(fuzzyKey) not in equivalenceTranslator:
-                    # print '---','{0}'.format(fuzzyKey),equivalenceTranslator.keys()
+                    # print('---','{0}'.format(fuzzyKey),equivalenceTranslator.keys())
                     # check if there is a combination of existing keys that deals with this modification without the need of creation a new one
                     if self.testAgainstExistingConventions(fuzzyKey,self.namingConventions['modificationList']):
                         logMess('INFO:LAE005', 'added relationship through existing convention in reaction {0}'.format(str(reaction)))
@@ -1467,9 +1467,9 @@ class SBMLAnalyzer:
             #should we reuse information obtained from other methods?
             #FIXME: instead of doing a simple split by '_' we should be comparing against the molecules in stripped molecules and split by smallest actionable units.
             if externalDependencyGraph == {}:
-                #print '-----',reaction
+                #print('-----',reaction)
                 #reactantString, productString = self.breakByActionableUnit(reaction, strippedMolecules)
-                #print '...',reaction, reactantString, productString
+                #print('...',reaction, reactantString, productString)
                 #if not reactantString or not productString:
                 reactantString = [x.split('_') for x in reaction[0]]
                 reactantString = [[y for y in x if y!=''] for x in reactantString]
@@ -1502,7 +1502,7 @@ class SBMLAnalyzer:
             if [0] in reactantString or [0] in productString:
                 continue
             matching, matching2 = self.approximateMatching2(reactantString, productString, strippedMolecules, translationKeys)
-            #print reaction, matching
+            #print(reaction, matching)
             #if matching and flagstar:
             #    logMess('DEBUG:Atomization', 'inverting order of {0} for lexical analysis'.format([reaction[1], reaction[0]]))
      

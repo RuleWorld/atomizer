@@ -12,7 +12,7 @@ Created on Tue Dec  6 17:42:31 2011
 @author: proto
 """
 from copy import deepcopy, copy
-import analyzeSBML
+from . import analyzeSBML
 import utils.structures as st
 from utils.util import logMess
 #import biogrid
@@ -21,9 +21,9 @@ import functools
 import utils.pathwaycommons as pwcm
 from collections import Counter, defaultdict
 import itertools
-from atomizerUtils import BindingException
-import resolveSCT
-import atomizationAux as atoAux
+from .atomizerUtils import BindingException
+from . import resolveSCT
+from . import atomizationAux as atoAux
 
 def isInComplexWith(moleculeSet, parser=None):
     """
@@ -312,7 +312,7 @@ def getComplexationComponents2(moleculeName, species, bioGridFlag, pathwaycommon
 
     for x in sortMolecules(species.molecules, reverse=True):
         for component in [y for y in x.components if y.name.lower()
-                          in speciesDict.keys()]:
+                          in list(speciesDict.keys())]:
             if x.name.lower() in speciesDict:
                 if(x in speciesDict[component.name.lower()]) and component.name in [y.name.lower() for y
                                                                                     in speciesDict[x.name.lower()]]:
@@ -844,10 +844,10 @@ def sanityCheck(database):
     '''
     stringrep = {x: str(database.translator[x]) for x in database.translator}
     repeats = set()
-    for key in range(0, len(database.translator.keys()) - 1):
-        for key2 in range(key + 1, len(database.translator.keys())):
-            if stringrep[database.translator.keys()[key]] == stringrep[database.translator.keys()[key2]]:
-                repeats.add((database.translator.keys()[key], database.translator.keys()[key2]))
+    for key in range(0, len(list(database.translator.keys())) - 1):
+        for key2 in range(key + 1, len(list(database.translator.keys()))):
+            if stringrep[list(database.translator.keys())[key]] == stringrep[list(database.translator.keys())[key2]]:
+                repeats.add((list(database.translator.keys())[key], list(database.translator.keys())[key2]))
     for repeat in repeats:
         temp = sorted(repeat)
         logMess('ERROR:SCT241', '{0}:{1}:produce the same translation:{2}:{1}:was empied'.format(temp[0], temp[1], database.prunnedDependencyGraph[temp[0]][0]))

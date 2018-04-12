@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import sys
-reload(sys)
-sys.setdefaultencoding("ISO-8859-1")
+# import sys
+# from importlib import reload
+# reload(sys)
+# sys.setdefaultencoding("ISO-8859-1")
 
 import re
 from copy import deepcopy
@@ -11,7 +12,8 @@ import string
 from pyparsing import commaSeparatedList as csl
 import pyparsing
 from itertools import dropwhile
-import StringIO
+# import StringIO
+from io import StringIO
 import pyparsing as pyp
 
 def evaluatePiecewiseFunction(function):
@@ -98,7 +100,7 @@ def rindex(lst, item):
     try:
         return dropwhile(lambda x: lst[x] != item, reversed(xrange(len(lst)))).next()
     except StopIteration:
-        raise ValueError, "rindex(lst, item): item not in list"
+        raise ValueError("rindex(lst, item): item not in list")
         
         
     
@@ -227,7 +229,7 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
                 rule  = re.sub('({0})\(([^,]+),([^)]+)\)'.format(x),function,rule)
             if rule == oldrule:
                 logMess('ERROR:Translation','Malformed pow or root function %s' % rule)
-                print 'meep'
+                print('meep')
         return rule
 
     #rule = changeToBNGL(['pow','root'],rule,powParse)
@@ -291,7 +293,7 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
     #finalString = re.sub(r'(\W|^)(t)(\W|$)',r'\1time()\3',finalString)
     #pi
     finalString = re.sub(r'(\W|^)(pi)(\W|$)',r'\g<1>3.1415926535\g<3>',finalString)
-    #print reactants,finalString
+    #print(reactants,finalString)
     #log for log 10
     finalString = re.sub(r'(\W|^)log\(',r'\1 ln(',finalString)
     #reserved keyword: e
@@ -303,11 +305,11 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
     
     tmp = finalString
     
-    #print finalString,reactants
+    #print(finalString,reactants)
     #for reactant in reactants:
     #    finalString = re.sub(r'(\W|^)({0}\s+\*)'.format(reactant[0]),r'\1',finalString)
     #    finalString = re.sub(r'(\W|^)(\*\s+{0}(\s|$))'.format(reactant[0]),r'\1',finalString)
-    #print finalString
+    #print(finalString)
     
     #if finalString != tmp:
     #    logMess('WARNING','Removed mass action elements from )

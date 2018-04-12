@@ -74,7 +74,7 @@ if __name__ == "__main__":
     model = document.getModel()        
     parser = SBML2BNGL(model)
     annotationDictionary =  getAnnotations(parser)
-    print annotationDictionary
-    #print getEquivalence('SAv_EpoR',annotationDictionary)
-    #print annotation
-    #print rules    
+    print(annotationDictionary)
+    #print(getEquivalence('SAv_EpoR',annotationDictionary))
+    #print(annotation)
+    #print(rules    )

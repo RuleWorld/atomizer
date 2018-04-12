@@ -42,7 +42,7 @@ def loadBioGrid():
 
 
 def handler(signum, frame):
-    print "Forever is over!"
+    print("Forever is over!")
     raise Exception("end of time")
 
 
@@ -93,7 +93,7 @@ def evaluation(numMolecules, translator):
     return ruleElements
 
 
-    #print rules
+    #print(rules)
 #14,18,56,19,49.87.88.107,109,111,120,139,140,145,151,153,171,175,182,202,205
 #230,253,255,256,268,269,288,313,332,333,334,335,336,362,396,397,399,406
 
@@ -248,7 +248,7 @@ def processFunctions(functions,sbmlfunctions,artificialObservables,tfunc):
     '''
     fd = []
     for function in functions:
-        # print function,'---',dependencies2[function.split(' = ' )[0].split('(')[0]],'---',function.split(' = ' )[0].split('(')[0],0
+        # print(function,'---',dependencies2[function.split(' = ' )[0].split('(')[0]],'---',function.split(' = ' )[0].split('(')[0],0)
         fd.append([function,resolveDependencies(dependencies2,function.split(' = ' )[0].split('(')[0],0)])
     fd = sorted(fd,key= lambda rule:rule[1])
     functions = [x[0] for x in fd]
@@ -322,7 +322,7 @@ def extractCompartmentCoIncidence(species):
                 molId1 = getMoleculeByName(species,atom)
                 molId2 = getMoleculeByName(species,atom2)
                 key = tuple([atom,atom2])
-                #print key,(molId1,molId2)
+                #print(key,(molId1,molId2))
                 if key not in atomPairDictionary:
                     atomPairDictionary[key] = Counter()
                 atomPairDictionary[key].update([tuple([molId1,molId2])])
@@ -357,7 +357,7 @@ def extractCompartmentStatistics(bioNumber,useID,reactionDefinitions,speciesEqui
             else:
                 compartmentPairs[element].update(temp[element])
     finalCompartmentPairs = {}
-    print '-----'
+    print('-----')
     for element in compartmentPairs:
         if element[0][0] not in finalCompartmentPairs:
             finalCompartmentPairs[element[0][0]] = {}
@@ -492,7 +492,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     document = reader.readSBMLFromFile(bioNumber)
 
     if document.getModel() == None:
-        print 'File {0} could not be recognized as a valid SBML file'.format(bioNumber)
+        print('File {0} could not be recognized as a valid SBML file'.format(bioNumber))
         return
     parser =SBML2BNGL(document.getModel(),useID)
     parser.setConversion(not noConversion)
@@ -516,7 +516,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
             translator, onlySynDec = mc.transformMolecules(parser, database, reactionDefinitions,
                                                            namingConventions, speciesEquivalence, bioGrid)
     except TranslationException as e:
-        print "Found an error in {0}. Check log for more details. Use -I to ignore translation errors".format(e.value)
+        print("Found an error in {0}. Check log for more details. Use -I to ignore translation errors".format(e.value))
         if len(logMess.log) > 0:
             with open(outputFile + '.log', 'w') as f:
                 for element in logMess.log:
@@ -530,7 +530,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     sortby = 'cumulative'
     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
     ps.print_stats(10)
-    print s.getvalue()
+    print(s.getvalue())
     '''
     database.document = document
     database.reactionDefinitions = reactionDefinitions
@@ -644,7 +644,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     #    translator={}
     
     #except:
-    #    print 'failure'
+    #    print('failure')
     #    return None,None,None,None
     
     #translator = {}
@@ -757,7 +757,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     sbmlfunctions = parser.getSBMLFunctions()
 
     functions.extend(aRules)
-    #print functions
+    #print(functions)
 
     processFunctions(functions,sbmlfunctions,artificialObservables,rateFunctions)
     for interation in range(0,3):
@@ -774,7 +774,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     functions = changeNames(functions, aParameters)
     # change reference for observables with compartment name
     functions = changeNames(functions, observablesDict)
-#     print [x for x in functions if 'functionRate60' in x]
+#     print([x for x in functions if 'functionRate60' in x])
 
     functions = unrollFunctions(functions)
     rules = changeRates(rules, aParameters)
@@ -875,11 +875,11 @@ def processFile2():
         logMess.log = []
         logMess.counter = -1
         reactionDefinitions,useID,naming = selectReactionDefinitions('BIOMD%010i.xml' %bioNumber)
-        print reactionDefinitions, useID
+        print(reactionDefinitions, useID)
         #reactionDefinitions = 'reactionDefinitions/reactionDefinition7.json'
         #spEquivalence = 'reactionDefinitions/speciesEquivalence19.json'
         spEquivalence = detectCustomDefinitions(bioNumber)
-        print spEquivalence
+        print(spEquivalence)
         useID = False
         #reactionDefinitions = 'reactionDefinitions/reactionDefinition9.json'
         outputFile = 'complex/output' + str(bioNumber) + '.bngl'
@@ -937,7 +937,7 @@ def main():
         logMess.log = []
         logMess.counter = -1
         #reactionDefinitions,useID,naming = selectReactionDefinitions('BIOMD%010i.xml' %bioNumber)
-        #print reactionDefinitions, useID
+        #print(reactionDefinitions, useID)
         #reactionDefinitions = 'reactionDefinitions/reactionDefinition7.json'
         #spEquivalence = 'reactionDefinitions/speciesEquivalence19.json'
         #spEquivalence = naming
@@ -946,7 +946,7 @@ def main():
         #                                                  reactionDefinitions,False,'complex/output' + str(bioNumber) + '.bngl',
         #                                                    speciesEquivalence=spEquivalence,atomize=True)
         try:
-    	    fileName = bioNumber.split('/')[-1]
+            fileName = bioNumber.split('/')[-1]
             rlength = reval = reval2 = slength = None
             analysisResults = analyzeFile(bioNumber, resource_path('config/reactionDefinitions.json'),
                 False,resource_path('config/namingConventions.json'),
@@ -954,19 +954,19 @@ def main():
                 'complex2/' + fileName +  '.bngl',
                 speciesEquivalence=None,atomize=True,bioGrid=False)
             #rlength, slength,reval, reval2, clength,rdf, _, _ = analysisResults
-            #print '++++',bioNumber,rlength,reval,reval2,clength
+            #print('++++',bioNumber,rlength,reval,reval2,clength)
                                                                 
         
         except KeyError:
-            print 'keyErrorerror--------------',bioNumber
+            print('keyErrorerror--------------', bioNumber)
             continue
         except OverflowError:
-            print 'overFlowerror--------------',bioNumber
+            print('overFlowerror--------------', bioNumber)
             continue
         except ValueError:
-            print 'valueError',bioNumber
+            print('valueError', bioNumber)
         except pyparsing.ParseException:
-            print 'pyparsing',bioNumber
+            print('pyparsing', bioNumber)
         finally:  
             if analysisResults.rlength != None:        
                 rulesLength.append({'index':bioNumber,'nreactions': analysisResults.rlength,
@@ -981,10 +981,10 @@ def main():
                 rdfArray.append({})
         
             #classificationArray.append({})
-    #print evaluation
-    #print evaluation2
+    #print(evaluation)
+    #print(evaluation2)
     #sortedCurated = [i for i in enumerate(evaluation), key=lambda x:x[1]]
-    print [(idx+1,x) for idx,x in enumerate(rulesLength) if  x > 50]
+    print([(idx+1,x) for idx,x in enumerate(rulesLength) if  x > 50])
     with open('sortedD.dump','wb') as f:
         pickle.dump(rulesLength,f)
     with open('annotations.dump','wb') as f:
@@ -1014,7 +1014,7 @@ def main():
             idx+=1
 
         if x < 15 and y > 0.7 and z>1:
-            print '---',idx,x,y
+            print('---',idx,x,y)
         idx+=1
     #plt.hist(ev,bins =[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0])
     #plt.xlabel('Atomization Degree',fontsize=18)    
@@ -1028,7 +1028,7 @@ def main2():
         stringBuffer = StringIO.StringIO()
         jsonPointer = 'reactionDefinitions/speciesEquivalence163.json'
         readFromString(st, resource_path('config/reactionDefinitions.json'),False,jsonPointer,True,stringBuffer)  
-        print stringBuffer.getvalue()
+        print(stringBuffer.getvalue())
 
 
 
@@ -1074,7 +1074,7 @@ def getRelationshipDegree(componentPair,statusQueryFunction,comparisonFunction,f
             comparison = comparisonFunction(status1,status2)
             stats.append(comparison)
         if finalComparison(stats):
-            print pair,componentPair[pair]
+            print(pair,componentPair[pair])
         componentPairRelationshipDict[pair] = finalComparison(stats)
     return componentPairRelationshipDict
 
@@ -1086,7 +1086,7 @@ def createPlot(labelDict):
         tmp = list(set([y for x in labelDict[element] for y in x]))
         xaxis = [tmp.index(x[0]) for x in labelDict[element] if  labelDict[element][x]== True]
         yaxis = [tmp.index(x[1]) for x in labelDict[element] if labelDict[element][x] == True]
-        #6print tmp,xaxis,yaxis
+        #6print(tmp,xaxis,yaxis)
         plt.scatter(xaxis,yaxis)
         plt.xticks(range(len(tmp)),tmp)
         plt.yticks(range(len(tmp)),tmp)
@@ -1096,7 +1096,7 @@ def createPlot(labelDict):
         #ax[math.floor(idx/4)][idx%4].yticks(range(len(tmp)),tmp)
         #ax[math.floor(idx/4)][idx%4].title(element)
         plt.savefig('{0}.png'.format(element))
-        print '{0}.png'.format(element)
+        print('{0}.png'.format(element))
 '''
 '''
 def statFiles():
@@ -1115,7 +1115,7 @@ def statFiles():
         orBoxDict = {}
         for molecule in componentPairs:
             xorBoxDict[molecule] = getRelationshipDegree(componentPairs[molecule],isActivated,xorBox,all)
-            #print '----------------------',molecule,'---------'            
+            #print('----------------------',molecule,'---------'            )
             orBoxDict[molecule] =  getRelationshipDegree(componentPairs[molecule],flatStatusVector,orBox,totalEnumerations)
 
         #createPlot(orBoxDict)
@@ -1135,7 +1135,7 @@ def processDir(directory,atomize=True):
     for xml in xmlFiles:
         #try:
         if xml not in ['MODEL1310110034.xml'] and len([x for x in blackList if str(x) in xml]) == 0:
-            print xml
+            print(xml)
             try:
                 analysisResults = analyzeFile(directory + xml,'reactionDefinitions/reactionDefinition7.json',
                         False, resource_path('config/namingConventions.json'),
@@ -1187,7 +1187,7 @@ def listFiles(minReactions,directory):
     xmlFiles = [ f for f in listdir('./' + directory) if isfile(join('./' + directory,f)) and 'xml' in f]
     outputList = []
     for xml in xmlFiles:
-        print '.',
+        print('.',)
         reader = libsbml.SBMLReader()
         document = reader.readSBMLFromFile(directory + xml)
         model = document.getModel()
@@ -1195,7 +1195,7 @@ def listFiles(minReactions,directory):
             continue
         if len(model.getListOfReactions()) > minReactions:
             outputList.append(xml)
-    print len(outputList)
+    print(len(outputList))
     
 if __name__ == "__main__":
     #identifyNamingConvention()
@@ -1250,10 +1250,10 @@ if __name__ == "__main__":
     #processFile3('hexamer.xml')
     #with open('dimer.xml','r') as f:
     #    r = f.read()
-    #print readFromString(r,resource_path('config/reactionDefinitions.json'),False,None,True)
+    #print(readFromString(r,resource_path('config/reactionDefinitions.json'),False,None,True))
     #statFiles()
     #main2()
-    #print readFromString('dsfsdf',resource_path('config/reactionDefinitions.json'),False)
+    #print(readFromString('dsfsdf',resource_path('config/reactionDefinitions.json'),False))
     #processFile2()
     #listFiles(50,'./XMLExamples/curated/')
 #todo: some of the assignmentRules defined must be used instead of parameters. remove from the paraemter
