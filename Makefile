@@ -8,18 +8,12 @@ DIST = ./dist
 
 
 all:
-	if ! test -d pyinstaller2 ; then \
-		unzip utils/pyinstaller2.zip;   \
-	fi ;
-
-
-
 
 ifeq ($(OS),Windows_NT)
 ifeq ($(shell uname -o),Cygwin)
-	python pyinstaller2/pyinstaller.py utils/sbmlTranslator.spec ;
+	pyinstaller utils/sbmlTranslator.spec ;
 else
-	python pyinstaller2/pyinstaller.py utils/sbmlTranslator_windows.spec ;
+	pyinstaller utils/sbmlTranslator_windows.spec ;
 endif
 else
 	./build_sbmlTranslator_linux.sh
