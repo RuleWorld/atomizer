@@ -56,7 +56,17 @@ clean:
 	if test -d venv; then \
 		rm -rf venv;	\
 	fi
+	if test -d SBMLparser/atomizer_venv; then \
+		rm -rf SBMLparser/atomizer_venv;	\
+	fi
+	if test -d SBMLparser/dist; then \
+		rm -rf SBMLparser/dist;	\
+	fi
+	if test -d SBMLparser/build; then \
+		rm -rf SBMLparser/build;	\
+	fi
 
 	find . -name '*.pyc' -delete
+	find . -name '__pycache__' -delete
 
 	
