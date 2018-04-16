@@ -98,7 +98,7 @@ def rindex(lst, item):
     returns the last ocurrence of an element in alist
     '''
     try:
-        return dropwhile(lambda x: lst[x] != item, reversed(xrange(len(lst)))).next()
+        return next(dropwhile(lambda x: lst[x] != item, reversed(range(len(lst)))))
     except StopIteration:
         raise ValueError("rindex(lst, item): item not in list")
         
@@ -328,8 +328,9 @@ def curateParameters(param):
     
 def finalText(comments,param,molecules,species,observables,rules,functions,compartments,annotations,fileName):
     #output = open(fileName,'w')
-    output = StringIO.StringIO()
-    output.write(comments.decode('ascii','ignore'))
+    output = StringIO()
+    # output.write(comments.decode('ascii','ignore'))
+    output.write(comments)
     output.write('begin model\n')
     param = curateParameters(param)
     output.write(sectionTemplate('parameters',param))
