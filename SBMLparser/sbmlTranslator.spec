@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['sbmlTranslator.py'],
-             pathex=['/home/jczech/trd3/atomizer/SBMLparser'],
+             pathex=['.'],
              binaries=[],
              datas=[('libsbml', '.')],
              hiddenimports=[],
