@@ -112,7 +112,7 @@ class SBMLAnalyzer:
 
         """
         def index_min(values):
-            return min(xrange(len(values)), key=values.__getitem__)
+            return min(range(len(values)), key=values.__getitem__)
 
         equivalenceTranslator, translationKeys, conventionDict = self.processNamingConventions2([baseElement, modifiedElement])
 
@@ -371,7 +371,7 @@ class SBMLAnalyzer:
                     flag = False
                     for element in closestList:
                         localEquivalenceTranslator,_,_ =  self.processNamingConventions2([element,splitp])
-                        if len(localEquivalenceTranslator.keys()) == 0:
+                        if len(list(localEquivalenceTranslator.keys())) == 0:
                             basicElements = []
                             composingElements = []
                         for element in localEquivalenceTranslator:
@@ -555,9 +555,9 @@ class SBMLAnalyzer:
             l1 = len(s1)
             l2 = len(s2)
         
-            matrix = [range(l1 + 1)] * (l2 + 1)
+            matrix = [list(range(l1 + 1))] * (l2 + 1)
             for zz in range(l2 + 1):
-              matrix[zz] = range(zz,zz + l1 + 1)
+              matrix[zz] = list(range(zz,zz + l1 + 1))
             for zz in range(0,l2):
               for sz in range(0,l1):
                 if s1[sz] == s2[zz]:
@@ -1073,7 +1073,7 @@ class SBMLAnalyzer:
                         productPartitions[idx] = productPartitions[idx].replace(dic[element],element)
                         reactantPartitions[idx] = reactantPartitions[idx].replace(dic[element],element)
                         
-                zippedPartitions = zip(reactantPartitions,productPartitions)
+                zippedPartitions = list(zip(reactantPartitions,productPartitions))
                 zippedPartitions = [sorted(x,key=len) for x in zippedPartitions]
                 bdifferences = [[z for z in y if '+ ' in z or '- ' in z] for y in \
                              [difflib.ndiff(*x) for x in zippedPartitions]]
@@ -1139,17 +1139,17 @@ class SBMLAnalyzer:
         #check if the reaction conditions each tuple satisfies are enough to get classified
         #as an specific named reaction type
         tupleDefinitionMatrix = {key:np.zeros((len(reactionDefinition['definitions']))) for key in ruleDictionary}
-        for key,element in tupleComplianceMatrix.items():
+        for key,element in list(tupleComplianceMatrix.items()):
             for idx,member in enumerate(reactionDefinition['definitions']):
                 for alternative in member:
                     if 'r' in alternative:            
-                        tupleDefinitionMatrix[key][idx] += np.all([element[reaction] for reaction in alternative[u'r']])
+                        tupleDefinitionMatrix[key][idx] += np.all([element[reaction] for reaction in alternative['r']])
                     if 'n' in alternative and reactionDefinition['reactionsNames'][idx] in equivalenceTranslator:
                         tupleDefinitionMatrix[key][idx] += np.all([tupleNameComplianceMatrix[key][reactionDefinition['reactionsNames'][idx]]])
         #cotains which rules are equal to reactions defined in reactionDefinitions['definitions']
         #use the per tuple classification to obtain a per reaction classification
         ruleDefinitionMatrix = np.zeros((len(rules),len(reactionDefinition['definitions'])))
-        for key,element in ruleDictionary.items():
+        for key,element in list(ruleDictionary.items()):
             for rule in element:
                 ruleDefinitionMatrix[rule] = self.checkCompliance(ruleComplianceMatrix[rule],
     tupleDefinitionMatrix[key],reactionDefinition['definitions'])
@@ -1187,7 +1187,7 @@ class SBMLAnalyzer:
             #if its a reaction defined by its naming convention   
             #xxxxxxxxxxxxxxxxxxx
             for alternative in properties:
-                if 'n' in alternative.keys():
+                if 'n' in list(alternative.keys()):
                     try:
                         site = reactionDefinition['reactionSite'][alternative['rsi']]
                         state = reactionDefinition['reactionState'][alternative['rst']]
@@ -1218,21 +1218,21 @@ class SBMLAnalyzer:
             idx1=0
             idx2 = 1
             while idx2 <= len(element):
-                if (element[idx1],) in conventionDict.keys():
+                if (element[idx1],) in list(conventionDict.keys()):
                     pattern = conventionDict[(element[idx1],)]
                     indirectEquivalenceTranslator[pattern].append([[reaction[0][index],reaction[1][0]],reaction[0],matches[index],reaction[1]])
-                elif (element[idx1].replace('-','+'),) in conventionDict.keys():
+                elif (element[idx1].replace('-','+'),) in list(conventionDict.keys()):
                     matches[index].reverse()
                     transformedPattern = conventionDict[(element[idx1].replace('-','+'),) ]
                     indirectEquivalenceTranslator[transformedPattern].append([[reaction[1][0],reaction[0][index]],reaction[0],matches[index],reaction[1]])
                 elif idx2 < len(element):
-                    if tuple([element[idx1],element[idx2]]) in conventionDict.keys():    
+                    if tuple([element[idx1],element[idx2]]) in list(conventionDict.keys()):    
                         pattern = conventionDict[tuple([element[idx1],element[idx2]])]
                         indirectEquivalenceTranslator[pattern].append([[reaction[0][index],reaction[1][0]],reaction[0],matches[index],reaction[1]])
                         idx1 += 1
                         idx2 += 1
                     elif '-' in element[idx1] and '-' in element[idx2]:
-                        if tuple([element[idx1].replace('-','+'),element[idx2].replace('-','+')]) in conventionDict.keys():  
+                        if tuple([element[idx1].replace('-','+'),element[idx2].replace('-','+')]) in list(conventionDict.keys()):  
                             matches[index].reverse()
                             transformedPattern = conventionDict[tuple([element[idx1].replace('-','+'),element[idx2].replace('-','+')])]
                             indirectEquivalenceTranslator[transformedPattern].append([[reaction[1][0],reaction[0][index]],reaction[0],matches[index],reaction[1]])
@@ -1287,7 +1287,7 @@ class SBMLAnalyzer:
             scoreDict = []
             result = 0
             try:
-                for i in xrange(1, len(chemicalCandidates)+1):
+                for i in range(1, len(chemicalCandidates)+1):
                     combinations = list(itertools.permutations(chemicalCandidates,i))
                     for x in combinations:
 
@@ -1313,11 +1313,11 @@ class SBMLAnalyzer:
         validCandidatesProducts = [[y for y in strippedMolecules if y in x] for x in reaction[1]]
 
         # find the subset of intersection parts between reactants and products
-        intermediateVector = [list(itertools.ifilter(lambda x: any([len([z for z in difflib.ndiff(x,y) if '+' in z[0] or '-' in z[0]]) <= 3 for z in validCandidatesProducts for y in z]), sublist)) for sublist in validCandidatesReactants] 
-        intermediateVector = [list(itertools.ifilter(lambda x: any([len([z for z in difflib.ndiff(x,y) if '+' in z[0] or '-' in z[0]]) <= 3 for z in intermediateVector for y in z]), sublist)) for sublist in validCandidatesProducts] 
+        intermediateVector = [list(filter(lambda x: any([len([z for z in difflib.ndiff(x,y) if '+' in z[0] or '-' in z[0]]) <= 3 for z in validCandidatesProducts for y in z]), sublist)) for sublist in validCandidatesReactants] 
+        intermediateVector = [list(filter(lambda x: any([len([z for z in difflib.ndiff(x,y) if '+' in z[0] or '-' in z[0]]) <= 3 for z in intermediateVector for y in z]), sublist)) for sublist in validCandidatesProducts] 
 
-        tmpReactant = [[list(itertools.ifilter(lambda y:len([x for x in intermediateVector[0] if y in x]) == 1, reactant))] for reactant in validCandidatesReactants]
-        tmpProduct = [[list(itertools.ifilter(lambda y:len([x for x in intermediateVector[0] if y in x]) == 1, reactant))] for reactant in validCandidatesProducts]
+        tmpReactant = [[list(filter(lambda y:len([x for x in intermediateVector[0] if y in x]) == 1, reactant))] for reactant in validCandidatesReactants]
+        tmpProduct = [[list(filter(lambda y:len([x for x in intermediateVector[0] if y in x]) == 1, reactant))] for reactant in validCandidatesProducts]
 
         #print(validCandidatesReactants,validCandidatesProducts,intermediateVector)
         #print('......',reaction)
@@ -1337,10 +1337,10 @@ class SBMLAnalyzer:
         def testAgainstExistingConventionsHelper(fuzzyKey, modificationList, threshold):
             if not fuzzyKey:
                 return None
-            for i in xrange(1, threshold):
+            for i in range(1, threshold):
                 combinations = itertools.permutations(modificationList, i)
                 
-                validKeys = list(itertools.ifilter(lambda x: (''.join(x)).upper() == fuzzyKey.upper(), combinations))
+                validKeys = list(filter(lambda x: (''.join(x)).upper() == fuzzyKey.upper(), combinations))
                 
                 if (validKeys):
                     return validKeys
@@ -1538,7 +1538,7 @@ class SBMLAnalyzer:
                                         lexicalDependencyGraph[x[1]] = []
         translationKeys.extend(newTranslationKeys)
         for species in localSpeciesDict:
-            speciesName =  localSpeciesDict[species][localSpeciesDict[species].keys()[0]][0][0]
+            speciesName =  localSpeciesDict[species][list(localSpeciesDict[species].keys())[0]][0][0]
             definition = [species]
             sdefinition = [speciesName]
             for component in localSpeciesDict[species]:
