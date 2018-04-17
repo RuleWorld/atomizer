@@ -10,9 +10,15 @@ this method classifies reactants according to the rdf information, and gives
 us information on which reactants are the same, and how do they differ
 (compartment etc)
 '''
-from sbml2bngl import SBML2BNGL
+try:
+    from sbml2bngl import SBML2BNGL
+    import libsbml
+except ModuleNotFoundError:
+    import sys
+    sys.path.append('..')
+    from sbml2bngl import SBML2BNGL
+    import libsbml
 
-import libsbml
 import collections
 
 def getAnnotations(parser,stringKey=None):
