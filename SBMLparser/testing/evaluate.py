@@ -96,7 +96,7 @@ def analyzeErrors(directory):
                 else:
                     errorLog['others'] +=1
     
-    print errorLog,errorFiles
+    print(errorLog,errorFiles)
     
 def createValidFileBatch(directory):
     import zipfile
@@ -130,7 +130,7 @@ def main():
                 errorFiles.append(x)
     bnglFiles = [x for x in onlyfiles if 'bngl' in x and 'log' not in x]
     validFiles = [x for x in bnglFiles if x not in errorFiles]
-    print 'Thrown out: {0}'.format(len(bnglFiles)-len(validFiles))
+    print('Thrown out: {0}'.format(len(bnglFiles)-len(validFiles)))
     skip = [] #['334','225','332','105','293','333','337','18','409']
     counter = 0
     with open('executionTestErrors' + '.log', 'w') as f:
@@ -138,7 +138,7 @@ def main():
         for idx,bnglFile in enumerate(sorted(validFiles)):
             #if '100.' not in bnglFile:
             #    continue
-            print bnglFile,
+            print(bnglFile, end=' ')
             timeout = 30
             if len([x for x in skip if x in bnglFile]) > 0: 
                 continue
@@ -153,7 +153,7 @@ def main():
                         os.kill(result.pid, signal.SIGKILL)
                         os.waitpid(-1, os.WNOHANG)
                         subprocess.call(['killall','run_network'])
-                        print 'breaker',
+                        print('breaker', end=' ')
                         counter -=1
                         break
                 
@@ -164,21 +164,21 @@ def main():
                     lines = outfile.readlines()
                 tag = ''
                 if 'cvode' in ','.join(lines):
-                    print '///',bnglFile
+                    print('///',bnglFile)
                     tag = 'cvode'
                 elif 'ABORT: Reaction rule list could not be read because of errors' in ','.join(lines):
-                    print '\\\\\\',bnglFile
+                    print('\\\\\\',bnglFile)
                 #elif 'Incorrect number of arguments' in ','.join(lines):
                 #    print '[[]]',bnglFile
                 else:
-                    print '---',bnglFile
+                    print('---',bnglFile)
                     tag = lines
                     f.write('%s %s\n' % (bnglFile,tag))
                 f.flush()
             else:
                 counter += 1
-                print '+++',bnglFile
-    print counter
+                print('+++',bnglFile)
+    print(counter)
         
 
 if __name__ == "__main__":

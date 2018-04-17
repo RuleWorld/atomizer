@@ -70,7 +70,7 @@ class GMLIntegrityTestCase(ParametrizedTestCase):
         return result
         
     def test_gml_contact(self):
-        print self.param
+        print(self.param)
         self.assertEqual(self.generateGraph(self.param,'contactmap'),0)
     def test_gml_regulatory(self):
         self.assertEqual(self.generateGraph(self.param,'regulatory'),0)
