@@ -1,8 +1,8 @@
 
 
 SHELL = /bin/bash
-BUILD = ./build
-DIST = ./dist
+BUILD = ./SBMLparser/build
+DIST = ./SBMLparser/dist
 
 .PHONY: all install clean test
 
@@ -53,17 +53,14 @@ clean:
 	if test -d test/BioNetGen-2.2.6-stable; then \
 		rm -rf test/BioNetGen-2.2.6-stable;	\
 	fi
-	if test -d venv; then \
-		rm -rf venv;	\
-	fi
 	if test -d SBMLparser/atomizer_venv; then \
 		rm -rf SBMLparser/atomizer_venv;	\
 	fi
-	if test -d SBMLparser/dist; then \
-		rm -rf SBMLparser/dist;	\
+	if test -d SBMLparser/libsbml; then \
+		rm -rf SBMLparser/libsbml;	\
 	fi
-	if test -d SBMLparser/build; then \
-		rm -rf SBMLparser/build;	\
+	if test -d SBMLparser/python_libsbml-*.dist-info; then \
+		rm -rf SBMLparser/python_libsbml-*.dist-info;	\
 	fi
 
 	find . -name '*.pyc' -delete
