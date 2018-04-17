@@ -5,7 +5,6 @@ Created on Sat Oct 19 15:19:35 2013
 @author: proto
 """
 import pprint
-import libsbml
 import difflib
 from collections import Counter
 import json
@@ -14,7 +13,14 @@ import pickle
 from os import listdir
 from os.path import isfile, join
 import numpy as np
-from utils.util import pmemoize as memoize
+try:
+    from utils.util import pmemoize as memoize
+    import libsbml
+except ModuleNotFoundError:
+    import sys
+    sys.path.append('..')
+    from utils.util import pmemoize as memoize
+    import libsbml
 
 @memoize
 def levenshtein(s1, s2):
@@ -24,7 +30,7 @@ def levenshtein(s1, s2):
     #matrix = [range(l1 + 1)] * (l2 + 1)
     # for zz in range(l2 + 1):
     #  matrix[zz] = range(zz,zz + l1 + 1)
-    matrix = [range(x, x + l1 + 1) for x in range(0, l2 + 1)]
+    matrix = [list(range(x, x + l1 + 1)) for x in range(0, l2 + 1)]
     for zz in range(0, l2):
         for sz in range(0, l1):
             z = matrix[zz][sz] if s1[sz] == s2[zz] else matrix[zz][sz] + 1
@@ -272,7 +278,7 @@ def analyzeTrends(inputFile):
 
 if __name__ == "__main__":
     bioNumber = 19
-    #main('XMLExamples/curated/BIOMD%010i.xml' % bioNumber)
+    main('XMLExamples/curated/BIOMD%010i.xml' % bioNumber)
 
-    databaseAnalysis('XMLExamples/non_curated/', 'non_ontologies.dump')
+    #databaseAnalysis('XMLExamples/non_curated/', 'non_ontologies.dump')
     # analyzeTrends('ontologies.dump')

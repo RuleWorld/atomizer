@@ -1,19 +1,41 @@
-Project for the translation of SBML files into BNGL files. You can find more information about the project [here](https://ruleworld.github.io/atomizer/).
+Project for the translation of SBML files into BNGL files. You can find more
+information about the project [here](https://ruleworld.github.io/atomizer/).
 
 [![Build Status](https://travis-ci.org/RuleWorld/atomizer.svg?branch=master)](https://travis-ci.org/RuleWorld/atomizer) [![Build status](https://ci.appveyor.com/api/projects/status/rb4sci41f2fy62il?svg=true)](https://ci.appveyor.com/project/jjtapia/atomizer)
 
 
 ## Requirements
-libsbml, networkx (for state transition diagram creation), pexpect (for post atomization analysis). Check requirements.txt for specific versions of the libraries that Atomizer needs. You can also install all requirements with one command by doing
 
-> pip install -r requirements.txt
+### Ubuntu
 
-From the atomizer root directory 
+sudo apt-get install -y python3-dev
+sudo apt-get install -y python3-venv
 
+A number of Python libraries need to be installed, but these can be
+automatically installed in a Python virtual environment, which is exactly what
+the make file does. 
+
+### Optional for Developers
+
+If you want to run ./atomizer/SBMLparser/sbmlTranslator.py directly, you can
+install all the Python requirements at the system level by doing:
+
+> cd SBMLparser
+> sudo pip3 install -r requirements.txt
+
+Alternatively, you can do this at the user level:
+
+> cd SBMLparser
+> pip3 install --user -r requirements.txt
 
 ## Installation:
 
+From the top-level directory, type the following:
+
 > make; make install
+
+This will create an `sbmlTranslator` binary in `./atomizer/bin`. This is made
+using pyInstaller.
 
 ## Execution
 
