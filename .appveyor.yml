@@ -49,10 +49,9 @@ branches:
 
 
 build_script:
-  - "powershell ./build_sbmlTranslator_win.ps1"
-#   - make
-#   - make install
-#   - make test
+  - "%PYTHON%\\python.exe -m pip install --user -r ./SBMLparser/requirements_win.txt"
+  - "%PYTHON%\\python.exe -m pip install --target=./SBMLparser/ python-libsbml"
+  - "pyinstaller ./sbmlTranslator.spec"
 
 artifacts:
   - path: ./SBMLparser/dist/sbmlTranslator.exe
