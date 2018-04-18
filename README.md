@@ -1,7 +1,7 @@
 Project for the translation of SBML files into BNGL files. You can find more
 information about the project [here](https://ruleworld.github.io/atomizer/).
 
-[![Build Status](https://travis-ci.org/RuleWorld/atomizer.svg?branch=master)](https://travis-ci.org/RuleWorld/atomizer) [![Build status](https://ci.appveyor.com/api/projects/status/rb4sci41f2fy62il?svg=true)](https://ci.appveyor.com/project/jjtapia/atomizer)
+[![Build Status](https://travis-ci.org/RuleWorld/atomizer.svg?branch=master)](https://travis-ci.org/RuleWorld/atomizer) [![Build status](https://ci.appveyor.com/api/projects/status/rb4sci41f2fy62il?svg=true)](https://ci.appveyor.com/project/jczech/atomizer)
 
 
 ## Requirements
@@ -13,8 +13,8 @@ Windows.
 
 ### Ubuntu
 
-sudo apt-get install -y python3-dev
-sudo apt-get install -y python3-venv
+> sudo apt-get install -y python3-dev
+> sudo apt-get install -y python3-venv
 
 ### Windows 10
 
@@ -22,7 +22,7 @@ You'll need to install Python 3. We recommend using Anaconda for this.
 
 ### Optional for Developers
 
-If you want to run ./atomizer/SBMLparser/sbmlTranslator.py directly, you can
+If you want to run `./atomizer/SBMLparser/sbmlTranslator.py` directly, you can
 install all the Python requirements at the system level by doing:
 
 > cd SBMLparser
@@ -33,16 +33,18 @@ Alternatively, you can do this at the user level:
 > cd SBMLparser
 > pip3 install --user -r requirements.txt
 
-## Installation for OSX and Linux
+## Installation 
+
+### OSX and Linux
 
 From the top-level directory, type the following:
 
 > make; make install
 
 This will create an `sbmlTranslator` binary in `./atomizer/bin`. This is made
-using pyInstaller.
+using PyInstaller.
 
-## Installation for Windows
+### Installation for Windows
 
 Right click on `./atomizer/build_sbmlTranslator_win.ps1` and select `Run with
 PowerShell`.
