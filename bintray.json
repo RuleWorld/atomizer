@@ -6,6 +6,7 @@
         "desc": "I was pushed completely automatically",
         "website_url": "www.bionetgen.org",
         "issue_tracker_url": "https://github.com/ruleworld/atomizer/issues",
+        "licenses": ["GPL-2.0"],
         "vcs_url": "https://github.com/ruleworld/atomizer.git",
         "public_download_numbers": false,
         "public_stats": false
