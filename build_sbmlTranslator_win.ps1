@@ -4,7 +4,7 @@
 python -m venv .\atomizer_venv
 .\atomizer_venv\Scripts\Activate.ps1
 pip install --upgrade pip
-pip install -r .\requirements.txt
+pip install -r .\requirements_win.txt
 pip install --target=. python-libsbml
 pyinstaller .\sbmlTranslator.spec
 deactivate
