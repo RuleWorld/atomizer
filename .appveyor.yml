@@ -37,9 +37,10 @@ install:
   - "powershell ./build_sbmlTranslator_win.ps1"
 
 
-# branches:
-#   # whitelist
-#   only:
+branches:
+  # whitelist
+  only:
+     - python3
 #     - master
 #     - release
 #     - development
