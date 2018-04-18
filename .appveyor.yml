@@ -49,13 +49,13 @@ branches:
 
 
 build_script:
-  - "%PYTHON%\\python.exe -m pip install --user -r ./SBMLparser/requirements_win.txt"
-  - "%PYTHON%\\python.exe -m pip install --target=./SBMLparser/ python-libsbml"
-  - "%PYTHON%\\python.exe -m PyInstaller ./SBMLparser/sbmlTranslator.spec"
-  - "mv ./dist/sbmlTranslator.exe ./dist/sbmlTranslator_%APPVEYOR_REPO_COMMIT%.exe"
+  - "cd ./SBMLparser; %PYTHON%\\python.exe -m pip install --user -r ./requirements_win.txt"
+  - "cd ./SBMLparser; %PYTHON%\\python.exe -m pip install --target=. python-libsbml"
+  - "cd ./SBMLparser; %PYTHON%\\python.exe -m PyInstaller ./sbmlTranslator.spec"
+  - "mv ./dist/SBMLparser/sbmlTranslator.exe ./dist/SBMLparser/sbmlTranslator_%APPVEYOR_REPO_COMMIT%.exe"
 
 artifacts:
-  - path: ./dist/sbmlTranslator_%APPVEYOR_REPO_COMMIT%.exe
+  - path: ./dist/SBMLparser/sbmlTranslator_%APPVEYOR_REPO_COMMIT%.exe
     name: sbmlTranslator
 
 deploy:
