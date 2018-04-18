@@ -51,10 +51,10 @@ branches:
 build_script:
   - "%PYTHON%\\python.exe -m pip install --user -r ./SBMLparser/requirements_win.txt"
   - "%PYTHON%\\python.exe -m pip install --target=./SBMLparser/ python-libsbml"
-  - "%PYTHON%\\python.exe -m PyInstaller ./sbmlTranslator.spec"
+  - "%PYTHON%\\python.exe -m PyInstaller ./SBMLparser/sbmlTranslator.spec"
 
 artifacts:
-  - path: ./SBMLparser/dist/sbmlTranslator.exe
+  - path: ./dist/sbmlTranslator.exe
     name: sbmlTranslator
 
 deploy:
