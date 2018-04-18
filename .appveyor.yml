@@ -54,6 +54,17 @@ build_script:
 #   - make install
 #   - make test
 
+deploy:
+- provider: BinTray
+  username: jczech
+  api_key:
+    secure: XzrXGPWsRRrx8DZTJSNJpLkMZrxlXF2vdeao4CCBiXUtKBuxR7Nj2CQIBy3L3bSB
+  subject: jczech
+  repo: atomizer
+  package: atomizer
+  publish: true
+  override: true
+
 # artifacts:
 #   - path: '.\dist\sbmlTranslator-Win64.exe'
 #     name: sbmlTranslator
