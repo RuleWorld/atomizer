@@ -3,15 +3,15 @@ os:
   - osx
 
 #  This causes Ubuntu 12 to be loaded.  Remove it to get the latest version of Ubuntu
-dist: precise
+#dist: precise
 
 language: c++
 python:
-  - '2.7'
+  - '3.5'
 addons:
   apt:
     packages:
-    - perl
+    #- perl
     - python-pip
     - python-dev
     - python-numpy
@@ -24,40 +24,49 @@ addons:
     - libyaml-dev
 cache: pip
 
+before_script:
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install python
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libxml2
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libxslt
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libzip
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libsbml
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install lib32z1 lib32z1-dev
 
-before_install:
-  - source osx_install.sh
-  - sudo -H pip install -U pip wheel
+#before_install:
+#  - source osx_install.sh
+#  - sudo -H pip install -U pip wheel
 
 
-env:
-  global:
-#       FTP_USER
-    - secure: "UXFAHMY3o78I66J4fXOx422TcFTBWxEHsYF+REd7jIrfdJhhqDy5calvJHWJYgBvu5jSOvSEHNbjULPikNeInWslX0Na+qP2GYVlYjcnByEIgeHfnE+x1xfP38USkynMNpn9B9eVS5Nam0uf1mdcL6SxGCpMEN5u5sVgDWxpiQWiuNTf+5FMdjpmsPqi8z5Yn+UzbRl04i2Gd5by3iLteIVbSI8el2a8B5u824njSeK1HYqTKcNWgchcNzrqdf20EWnQcBqbJs5yXRWESIqphAQADNB7Ao4Q/Azv4Yj2v5wuec4j5PjGTEOPWTRtATpE3tY/x923xEEgsm0nAmZUBHL/7775+ncucbPKNKmhBrbqD88ysIGpYX/6+EMG7s0XkBZepC0Yfcuigr4yPw06AHs9pZMCsykMfbUodXnXaKYXqggYnd7xnJuZOaqVmO3eK323TWgyTMQQ/wOmni3QokVLI0o/EEzE/mm2kbk3jCu+23V/ilaqk9qOVmAUpyS9ruzywR7CY9V4kFr1dKhs5uLpPkW96/iT/gsDGKpsl3QwHpXjP8tGyNH909u8OspxtiwGIGgmYgUZbAA/Usefx2lAxF3poV9YI1opfKlC/KQ5hJTJW4fO0PGCt66IP+7MWvt7lYCwdD9OCHttR/Iqalcy8vcXmaajvBc16fXN25w="
-#       FTP_PASSWORD    
-    - secure: "q+x1GW3aiNFXOBIeu8+cF85C7B/kY7VZhgC2sLzhdhJB8OCVU7Ise0d5sE4YLMTJM1UDZHo+yxIL6ni/Evk33yDXa6U4d+n5F6yRFS1306WsoUcBj4KrDNqHnaDp/BjGYYvg+uKDfH/bmaG/q+vbJi8WUfZPdazB9YMLXEZd4ZdoQ0I3uXGnciDcd9xBkMB6OGBRxDYEYC5ti5tkJ27pmzioEJzNGwaCGab56mOd84EQJ2+76mnn2NqrzMyt0wcC+qkJPMyTZGduOpy3vrRiYOwc0zt78mv9KjNBY3KziCv4AZuXaLKvGQvfypRco5G1TB5Vg7rI53MC6kvNDKmPVxWX9AYA8g4wYMgazsD1VAHjpoe1AvhCOaKqiANquwysq938IX3vV92WH8Y4uYh3i7RzHzDXrNPvHBAiul4JuD5+KV6ccK6Ucq6s/AIOSWI56l7G0SkyffTJzrjdLZDMeOCKUtAgLu78Hi+hgBqFqRmPJROoJS/ApoBn7rirBgDwUIifYZlJmYhCpPw8hwJPf1nv0R+KoyzehQkxtzvtTIH6HuRI3P9hot4SxvMA5wnZLz5xBjV6z9wXzUFy8JNl2cYGSIAVxbJfTmC2COnCflxOHAP1BGlDW2RQUUrLHEk+s1ND9vjdFwTtpOg8zuhPHBNidn+t7Xtcs7tA2LInIMY="
+#env:
+#  global:
+##       FTP_USER
+#    - secure: "UXFAHMY3o78I66J4fXOx422TcFTBWxEHsYF+REd7jIrfdJhhqDy5calvJHWJYgBvu5jSOvSEHNbjULPikNeInWslX0Na+qP2GYVlYjcnByEIgeHfnE+x1xfP38USkynMNpn9B9eVS5Nam0uf1mdcL6SxGCpMEN5u5sVgDWxpiQWiuNTf+5FMdjpmsPqi8z5Yn+UzbRl04i2Gd5by3iLteIVbSI8el2a8B5u824njSeK1HYqTKcNWgchcNzrqdf20EWnQcBqbJs5yXRWESIqphAQADNB7Ao4Q/Azv4Yj2v5wuec4j5PjGTEOPWTRtATpE3tY/x923xEEgsm0nAmZUBHL/7775+ncucbPKNKmhBrbqD88ysIGpYX/6+EMG7s0XkBZepC0Yfcuigr4yPw06AHs9pZMCsykMfbUodXnXaKYXqggYnd7xnJuZOaqVmO3eK323TWgyTMQQ/wOmni3QokVLI0o/EEzE/mm2kbk3jCu+23V/ilaqk9qOVmAUpyS9ruzywR7CY9V4kFr1dKhs5uLpPkW96/iT/gsDGKpsl3QwHpXjP8tGyNH909u8OspxtiwGIGgmYgUZbAA/Usefx2lAxF3poV9YI1opfKlC/KQ5hJTJW4fO0PGCt66IP+7MWvt7lYCwdD9OCHttR/Iqalcy8vcXmaajvBc16fXN25w="
+##       FTP_PASSWORD    
+#    - secure: "q+x1GW3aiNFXOBIeu8+cF85C7B/kY7VZhgC2sLzhdhJB8OCVU7Ise0d5sE4YLMTJM1UDZHo+yxIL6ni/Evk33yDXa6U4d+n5F6yRFS1306WsoUcBj4KrDNqHnaDp/BjGYYvg+uKDfH/bmaG/q+vbJi8WUfZPdazB9YMLXEZd4ZdoQ0I3uXGnciDcd9xBkMB6OGBRxDYEYC5ti5tkJ27pmzioEJzNGwaCGab56mOd84EQJ2+76mnn2NqrzMyt0wcC+qkJPMyTZGduOpy3vrRiYOwc0zt78mv9KjNBY3KziCv4AZuXaLKvGQvfypRco5G1TB5Vg7rI53MC6kvNDKmPVxWX9AYA8g4wYMgazsD1VAHjpoe1AvhCOaKqiANquwysq938IX3vV92WH8Y4uYh3i7RzHzDXrNPvHBAiul4JuD5+KV6ccK6Ucq6s/AIOSWI56l7G0SkyffTJzrjdLZDMeOCKUtAgLu78Hi+hgBqFqRmPJROoJS/ApoBn7rirBgDwUIifYZlJmYhCpPw8hwJPf1nv0R+KoyzehQkxtzvtTIH6HuRI3P9hot4SxvMA5wnZLz5xBjV6z9wXzUFy8JNl2cYGSIAVxbJfTmC2COnCflxOHAP1BGlDW2RQUUrLHEk+s1ND9vjdFwTtpOg8zuhPHBNidn+t7Xtcs7tA2LInIMY="
 
 #before_deploy:
 #- cd dist; python changeFilename.py; cd ..
 
 
-script: make; make install; make test; cp ./dist/sbmlTranslator ./dist/sbmlTranslator-$TRAVIS_OS_NAME ; source .curl_ftp.sh
+#script: make; make install; make test; cp ./dist/sbmlTranslator ./dist/sbmlTranslator-$TRAVIS_OS_NAME ; source .curl_ftp.sh
+script: make
 
 #deploy:
 # skip_cleanup: true 
  
-notifications:
-  slack: 
-    rooms:    
-      - faederlab:tEor7269wGs9ylzYYu7hVGq9#build-results
-    template:
-      - "Atomizer build: %{result} in %{duration}"
-      - "Build: <%{build_url}|#%{build_number}> (<%{compare_url}|%{commit}>) Author: %{author}"      
-      - "To download the Atomizer executable, "
-      - "Goto: https://rawgit.com/RuleWorld/atomizer/master/.Atomizer_Beta.html"
-      - "To package Atomizer, please make a small modification to BioNetGen:"
-      - "Goto: https://github.com/RuleWorld/bionetgen"
-      - "Build details:  %{build_url} "
+#notifications:
+#  slack: 
+#    rooms:    
+#      - faederlab:tEor7269wGs9ylzYYu7hVGq9#build-results
+#    template:
+#      - "Atomizer build: %{result} in %{duration}"
+#      - "Build: <%{build_url}|#%{build_number}> (<%{compare_url}|%{commit}>) Author: %{author}"      
+#      - "To download the Atomizer executable, "
+#      - "Goto: https://rawgit.com/RuleWorld/atomizer/master/.Atomizer_Beta.html"
+#      - "To package Atomizer, please make a small modification to BioNetGen:"
+#      - "Goto: https://github.com/RuleWorld/bionetgen"
+#      - "Build details:  %{build_url} "
 
 
 #after_success:

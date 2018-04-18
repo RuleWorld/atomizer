@@ -16,7 +16,7 @@ else
 	pyinstaller utils/sbmlTranslator_windows.spec ;
 endif
 else
-	./build_sbmlTranslator_linux.sh
+	./build_sbmlTranslator.sh
 endif
 
 
