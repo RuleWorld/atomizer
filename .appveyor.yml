@@ -49,9 +49,9 @@ branches:
 
 
 build_script:
-  - "cd ./SBMLparser; %PYTHON%\\python.exe -m pip install --user -r ./requirements_win.txt"
-  - "cd ./SBMLparser; %PYTHON%\\python.exe -m pip install --target=. python-libsbml"
-  - "cd ./SBMLparser; %PYTHON%\\python.exe -m PyInstaller ./sbmlTranslator.spec"
+  - "cd ./SBMLparser && %PYTHON%\\python.exe -m pip install --user -r ./requirements_win.txt"
+  - "cd ./SBMLparser && %PYTHON%\\python.exe -m pip install --target=. python-libsbml"
+  - "cd ./SBMLparser && %PYTHON%\\python.exe -m PyInstaller ./sbmlTranslator.spec"
   - "mv ./dist/SBMLparser/sbmlTranslator.exe ./dist/SBMLparser/sbmlTranslator_%APPVEYOR_REPO_COMMIT%.exe"
 
 artifacts:
