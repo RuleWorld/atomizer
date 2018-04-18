@@ -6,29 +6,12 @@ os:
 #dist: precise
 
 language: c++
-python:
-  - '3.5'
-addons:
-  apt:
-    packages:
-    - python3-dev
-    - python3-venv
-    #- libxml2-dev
-    #- zlib1g-dev
-    #- libbz2-dev
-    #- libxslt-dev
-    #- lib32z1-dev
-    #- python-lxml
-    #- libyaml-dev
-cache: pip
 
 before_script:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y python3-dev; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y python3-venv; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade python; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libxml2; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libxslt; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libzip; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install lib32z1 lib32z1-dev; fi
 
 #before_install:
 #  - source osx_install.sh
