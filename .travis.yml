@@ -26,12 +26,12 @@ cache: pip
 
 before_script:
   - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install python
-  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libxml2
-  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libxslt
-  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libzip
-  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libsbml
-  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install lib32z1 lib32z1-dev
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install python; fi
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libxml2; fi
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libxslt; fi
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libzip; fi
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install libsbml; fi
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]]; brew install lib32z1 lib32z1-dev; fi
 
 #before_install:
 #  - source osx_install.sh
