@@ -6,14 +6,19 @@ information about the project [here](https://ruleworld.github.io/atomizer/).
 
 ## Requirements
 
+A number of Python libraries need to be installed, but these can be
+automatically installed in a Python virtual environment, which is exactly what
+the make file does under Linux and OSX or what the PowerShell script does for
+Windows.
+
 ### Ubuntu
 
 sudo apt-get install -y python3-dev
 sudo apt-get install -y python3-venv
 
-A number of Python libraries need to be installed, but these can be
-automatically installed in a Python virtual environment, which is exactly what
-the make file does. 
+### Windows 10
+
+You'll need to install Python 3. We recommend using Anaconda for this.
 
 ### Optional for Developers
 
@@ -28,7 +33,7 @@ Alternatively, you can do this at the user level:
 > cd SBMLparser
 > pip3 install --user -r requirements.txt
 
-## Installation:
+## Installation for OSX and Linux
 
 From the top-level directory, type the following:
 
@@ -36,6 +41,11 @@ From the top-level directory, type the following:
 
 This will create an `sbmlTranslator` binary in `./atomizer/bin`. This is made
 using pyInstaller.
+
+## Installation for Windows
+
+Right click on `./atomizer/build_sbmlTranslator_win.ps1` and select `Run with
+PowerShell`.
 
 ## Execution
 
@@ -51,7 +61,7 @@ Optional arguments
 Directory Structure:
 |
 - SBMLparser: Directory containing the main project.
-  | 
+  |
     - sbmlTranslator.py: Entry level file
     - atomizer: Contains the main implicit assumption extraction code
     	- analyzeSBML.py: lexical analysis engine
@@ -61,9 +71,8 @@ Directory Structure:
         - resolveSCT.py: Creates the species composition table using lexical analysis, annotation information and
         				 the stoichiometry matrix
         - moleculeCreation.py: Creates the structured molecules for use in graph-creation
-        
+
     - utils: contains several utility scripts used during the atomization process
     	- consoleCommands.py: Interfaces with the BioNetGen console
         - pathwaysCommons.py: Queries BioGrid and pathways commons given an RDF annotation entry
 - stats: Extracts statistics of a set of atomized BioModels files
-
