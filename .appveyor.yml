@@ -54,6 +54,10 @@ build_script:
 #   - make install
 #   - make test
 
+artifacts:
+  - path: ./SBMLparser/dist/sbmlTranslator.exe
+    name: sbmlTranslator
+
 deploy:
 - provider: BinTray
   username: jczech
@@ -64,6 +68,7 @@ deploy:
   package: atomizer
   publish: true
   override: true
+  artifact: sbmlTranslator
 
 # artifacts:
 #   - path: '.\dist\sbmlTranslator-Win64.exe'
