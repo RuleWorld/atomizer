@@ -13,13 +13,13 @@ addons:
     packages:
     - python3-dev
     - python3-venv
-    - libxml2-dev
-    - zlib1g-dev
-    - libbz2-dev
-    - libxslt-dev
-    - lib32z1-dev
-    - python-lxml
-    - libyaml-dev
+    #- libxml2-dev
+    #- zlib1g-dev
+    #- libbz2-dev
+    #- libxslt-dev
+    #- lib32z1-dev
+    #- python-lxml
+    #- libyaml-dev
 cache: pip
 
 before_script:
