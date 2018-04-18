@@ -52,9 +52,10 @@ build_script:
   - "%PYTHON%\\python.exe -m pip install --user -r ./SBMLparser/requirements_win.txt"
   - "%PYTHON%\\python.exe -m pip install --target=./SBMLparser/ python-libsbml"
   - "%PYTHON%\\python.exe -m PyInstaller ./SBMLparser/sbmlTranslator.spec"
+  - "mv ./dist/sbmlTranslator.exe ./dist/sbmlTranslator_%APPVEYOR_REPO_COMMIT%.exe"
 
 artifacts:
-  - path: ./dist/sbmlTranslator.exe
+  - path: ./dist/sbmlTranslator_%APPVEYOR_REPO_COMMIT%.exe
     name: sbmlTranslator
 
 deploy:
