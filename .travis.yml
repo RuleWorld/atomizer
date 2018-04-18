@@ -2,8 +2,9 @@ os:
   - linux  
   - osx
 
-#  This causes Ubuntu 12 to be loaded.  Remove it to get the latest version of Ubuntu
-#dist: precise
+# Ubuntu 14.04. For some reason, 16.04 isn't available... :/
+dist: trusty
+sudo: required
 
 language: c++
 
