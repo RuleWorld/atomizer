@@ -7,7 +7,6 @@
         "website_url": "www.bionetgen.org",
         "issue_tracker_url": "https://github.com/ruleworld/atomizer/issues",
         "vcs_url": "https://github.com/ruleworld/atomizer.git",
-        "licenses": ["GPL"],
         "public_download_numbers": false,
         "public_stats": false
     },
