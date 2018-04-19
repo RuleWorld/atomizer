@@ -12,6 +12,12 @@
         "public_stats": false
     },
 
+    "version": {
+      "name": "1.0",
+      "desc": "The latest release of atomizer",
+      "gpgSign": false
+    },
+
 		"files":
 				[
         {"includePattern": "SBMLparser/dist/(sbmlTranslator.*)", "uploadPattern": "/$1"}
