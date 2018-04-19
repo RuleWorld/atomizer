@@ -1,5 +1,3 @@
-
-
 SHELL = /bin/bash
 BUILD = ./SBMLparser/build
 DIST = ./SBMLparser/dist
@@ -8,34 +6,15 @@ DIST = ./SBMLparser/dist
 
 
 all:
-
-ifeq ($(OS),Windows_NT)
-ifeq ($(shell uname -o),Cygwin)
-	pyinstaller utils/sbmlTranslator.spec ;
-else
-	pyinstaller utils/sbmlTranslator_windows.spec ;
-endif
-else
 	./build_sbmlTranslator.sh
-endif
 
 
 install:
 	mkdir -p bin
-ifeq ($(OS),Windows_NT)
-    ifeq ($(shell uname -o),Cygwin)
-	    cp  ${DIST}/sbmlTranslator bin/sbmlTranslator.exe;
-    else
-	    cp  ${DIST}/sbmlTranslator.exe bin/sbmlTranslator.exe;
-	    cp  ${DIST}/sbmlTranslator.exe ${DIST}/sbmlTranslator-Win64.exe;
-    endif
-else
 	cp  ${DIST}/sbmlTranslator bin/sbmlTranslator;
-endif
-
 
 test:
-	cd SBMLparser; PYTHONPATH=$PYTHONPATH:. nosetests --with-doctest; cd ..;
+	cd SBMLparser; PYTHONPATH=$(PYTHONPATH):. nosetests --with-doctest; cd ..;
 ifeq ($(shell uname -s),Linux)
 	cd test; tar xfj bionetgen-2.2.6.tar.bz2; tar xfj testsuite.tar.bz2; python testSuite.py;
 endif
@@ -65,5 +44,3 @@ clean:
 
 	find . -name '*.pyc' -delete
 	find . -name '__pycache__' -delete
-
-	
