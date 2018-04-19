@@ -20,8 +20,11 @@
 
 		"files":
 				[
-        {"includePattern": "SBMLparser/dist/(sbmlTranslator.*)", "uploadPattern": "/$1"}
-		    ],
+        {"includePattern": "SBMLparser/dist/(sbmlTranslator.*)", "uploadPattern": "/$1",
+				"matrixParams": {
+						"override": 1 }
+				}
+		],
 
     "publish": true
 }
