@@ -16,6 +16,8 @@ a = Analysis(['sbmlTranslator.py'],
              cipher=block_cipher)
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
+a.datas += [('config/namingConventions.json','config/namingConventions.json','DATA'),
+            ('config/reactionDefinitions.json','config/reactionDefinitions.json','DATA')]
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
