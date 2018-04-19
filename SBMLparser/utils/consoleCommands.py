@@ -21,6 +21,7 @@ bngExecutable = join(home,'workspace','RuleWorld','bionetgen','bng2','BNG2.pl')
 
 
 def setBngExecutable(executable):
+    global bngExecutable
     bngExecutable = executable
 
 
