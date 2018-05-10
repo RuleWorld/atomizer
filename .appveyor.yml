@@ -8,27 +8,32 @@ branches:
      - python3
 
 build_script:
-  - "cd ./SBMLparser"
+  - "cd .\SBMLparser"
   - "%PYTHON%\\python.exe -m pip install --user -r ./requirements_win.txt"
   - "%PYTHON%\\python.exe -m pip install --target=. python-libsbml"
   - "%PYTHON%\\python.exe -m PyInstaller ./sbmlTranslator.spec"
-  - "mv ./dist/sbmlTranslator.exe ./dist/sbmlTranslator_%APPVEYOR_REPO_COMMIT%.exe"
+  - "cd .\dist"
+  - "7z a .\sbmlTranslator.zip .\sbmlTranslator"
+  - "cd .."
 
 artifacts:
-  - path: ./SBMLparser/dist/sbmlTranslator_%APPVEYOR_REPO_COMMIT%.exe
+  - path: ./SBMLparser/dist/sbmlTranslator.zip
     name: sbmlTranslator
 
 deploy:
 - provider: BinTray
   username: jczech
-  api_key:
-    secure: XzrXGPWsRRrx8DZTJSNJpLkMZrxlXF2vdeao4CCBiXUtKBuxR7Nj2CQIBy3L3bSB
   subject: jczech
+  api_key:
+    # api key from https://bintray.com/profile/edit
+    # encrypted in https://ci.appveyor.com/tools/encrypt
+    secure: XzrXGPWsRRrx8DZTJSNJpLkMZrxlXF2vdeao4CCBiXUtKBuxR7Nj2CQIBy3L3bSB
   repo: atomizer
   package: atomizer
+  version: 1.0
+  artifact: sbmlTranslator
   publish: true
   override: true
-  artifact: sbmlTranslator
 
 #  To encrypt a password, do the following:
 #  1) Log on to Appveyor
