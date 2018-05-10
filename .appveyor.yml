@@ -13,7 +13,7 @@ build_script:
   - "%PYTHON%\\python.exe -m pip install --target=. python-libsbml"
   - "%PYTHON%\\python.exe -m PyInstaller ./sbmlTranslator.spec"
   - "cd .\\dist"
-  - "7z a .\\sbmlTranslator.zip .\\sbmlTranslator"
+  - "7z a .\\sbmlTranslator.zip .\\sbmlTranslator.exe"
   - "cd .."
 
 artifacts:
