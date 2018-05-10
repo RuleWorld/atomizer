@@ -3,6 +3,14 @@ information about the project [here](https://ruleworld.github.io/atomizer/).
 
 [![Build Status](https://travis-ci.org/RuleWorld/atomizer.svg?branch=master)](https://travis-ci.org/RuleWorld/atomizer) [![Build status](https://ci.appveyor.com/api/projects/status/rb4sci41f2fy62il?svg=true)](https://ci.appveyor.com/project/jczech/atomizer)
 
+## Download Latest Test Builds
+
+These builds are the from the head of master and are not guaranteed to be
+stable. Use at your own risk.
+
+* [Linux](https://bintray.com/jczech/atomizer/download_file?file_path=sbmlTranslator_linux)
+* [OSX](https://bintray.com/jczech/atomizer/download_file?file_path=sbmlTranslator_osx)
+* [Windows x64](https://bintray.com/jczech/atomizer/download_file?file_path=sbmlTranslator_win.zip)
 
 ## Requirements
 
