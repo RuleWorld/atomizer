@@ -21,6 +21,7 @@ bngExecutable = join(home,'workspace','RuleWorld','bionetgen','bng2','BNG2.pl')
 
 
 def setBngExecutable(executable):
+    global bngExecutable
     bngExecutable = executable
 
 
@@ -95,4 +96,4 @@ def generateGraph(bnglFile,graphType,options=[]):
     
     
 if __name__ == "__main__":      
-    print bngl2xml('/tmp/tmpIhm3Ej.bngl')
+    print(bngl2xml('/tmp/tmpIhm3Ej.bngl'))

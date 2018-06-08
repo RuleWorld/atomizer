@@ -42,7 +42,7 @@ def main():
     namespace = parser.parse_args()
 
     options = checkInput(namespace)
-    print options    
+    print(options)    
     
     ls2b.analyzeFile(options['inputFile'],options['conventionFile'],options['useId'],
                      options['outputFile'],speciesEquivalence=options['userStructure'],

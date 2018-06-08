@@ -16,7 +16,7 @@ def xml2cps():
     with open('dummy.tmp','w') as d:
         for element in range(1,463):
             call(['/home/proto/Downloads/copasi/bin/CopasiSE','-i','XMLExamples/curated/BIOMD%010i.xml' % element],stdout=d)
-            print element
+            print(element)
 #    inputFile = open('fceri_ji_{0}b.cps'.format(index),'r')
     
     
@@ -86,11 +86,11 @@ def generateCopasiOutput():
     with open('dummy.tmp','w') as d:
         for element in range(1,463):
             call(['/home/proto/Downloads/copasi/bin/CopasiSE','copasiBenchmark/mBIOMD%010i.cps' % element],stdout=d)
-            print element
+            print(element)
 
 
 def loadResults(fileName,split):
-    print fileName,
+    print(fileName, end=' ')
     try:
         with open(fileName) as dataInput:
             timeCourse = []
@@ -103,11 +103,11 @@ def loadResults(fileName,split):
                  try:
                      timeCourse.append([float(x) for x in nline])     
                  except:
-                     print '++++',nline
-        print 'loaded'
+                     print('++++',nline)
+        print('loaded')
         return headers,np.array(timeCourse)
     except IOError:
-        print 'no file'
+        print('no file')
         return [],[]
         
 
@@ -168,7 +168,7 @@ def evaluate(fileNumber):
     rtol = atol/copasi[:,newCopHeaders]
     rtol = rtol[np.logical_not(np.isnan(rtol))]
     score =  np.median(pow(np.sum(pow(copasi[:,newCopHeaders] - bng[:,newBngHeaders],2),axis=0)/np.size(copasi,0),0.5))
-    print '---',score,fileNumber    
+    print('---',score,fileNumber)    
     return score
 
 def compareBNGResults(file1,file2):
@@ -177,17 +177,17 @@ def compareBNGResults(file1,file2):
     
     plotResults(bng,bng2)       
     score =  pow(np.sum(pow(bng-bng2,2),axis=0)/np.size(bng,0),0.5)
-    print score
+    print(score)
     score = np.median(score)
-    print score
-    print bngheaders
+    print(score)
+    print(bngheaders)
     
     
 def compareResults():
     good= 0
     tested = 0
     for fileNumber in [48]:
-        print fileNumber
+        print(fileNumber)
         copheaders,copasi = loadResults('copasiBenchmark/output_{0}.txt'.format(fileNumber),'[')
         copheaders = [x.replace(']','').strip() for x in copheaders]
         copheaders = [x.replace('-','_').strip() for x in copheaders]
@@ -198,13 +198,13 @@ def compareResults():
         newBngHeaders = []
         
         if len(copasi) < 2:
-            print 'copasi pass'
+            print('copasi pass')
             continue
         elif len(bng) < 2:
-            print 'bng pass'
+            print('bng pass')
             continue
         elif np.size(copasi,0) != np.size(bng,0):
-            print 'different times {0} {1}'.format(len(copasi),len(bng))
+            print('different times {0} {1}'.format(len(copasi),len(bng)))
             continue
         #print translator
         for idx,element in enumerate(copheaders):
@@ -222,7 +222,7 @@ def compareResults():
                             newCopHeaders.append(idx)
                             newBngHeaders.append(bngheaders.index(element.split(' ')[0])-1)
                     else:
-                        print 'herp derp',element
+                        print('herp derp',element)
                 continue
             elif translator[element] in bngheaders:
                 if not (bng[-1,bngheaders.index(translator[element])-1] ==0 and copasi[-1,idx] > 1e-5):
@@ -239,7 +239,7 @@ def compareResults():
         #rtol = atol/copasi[:,newCopHeaders]
         #rtol = rtol[np.logical_not(np.isnan(rtol))]
         score =  pow(np.sum(pow(copasi[:,newCopHeaders] - bng[:,newBngHeaders],2),axis=0)/np.size(copasi,0),0.5)
-        print score
+        print(score)
         score = np.median(score)
         #mini = np.min(np.sum(pow(copasi[:,newCopHeaders] - bng[:,newBngHeaders],2),axis=0)/np.size(copasi,0))
         #if score>1e-3 and mini<1e-5:
@@ -248,7 +248,7 @@ def compareResults():
         if score < 0.001:
             good += 1
         else:
-            print score,np.size(bng,1)
+            print(score,np.size(bng,1))
         #print newCopHeaders
     #print bngheaders,copheaders,copasiIndexes
     #print bng[0:3,newBngHeaders]
@@ -256,7 +256,7 @@ def compareResults():
 #    print bng[:,newBngHeaders]
 #    print copasi[:,newCopHeaders]
     #print copheaders[1:]
-    print tested,good 
+    print(tested,good) 
     plotResults(bng[:,newBngHeaders],bng[:,newBngHeaders]-copasi[:,newCopHeaders])           
 
         

@@ -5,7 +5,6 @@ Created on Sat Oct 19 15:19:35 2013
 @author: proto
 """
 import pprint
-import libsbml
 import difflib
 from collections import Counter
 import json
@@ -14,7 +13,14 @@ import pickle
 from os import listdir
 from os.path import isfile, join
 import numpy as np
-from utils.util import pmemoize as memoize
+try:
+    from utils.util import pmemoize as memoize
+    import libsbml
+except ModuleNotFoundError:
+    import sys
+    sys.path.append('..')
+    from utils.util import pmemoize as memoize
+    import libsbml
 
 @memoize
 def levenshtein(s1, s2):
@@ -24,7 +30,7 @@ def levenshtein(s1, s2):
     #matrix = [range(l1 + 1)] * (l2 + 1)
     # for zz in range(l2 + 1):
     #  matrix[zz] = range(zz,zz + l1 + 1)
-    matrix = [range(x, x + l1 + 1) for x in range(0, l2 + 1)]
+    matrix = [list(range(x, x + l1 + 1)) for x in range(0, l2 + 1)]
     for zz in range(0, l2):
         for sz in range(0, l1):
             z = matrix[zz][sz] if s1[sz] == s2[zz] else matrix[zz][sz] + 1
@@ -140,7 +146,7 @@ def defineEditDistanceMatrix(speciesName, similarityThreshold=4, parallel=False)
         for future in concurrent.futures.as_completed(futures):
             idx3,row = future.result()
             counter.remove(idx3)
-            print len(counter)
+            print(len(counter))
             scoreMatrix[idx3] = row
     '''
 
@@ -183,7 +189,7 @@ def analyzeNamingConventions(speciesName, ontologyFile, ontologyDictionary={}, s
     for key in tmp:
         tmp[key] = ontology['patterns'][key]
     keys = [''.join(x).replace('+ ', '') for x in keys]
-    # print ontology
+    # print(ontology)
 
     return pairClassification, keys, tmp
 
@@ -205,7 +211,7 @@ def databaseAnalysis(directory, outputFile):
     differenceCounter = Counter()
     fileDict = {}
     for xml in xmlFiles:
-        print xml
+        print(xml)
         reader = libsbml.SBMLReader()
         document = reader.readSBMLFromFile(directory + xml)
         model = document.getModel()
@@ -262,17 +268,17 @@ def analyzeTrends(inputFile):
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(keys)
     data = pd.DataFrame(keys)
-    #print data.to_excel('name.xls')
+    #print(data.to_excel('name.xls'))
     
     #for element in keys:
-    #    print '------------------'
-    #    print element
+    #    print('------------------')
+    #    print(element)
     #    pp.pprint(dictionary[element[0]])
 '''
 
 if __name__ == "__main__":
     bioNumber = 19
-    #main('XMLExamples/curated/BIOMD%010i.xml' % bioNumber)
+    main('XMLExamples/curated/BIOMD%010i.xml' % bioNumber)
 
-    databaseAnalysis('XMLExamples/non_curated/', 'non_ontologies.dump')
+    #databaseAnalysis('XMLExamples/non_curated/', 'non_ontologies.dump')
     # analyzeTrends('ontologies.dump')

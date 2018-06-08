@@ -1,0 +1,8 @@
+*.pyc
+tags
+SBMLparser/atomizer_venv
+SBMLparser/build
+SBMLparser/dist
+SBMLparser/libsbml
+SBMLparser/python_libsbml*
+sbmlTranslator.exe

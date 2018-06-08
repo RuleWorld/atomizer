@@ -5,8 +5,9 @@ Created on Mon Nov 19 14:28:16 2012
 @author: proto
 """
 from lxml import etree
-import smallStructures as st
-from cStringIO import StringIO
+from . import smallStructures as st
+# from cStringIO import StringIO
+from io import StringIO
 
 # http://igraph.sourceforge.net/documentation.html
 # ----------------------------------------------------------------------
@@ -363,9 +364,9 @@ def createBNGLFromDescription(namespace):
 
 if __name__ == "__main__":
     #mol,rule,par = parseXML("output19.xml")
-    # print [str(x) for x in mol]
+    # print([str(x) for x in mol])
     with open('output19.xml','r') as f:
         s = f.read()
-    print parseFullXML('output19.xml')['rules'][0][0].actions[0].action
-    #print getNumObservablesXML('output19.xml')
+    print(parseFullXML('output19.xml')['rules'][0][0].actions[0].action)
+    #print(getNumObservablesXML('output19.xml'))
 

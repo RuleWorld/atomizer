@@ -5,7 +5,7 @@ Created on Tue Dec  6 17:42:31 2011
 @author: proto
 """
 from copy import deepcopy, copy
-import writer.bnglWriter as writer
+from writer import bnglWriter as writer
 log = {'species': [], 'reactions': []}
 import re
 from collections import Counter
@@ -254,8 +254,8 @@ class SBML2BNGL:
         usage in bng requires special handling.
         """
         swapDict = {libsbml.AST_NAME_TIME : 'Time'}
-        for node in [x for x in math.getLeftChild(), math.getRightChild() if x != None]:
-            if node.getType() in swapDict.keys():
+        for node in [x for x in (math.getLeftChild(), math.getRightChild()) if x != None]:
+            if node.getType() in list(swapDict.keys()):
                 node.setName(swapDict[node.getType()])
         if math.getCharacter() == '+' and math.getNumChildren() == 1:
             math = math.getLeftChild()
@@ -291,14 +291,14 @@ class SBML2BNGL:
                 #math.getLeftChild().setValue(long(libsbml.formulaToString(math.getLeftChild())[1:]))
                 return True
             elif math.getLeftChild().getNumChildren() == 0 and libsbml.formulaToString(math.getLeftChild()).startswith('-'):
-                math.getLeftChild().setValue(long(libsbml.formulaToString(math.getLeftChild())[1:]))
+                math.getLeftChild().setValue(int(libsbml.formulaToString(math.getLeftChild())[1:]))
                 return True
             elif math.getRightChild().isUMinus():
                 math.setCharacter('+')
                 #math.getRightChild().setValue(long(libsbml.formulaToString(math.getRightChild())[1:]))
                 return True
             elif math.getRightChild().getNumChildren() == 0 and libsbml.formulaToString(math.getRightChild()).startswith('-'):
-                math.getRightChild().setValue(long(libsbml.formulaToString(math.getRightChild())[1:]))
+                math.getRightChild().setValue(int(libsbml.formulaToString(math.getRightChild())[1:]))
                 return True
 
             else:
@@ -1205,7 +1205,7 @@ but reaction is marked as reversible'.format(reactionID))
         '''
         def default_to_regular(d):
             if isinstance(d, defaultdict):
-                d = {k: default_to_regular(v) for k, v in d.iteritems()}
+                d = {k: default_to_regular(v) for k, v in d.items()}
             return d
 
         #find concentration units
@@ -1226,7 +1226,7 @@ but reaction is marked as reversible'.format(reactionID))
         observablesText = []
         observablesDict = {}
         names = []
-        rawSpeciesName = translator.keys()
+        rawSpeciesName = list(translator.keys())
         speciesTranslationDict = {}
         compartmentDict = {}
         compartmentDict[''] = 1

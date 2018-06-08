@@ -536,9 +536,9 @@ class Molecule:
         '''
         if flag:
             graph.add_node(identifier,label=self.__str__(),name="cluster%s_%s" % (identifier,self.idx))
-            print "cluster%s_%s" % (identifier,self.idx)
+            print("cluster%s_%s" % (identifier,self.idx))
         else:
-            print identifier
+            print(identifier)
             graph.add_node(identifier,label=self.__str__(),name=identifier)
         
         moleculeDictionary[self.idx] = identifier
@@ -612,7 +612,7 @@ class Component:
             self.states.append(state)
         if update:
             self.setActiveState(state)
-        #print 'LALALA',state
+        #print('LALALA',state)
     def addStates(self,states,update=True):
         for state in states:
             if state not in self.states:

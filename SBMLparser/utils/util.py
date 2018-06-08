@@ -163,7 +163,7 @@ class NumericStringParser(object):
 
     def evaluateStack(self, s):
         op = s.pop()
-        print op
+        print(op)
         if op == 'unary -':
             return -self.evaluateStack(s)
         if op in "+-*/^":
@@ -273,7 +273,7 @@ def getValidFiles(directory, extension):
 def generateBNGXML(directory):
 
     bnglFiles = getValidFiles(directory, 'bngl')
-    print 'converting {0} bnglfiles'.format(len(bnglFiles))
+    print('converting {0} bnglfiles'.format(len(bnglFiles)))
     progress = progressbar.ProgressBar()
     for i in progress(range(len(bnglFiles))):
         xmlName = '.'.join(bnglFiles[i].split('.')[:-1]) + '.xml'
@@ -283,7 +283,7 @@ def generateBNGXML(directory):
             continue
         console.bngl2xml(bnglFiles[i], timeout=10)
 
-    print 'moving xml files'
+    print('moving xml files')
     files = glob.iglob(os.path.join('.', "*.xml"))
     for xmlfile in files:
         if os.path.isfile(xmlfile):

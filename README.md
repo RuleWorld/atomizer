@@ -1,19 +1,61 @@
-Project for the translation of SBML files into BNGL files. You can find more information about the project [here](https://ruleworld.github.io/atomizer/).
+Project for the translation of SBML files into BNGL files. You can find more
+information about the project [here](https://ruleworld.github.io/atomizer/).
 
-[![Build Status](https://travis-ci.org/RuleWorld/atomizer.svg?branch=master)](https://travis-ci.org/RuleWorld/atomizer) [![Build status](https://ci.appveyor.com/api/projects/status/rb4sci41f2fy62il?svg=true)](https://ci.appveyor.com/project/jjtapia/atomizer)
+[![Build Status](https://travis-ci.org/RuleWorld/atomizer.svg?branch=master)](https://travis-ci.org/RuleWorld/atomizer) [![Build status](https://ci.appveyor.com/api/projects/status/rb4sci41f2fy62il?svg=true)](https://ci.appveyor.com/project/jczech/atomizer)
 
+## Download Latest Test Builds
+
+These builds are the from the head of master and are not guaranteed to be
+stable. Use at your own risk.
+
+* [Linux](https://bintray.com/jczech/atomizer/download_file?file_path=sbmlTranslator_linux)
+* [OSX](https://bintray.com/jczech/atomizer/download_file?file_path=sbmlTranslator_osx)
+* [Windows x64](https://bintray.com/jczech/atomizer/download_file?file_path=sbmlTranslator_win.zip)
 
 ## Requirements
-libsbml, networkx (for state transition diagram creation), pexpect (for post atomization analysis). Check requirements.txt for specific versions of the libraries that Atomizer needs. You can also install all requirements with one command by doing
 
-> pip install -r requirements.txt
+A number of Python libraries need to be installed, but these can be
+automatically installed in a Python virtual environment, which is exactly what
+the make file does under Linux and OSX or what the PowerShell script does for
+Windows.
 
-From the atomizer root directory 
+### Ubuntu
 
+> sudo apt-get install -y python3-dev
+> sudo apt-get install -y python3-venv
 
-## Installation:
+### Windows 10
+
+You'll need to install Python 3. We recommend using Anaconda for this.
+
+### Optional for Developers
+
+If you want to run `./atomizer/SBMLparser/sbmlTranslator.py` directly, you can
+install all the Python requirements at the system level by doing:
+
+> cd SBMLparser
+> sudo pip3 install -r requirements.txt
+
+Alternatively, you can do this at the user level:
+
+> cd SBMLparser
+> pip3 install --user -r requirements.txt
+
+## Installation 
+
+### OSX and Linux
+
+From the top-level directory, type the following:
 
 > make; make install
+
+This will create an `sbmlTranslator` binary in `./atomizer/bin`. This is made
+using PyInstaller.
+
+### Installation for Windows
+
+Right click on `./atomizer/build_sbmlTranslator_win.ps1` and select `Run with
+PowerShell`.
 
 ## Execution
 
@@ -29,7 +71,7 @@ Optional arguments
 Directory Structure:
 |
 - SBMLparser: Directory containing the main project.
-  | 
+  |
     - sbmlTranslator.py: Entry level file
     - atomizer: Contains the main implicit assumption extraction code
     	- analyzeSBML.py: lexical analysis engine
@@ -39,9 +81,8 @@ Directory Structure:
         - resolveSCT.py: Creates the species composition table using lexical analysis, annotation information and
         				 the stoichiometry matrix
         - moleculeCreation.py: Creates the structured molecules for use in graph-creation
-        
+
     - utils: contains several utility scripts used during the atomization process
     	- consoleCommands.py: Interfaces with the BioNetGen console
         - pathwaysCommons.py: Queries BioGrid and pathways commons given an RDF annotation entry
 - stats: Extracts statistics of a set of atomized BioModels files
-

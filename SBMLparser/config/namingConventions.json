@@ -1,5 +1,5 @@
 {
-"modificationList":[],
+"modificationList":["Phosporylation","Double-Phosporylation"],
 "reactionSite": ["phospho"],
 "reactionState":["P","PP"],
 "definitions":[{"rsi":0,"rst":0},
