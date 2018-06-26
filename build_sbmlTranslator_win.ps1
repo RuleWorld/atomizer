@@ -8,3 +8,6 @@ pip install -r .\requirements_win.txt
 pip install --target=. python-libsbml
 pyinstaller .\sbmlTranslator.spec
 deactivate
+cd ..
+mkdir bin
+cp  .\SBMLparser\dist\sbmlTranslator.exe .\bin
