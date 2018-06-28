@@ -6,3 +6,4 @@ SBMLparser/dist
 SBMLparser/libsbml
 SBMLparser/python_libsbml*
 sbmlTranslator.exe
+bin
