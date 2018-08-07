@@ -3,10 +3,6 @@ environment:
   matrix:
     - PYTHON: "C:\\Python36-x64"
 
-branches:
-  only:
-     - python3
-
 build_script:
   - "cd .\\SBMLparser"
   - "%PYTHON%\\python.exe -m pip install --user -r ./requirements_win.txt"
