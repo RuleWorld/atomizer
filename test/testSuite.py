@@ -78,7 +78,7 @@ class ParametrizedTestCase(unittest.TestCase):
     """
 
     def __init__(self, methodName='runTest', param=None):
-        super(ParametrizedTestCase, self).__init__(methodName)
+        super().__init__(methodName)
         self.param = param
 
     @staticmethod
@@ -130,7 +130,7 @@ class AtomizationTestCase(ParametrizedTestCase):
         #libsbml2bngl.analyzeFile('{0}/{1}/{1}-sbml-l2v4.xml'.format(self.param[0], self.param[1]), reactionDefinitions,
         #                         False, namingConventions,
         #                         outputFile=outputFile, speciesEquivalence=None, atomize=True, bioGrid=False)
-        call([os.path.join(pathname,'..','dist','sbmlTranslator'),'-i',os.path.join(pathname,self.param[0],self.param[1],'{0}-sbml-l2v4.xml'.format(self.param[1])),
+        call([os.path.join(pathname,'..','bin','sbmlTranslator'),'-i',os.path.join(pathname,self.param[0],self.param[1],'{0}-sbml-l2v4.xml'.format(self.param[1])),
                            '-o',outputFile,'-a','-nc'])
         settings = self.extractSimulationSettings(os.path.join(pathname,self.param[0],self.param[1],'{0}-settings.txt'.format(self.param[1])))
 
@@ -159,7 +159,7 @@ class TestValid(ParametrizedTestCase):
     Test for whether a file is recognized as correct by bng --check
     '''
     def __init__(self):
-        super().__init__(self)
+        super().__init__()
         # skip stoichiometry math
         xdirs = ['00068', '00069', '00070', '00518']
         # non supported operands
@@ -188,3 +188,7 @@ class TestValid(ParametrizedTestCase):
         ret = 0 if ret else 1
         print(ret)
         sys.exit(ret)    
+
+if __name__ == '__main__':
+    TestValid() 
+    unittest.main()
