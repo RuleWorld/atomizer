@@ -1,0 +1,127 @@
+###
+#@BQB_IS:['http://identifiers.org/biomodels.db/BIOMD0000000075', 'http://identifiers.org/biomodels.db/MODEL3095606944']
+#@BQB_IS_PART_OF:['http://identifiers.org/kegg.pathway/map04070']
+#@BQB_IS_VERSION_OF:['http://identifiers.org/go/GO:0046488']
+#@BQB_OCCURS_IN:['http://identifiers.org/bto/BTO:0000931']
+#@BQB_HAS_TAXON:['http://identifiers.org/taxonomy/10090']
+#@BQB_IS_DESCRIBED_BY:['http://identifiers.org/pubmed/12771127']
+#@BQM_IS:['http://identifiers.org/biomodels.db/BIOMD0000000075', 'http://identifiers.org/biomodels.db/MODEL3095606944']
+#@creatorEmail:'hdharuri@cds.caltech.edu'
+#@creatorName:'Dharuri Harish'
+#@notes:'This is an atomized translation of an SBML model created on 31/05/2019. The original model has 13 molecules and 8 reactions. The translated model has 9 molecules and 8 rules'
+###
+begin model
+begin parameters
+	KMOLE 0.00166112956810631 #units:unit_0
+	PIP_basal_PIPSyn 2857.0 #units:unit_1
+	kBasalSynPIP_PIPSyn 0.0055 #units:unit_2
+	kStimSynPIP_PIPSyn 0.019 #units:unit_2
+	tauPIPsyn_PIPSyn 0.05 #units:unit_3
+	PIPsyndecay_PIPSyn 1.0 #units:unit_3
+	tau0_PLCact 0.05 #units:unit_3
+	stimdecay_PLCact 1.0 #units:unit_3
+	kf_PIP2PH_PIP2_PH 0.12 #units:unit_5
+	KdPIP2PH_PIP2_PH 2.0 #units:unit_6
+	#kr_PIP2PH_PIP2_PH 0.24 #units:unit_2
+	kStimSynPIP2_PIP2Syn 0.92 #units:unit_2
+	tauPIP2syn_PIP2Syn 0.05 #units:unit_3
+	PIP2syndecay_PIP2Syn 1.0 #units:unit_3
+	PIP2_basal_PIP2Syn 4000.0 #units:unit_1
+	kBasalSynPIP2_PIP2Syn 0.048 #units:unit_2
+	kf_IP3PH_IP3_PHGFP 10.0 #units:unit_5
+	KdIP3PH_IP3_PHGFP 2.0 #units:unit_6
+	#kr_IP3PH_IP3_PHGFP 20.0 #units:unit_2
+	r2_k_PIP2hyd 2.400000
+	r3_KfPLCact 0.000500
+	r3_krPLCact 0.100000
+	r4_k_PIP2PHhyd 0.000000
+	r6_IP3_basal 0.160000
+	r6_kIP3deg 0.080000
+end parameters
+begin compartments
+	#volume units: volume
+	Extracellular 3 0.277777777777778
+	PM 2 0.5555555555556
+	Cytosol 3 1.0
+	NM 2 0.111111111111111
+	Nucleus 3 0.111111111111111
+	cell 3 1.0
+end compartments
+begin molecule types
+	#^ bqbiol:isVersionOf chebi:CHEBI:28874
+	PI()
+	IP3X()
+	stim()
+	#^ bqbiol:isVersionOf chebi:CHEBI:26034
+	PIP()
+	#^ bqbiol:isVersionOf uniprot:Q8K4S1
+	PLC(_act~_ACT~0)
+	#^ bqbiol:hasPart interpro:IPR001849, interpro:IPR011584
+	PH_GFP_Cyt(ip3_cyt)
+	#^ bqbiol:isVersionOf chebi:CHEBI:16595
+	IP3_Cyt(dag,ph_gfp_cyt)
+	hv()
+	#^ bqbiol:isVersionOf chebi:CHEBI:18035
+	DAG(ip3_cyt)
+end molecule types
+begin seed species
+	@PM:PI() 142857.0 #PI #PI_PM
+	@PM:$stim() 1.0 #stim #stim_PM
+	@PM:IP3_Cyt(dag!0,ph_gfp_cyt).DAG(ip3_cyt!0) 4000.0 #PIP2 #PIP2_PM
+	@PM:PIP() 2857.0 #PIP #PIP_PM
+	@PM:DAG(ip3_cyt) 2000.0 #DAG #DAG_PM
+	@Cytosol:$hv() 0 #hv #hv_Cytosol
+	@Cytosol:$IP3X() 0 #IP3X #IP3X_Cytosol
+	@PM:PLC(_act~0) 100.0 #PLC #PLC_PM
+	@Cytosol:IP3_Cyt(dag,ph_gfp_cyt) 96.32 #IP3_Cyt #IP3_Cyt
+end seed species
+begin observables
+	Species PIP2_PHGFP_PM @PM:IP3_Cyt(dag!0,ph_gfp_cyt!1).DAG(ip3_cyt!0).PH_GFP_Cyt(ip3_cyt!1) #PIP2_PHGFP_PM
+	Species PH_GFP_Cyt_Cytosol @Cytosol:PH_GFP_Cyt(ip3_cyt) #PH_GFP_Cyt
+	Species PI_PM @PM:PI() #PI_PM
+	Species stim_PM @PM:stim() #stim_PM
+	Species IP3_PHGFP_Cyt_Cytosol @Cytosol:IP3_Cyt(dag,ph_gfp_cyt!1).PH_GFP_Cyt(ip3_cyt!1) #IP3_PHGFP_Cyt
+	Species PIP2_PM @PM:IP3_Cyt(dag!0,ph_gfp_cyt).DAG(ip3_cyt!0) #PIP2_PM
+	Species PIP_PM @PM:PIP() #PIP_PM
+	Species DAG_PM @PM:DAG(ip3_cyt) #DAG_PM
+	Species hv_Cytosol @Cytosol:hv() #hv_Cytosol
+	Species IP3X_Cytosol @Cytosol:IP3X() #IP3X_Cytosol
+	Species PLC_PM @PM:PLC(_act~0) #PLC_PM
+	Species PLC_act_PM @PM:PLC(_act~_ACT) #PLC_act_PM
+	Species IP3_Cyt_Cytosol @Cytosol:IP3_Cyt(dag,ph_gfp_cyt) #IP3_Cyt
+end observables
+begin functions
+	functionRate1() = if(2.4 * PLC_act_PM *  0.5555555555556  >= 0, 2.4 * PLC_act_PM *  0.5555555555556 , 0)
+	functionRate1m() = if(if(IP3_Cyt_Cytosol>0, if(DAG_PM>0, 2.4 * PIP2_PM * PLC_act_PM *  0.5555555555556 /DAG_PM,0)/IP3_Cyt_Cytosol,0) < 0, -(if(IP3_Cyt_Cytosol>0, if(DAG_PM>0, 2.4 * PIP2_PM * PLC_act_PM *  0.5555555555556 /DAG_PM,0)/IP3_Cyt_Cytosol,0)), 0)
+	functionRate3() = if(0.0 * PLC_act_PM *  0.5555555555556  >= 0, 0.0 * PLC_act_PM *  0.5555555555556 , 0)
+	functionRate3m() = if(if(DAG_PM>0, if(IP3_Cyt_Cytosol>0, if(PH_GFP_Cyt_Cytosol>0, 0.0 * PLC_act_PM * PIP2_PHGFP_PM *  0.5555555555556 /PH_GFP_Cyt_Cytosol,0)/IP3_Cyt_Cytosol,0)/DAG_PM,0) < 0, -(if(DAG_PM>0, if(IP3_Cyt_Cytosol>0, if(PH_GFP_Cyt_Cytosol>0, 0.0 * PLC_act_PM * PIP2_PHGFP_PM *  0.5555555555556 /PH_GFP_Cyt_Cytosol,0)/IP3_Cyt_Cytosol,0)/DAG_PM,0)), 0)
+	functionRate5() = if(if(IP3_Cyt_Cytosol>0, 0.08 * (0.00166112956810631 * IP3_Cyt_Cytosol + -0.16) * 1 * (1 / KMOLE)/IP3_Cyt_Cytosol,0) >= 0, if(IP3_Cyt_Cytosol>0, 0.08 * (0.00166112956810631 * IP3_Cyt_Cytosol + -0.16) * 1 * (1 / KMOLE)/IP3_Cyt_Cytosol,0), 0)
+	functionRate5m() = if(0.08 * (0.00166112956810631 * IP3_Cyt_Cytosol + -0.16) * 1 * (1 / KMOLE) < 0, -(0.08 * (0.00166112956810631 * IP3_Cyt_Cytosol + -0.16) * 1 * (1 / KMOLE)), 0)
+	Rate_PIP2SynStim_PIP2Syn() = if((time()>tauPIP2syn_PIP2Syn),(kStimSynPIP2_PIP2Syn*exp(-((time()+-tauPIP2syn_PIP2Syn)*(1/PIP2syndecay_PIP2Syn)))),(0))
+	signal_PLCact() = if((time()>tau0_PLCact),(exp(-((time()+-tau0_PLCact)*(1/stimdecay_PLCact)))),(0))
+	Rate_PIP2Synbasal_PIP2Syn() = if((PIP2_PM<PIP2_basal_PIP2Syn),(0.581*kBasalSynPIP2_PIP2Syn*(-1+exp((PIP2_basal_PIP2Syn+-PIP2_PM)*(1/PIP2_basal_PIP2Syn)))),(0))
+	kr_PIP2PH_PIP2_PH() = kf_PIP2PH_PIP2_PH * KdPIP2PH_PIP2_PH
+	kr_IP3PH_IP3_PHGFP() = kf_IP3PH_IP3_PHGFP * KdIP3PH_IP3_PHGFP
+	Ratestim_PIPsyn_PIPSyn() = if((time()>tauPIPsyn_PIPSyn),(kStimSynPIP_PIPSyn*exp(-((time()+-tauPIPsyn_PIPSyn)*(1/PIPsyndecay_PIPSyn)))),(0))
+	Ratebasal_PIPsyn_PIPSyn() = if((PIP_PM<PIP_basal_PIPSyn),(0.581*kBasalSynPIP_PIPSyn*(-1+exp((PIP_basal_PIPSyn+-PIP_PM)*(1/PIP_basal_PIPSyn)))),(0))
+	functionRate2() = 0.0005 * stim_PM * (if((time()>tau0_PLCact),(exp(-((time()+-tau0_PLCact)*(1/stimdecay_PLCact)))),(0)))
+	functionRate4() = if(if(PIP2_PM>0, if(PH_GFP_Cyt_Cytosol>0, (kf_PIP2PH_PIP2_PH * 0.00166112956810631 * PH_GFP_Cyt_Cytosol * PIP2_PM + -((kf_PIP2PH_PIP2_PH * KdPIP2PH_PIP2_PH) * PIP2_PHGFP_PM)) *  0.5555555555556 /PH_GFP_Cyt_Cytosol,0)/PIP2_PM,0) >= 0, if(PIP2_PM>0, if(PH_GFP_Cyt_Cytosol>0, (kf_PIP2PH_PIP2_PH * 0.00166112956810631 * PH_GFP_Cyt_Cytosol * PIP2_PM + -((kf_PIP2PH_PIP2_PH * KdPIP2PH_PIP2_PH) * PIP2_PHGFP_PM)) *  0.5555555555556 /PH_GFP_Cyt_Cytosol,0)/PIP2_PM,0), 0)
+	functionRate4m() = if(if(PIP2_PHGFP_PM>0, (kf_PIP2PH_PIP2_PH * 0.00166112956810631 * PH_GFP_Cyt_Cytosol * PIP2_PM + -((kf_PIP2PH_PIP2_PH * KdPIP2PH_PIP2_PH) * PIP2_PHGFP_PM)) *  0.5555555555556 /PIP2_PHGFP_PM,0) < 0, -(if(PIP2_PHGFP_PM>0, (kf_PIP2PH_PIP2_PH * 0.00166112956810631 * PH_GFP_Cyt_Cytosol * PIP2_PM + -((kf_PIP2PH_PIP2_PH * KdPIP2PH_PIP2_PH) * PIP2_PHGFP_PM)) *  0.5555555555556 /PIP2_PHGFP_PM,0)), 0)
+	functionRate7() = if(if(PH_GFP_Cyt_Cytosol>0, if(IP3_Cyt_Cytosol>0, (kf_IP3PH_IP3_PHGFP * 0.00166112956810631 * IP3_Cyt_Cytosol * 0.00166112956810631 * PH_GFP_Cyt_Cytosol + -((kf_IP3PH_IP3_PHGFP * KdIP3PH_IP3_PHGFP) * 0.00166112956810631 * IP3_PHGFP_Cyt_Cytosol)) * 1 * (1 / KMOLE)/IP3_Cyt_Cytosol,0)/PH_GFP_Cyt_Cytosol,0) >= 0, if(PH_GFP_Cyt_Cytosol>0, if(IP3_Cyt_Cytosol>0, (kf_IP3PH_IP3_PHGFP * 0.00166112956810631 * IP3_Cyt_Cytosol * 0.00166112956810631 * PH_GFP_Cyt_Cytosol + -((kf_IP3PH_IP3_PHGFP * KdIP3PH_IP3_PHGFP) * 0.00166112956810631 * IP3_PHGFP_Cyt_Cytosol)) * 1 * (1 / KMOLE)/IP3_Cyt_Cytosol,0)/PH_GFP_Cyt_Cytosol,0), 0)
+	functionRate7m() = if(if(IP3_PHGFP_Cyt_Cytosol>0, (kf_IP3PH_IP3_PHGFP * 0.00166112956810631 * IP3_Cyt_Cytosol * 0.00166112956810631 * PH_GFP_Cyt_Cytosol + -((kf_IP3PH_IP3_PHGFP * KdIP3PH_IP3_PHGFP) * 0.00166112956810631 * IP3_PHGFP_Cyt_Cytosol)) * 1 * (1 / KMOLE)/IP3_PHGFP_Cyt_Cytosol,0) < 0, -(if(IP3_PHGFP_Cyt_Cytosol>0, (kf_IP3PH_IP3_PHGFP * 0.00166112956810631 * IP3_Cyt_Cytosol * 0.00166112956810631 * PH_GFP_Cyt_Cytosol + -((kf_IP3PH_IP3_PHGFP * KdIP3PH_IP3_PHGFP) * 0.00166112956810631 * IP3_PHGFP_Cyt_Cytosol)) * 1 * (1 / KMOLE)/IP3_PHGFP_Cyt_Cytosol,0)), 0)
+	functionRate0() = if((if((PIP_PM<PIP_basal_PIPSyn),(0.581*kBasalSynPIP_PIPSyn*(-1+exp((PIP_basal_PIPSyn+-PIP_PM)*(1/PIP_basal_PIPSyn)))),(0))) + (if((time()>tauPIPsyn_PIPSyn),(kStimSynPIP_PIPSyn*exp(-((time()+-tauPIPsyn_PIPSyn)*(1/PIPsyndecay_PIPSyn)))),(0))) >= 0, (if((PIP_PM<PIP_basal_PIPSyn),(0.581*kBasalSynPIP_PIPSyn*(-1+exp((PIP_basal_PIPSyn+-PIP_PM)*(1/PIP_basal_PIPSyn)))),(0))) + (if((time()>tauPIPsyn_PIPSyn),(kStimSynPIP_PIPSyn*exp(-((time()+-tauPIPsyn_PIPSyn)*(1/PIPsyndecay_PIPSyn)))),(0))), 0)
+	functionRate0m() = if(if(PIP_PM>0, ((if((PIP_PM<PIP_basal_PIPSyn),(0.581*kBasalSynPIP_PIPSyn*(-1+exp((PIP_basal_PIPSyn+-PIP_PM)*(1/PIP_basal_PIPSyn)))),(0))) + (if((time()>tauPIPsyn_PIPSyn),(kStimSynPIP_PIPSyn*exp(-((time()+-tauPIPsyn_PIPSyn)*(1/PIPsyndecay_PIPSyn)))),(0)))) * PI_PM/PIP_PM,0) < 0, -(if(PIP_PM>0, ((if((PIP_PM<PIP_basal_PIPSyn),(0.581*kBasalSynPIP_PIPSyn*(-1+exp((PIP_basal_PIPSyn+-PIP_PM)*(1/PIP_basal_PIPSyn)))),(0))) + (if((time()>tauPIPsyn_PIPSyn),(kStimSynPIP_PIPSyn*exp(-((time()+-tauPIPsyn_PIPSyn)*(1/PIPsyndecay_PIPSyn)))),(0)))) * PI_PM/PIP_PM,0)), 0)
+	functionRate6() = if((if((PIP2_PM<PIP2_basal_PIP2Syn),(0.581*kBasalSynPIP2_PIP2Syn*(-1+exp((PIP2_basal_PIP2Syn+-PIP2_PM)*(1/PIP2_basal_PIP2Syn)))),(0))) + (if((time()>tauPIP2syn_PIP2Syn),(kStimSynPIP2_PIP2Syn*exp(-((time()+-tauPIP2syn_PIP2Syn)*(1/PIP2syndecay_PIP2Syn)))),(0))) >= 0, (if((PIP2_PM<PIP2_basal_PIP2Syn),(0.581*kBasalSynPIP2_PIP2Syn*(-1+exp((PIP2_basal_PIP2Syn+-PIP2_PM)*(1/PIP2_basal_PIP2Syn)))),(0))) + (if((time()>tauPIP2syn_PIP2Syn),(kStimSynPIP2_PIP2Syn*exp(-((time()+-tauPIP2syn_PIP2Syn)*(1/PIP2syndecay_PIP2Syn)))),(0))), 0)
+	functionRate6m() = if(if(PIP2_PM>0, ((if((PIP2_PM<PIP2_basal_PIP2Syn),(0.581*kBasalSynPIP2_PIP2Syn*(-1+exp((PIP2_basal_PIP2Syn+-PIP2_PM)*(1/PIP2_basal_PIP2Syn)))),(0))) + (if((time()>tauPIP2syn_PIP2Syn),(kStimSynPIP2_PIP2Syn*exp(-((time()+-tauPIP2syn_PIP2Syn)*(1/PIP2syndecay_PIP2Syn)))),(0)))) * PIP_PM/PIP2_PM,0) < 0, -(if(PIP2_PM>0, ((if((PIP2_PM<PIP2_basal_PIP2Syn),(0.581*kBasalSynPIP2_PIP2Syn*(-1+exp((PIP2_basal_PIP2Syn+-PIP2_PM)*(1/PIP2_basal_PIP2Syn)))),(0))) + (if((time()>tauPIP2syn_PIP2Syn),(kStimSynPIP2_PIP2Syn*exp(-((time()+-tauPIP2syn_PIP2Syn)*(1/PIP2syndecay_PIP2Syn)))),(0)))) * PIP_PM/PIP2_PM,0)), 0)
+end functions
+begin reaction rules
+	PIPSyn: PI()@PM <-> PIP()@PM functionRate0(),functionRate0m()
+	PIP2_hyd: IP3_Cyt(dag!0,ph_gfp_cyt)@PM.DAG(ip3_cyt!0)@PM <-> DAG(ip3_cyt)@PM + IP3_Cyt(dag,ph_gfp_cyt)@Cytosol functionRate1(),functionRate1m() #Modifiers(PLC_act_PM)
+	PLCact: PLC(_act~0)@PM <-> PLC(_act~_ACT)@PM functionRate2(),r3_krPLCact #Modifiers(stim_PM)
+	PIP2_PH_hyd: IP3_Cyt(dag!0,ph_gfp_cyt!1)@PM.DAG(ip3_cyt!0)@PM.PH_GFP_Cyt(ip3_cyt!1)@PM <-> PH_GFP_Cyt(ip3_cyt)@Cytosol + IP3_Cyt(dag,ph_gfp_cyt)@Cytosol + DAG(ip3_cyt)@PM functionRate3(),functionRate3m() #Modifiers(PLC_act_PM)
+	PIP2_PH: PH_GFP_Cyt(ip3_cyt)@Cytosol + IP3_Cyt(dag!0,ph_gfp_cyt)@PM.DAG(ip3_cyt!0)@PM <-> IP3_Cyt(dag!0,ph_gfp_cyt!1)@PM.DAG(ip3_cyt!0)@PM.PH_GFP_Cyt(ip3_cyt!1)@PM functionRate4(),functionRate4m()
+	IP3deg: IP3_Cyt(dag,ph_gfp_cyt)@Cytosol <-> 0  functionRate5(),functionRate5m()
+	PIP2Syn: PIP()@PM <-> IP3_Cyt(dag!0,ph_gfp_cyt)@PM.DAG(ip3_cyt!0)@PM functionRate6(),functionRate6m()
+	IP3_PHGFP: IP3_Cyt(dag,ph_gfp_cyt)@Cytosol + PH_GFP_Cyt(ip3_cyt)@Cytosol <-> IP3_Cyt(dag,ph_gfp_cyt!1)@Cytosol.PH_GFP_Cyt(ip3_cyt!1)@Cytosol functionRate7(),functionRate7m()
+end reaction rules
+end model

@@ -1,0 +1,9 @@
+INFO:LAE004:PI:PIP:added induced naming convention
+INFO:LAE004:PLC:PLC_act:added induced naming convention
+INFO:LAE004:PIP:PIP2:added induced naming convention
+WARNING:ANN201:PI and PIP have a direct correspondence according to reaction     information however their annotations are completely different.
+WARNING:ANN201:PIP and PIP2 have a direct correspondence according to reaction     information however their annotations are completely different.
+WARNING:ANN201:PI and PIP have a direct correspondence according to reaction     information however their annotations are completely different.
+INFO:ANN001:IP3_Cyt:IP3X: there is a direct equivalence between these sets according to annotation information. No action was taken
+ERROR:ANN202:PIP:PI:can be mapped through naming conventions but the annotation information does not match
+INFO:SUM001:File contains 9 molecules out of 13 original SBML species

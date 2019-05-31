@@ -1,0 +1,151 @@
+moleculeTypes:
+  DAG(ip3_cyt):
+  - '#^ bqbiol:isVersionOf chebi:CHEBI:18035'
+  IP3X:
+    BQB_IS:
+    - http://identifiers.org/pato/PATO:0002355
+    BQB_IS_VERSION_OF:
+    - http://identifiers.org/chebi/CHEBI:16595
+  IP3_Cyt(dag,ph_gfp_cyt):
+  - '#^ bqbiol:isVersionOf chebi:CHEBI:16595'
+  PH_GFP_Cyt(ip3_cyt):
+  - '#^ bqbiol:hasPart interpro:IPR001849, interpro:IPR011584'
+  PI():
+  - '#^ bqbiol:isVersionOf chebi:CHEBI:28874'
+  PIP():
+  - '#^ bqbiol:isVersionOf chebi:CHEBI:26034'
+  PLC(_act~_ACT~0):
+  - '#^ bqbiol:isVersionOf uniprot:Q8K4S1'
+  hv:
+    BQB_IS_VERSION_OF:
+    - http://identifiers.org/chebi/CHEBI:30212
+  stim:
+    BQB_HAS_PROPERTY:
+    - http://identifiers.org/opb/OPB_01072
+species:
+  IP3_PHGFP_Cyt:
+    BQB_HAS_PART:
+    - http://identifiers.org/interpro/IPR001849
+    - http://identifiers.org/chebi/CHEBI:16595
+    - http://identifiers.org/interpro/IPR011584
+  PIP2:
+    BQB_IS_VERSION_OF:
+    - http://identifiers.org/chebi/CHEBI:18348
+  PIP2_PHGFP:
+    BQB_HAS_PART:
+    - http://identifiers.org/chebi/CHEBI:18348
+    - http://identifiers.org/interpro/IPR011584
+    - http://identifiers.org/interpro/IPR001849
+  PLC_act:
+    BQB_HAS_PROPERTY:
+    - http://identifiers.org/ec-code/3.1.4.11
+    BQB_IS_VERSION_OF:
+    - http://identifiers.org/uniprot/Q8K4S1
+units:
+  area:
+  - exponent: 2
+    kind: 22
+    multiplier: 1.0e-06
+    name: area
+    scale: 0
+  length:
+  - exponent: 1
+    kind: 22
+    multiplier: 1.0
+    name: length
+    scale: 0
+  substance:
+  - exponent: 1
+    kind: 12
+    multiplier: 1.0
+    name: substance
+    scale: 0
+  time:
+  - exponent: 1
+    kind: 28
+    multiplier: 1.0
+    name: time
+    scale: 0
+  unit_0:
+  - exponent: 1
+    kind: 6
+    multiplier: 602214.179
+    name: aAvogadro
+    scale: 0
+  unit_1:
+  - exponent: -2
+    kind: 22
+    multiplier: 1000000.0
+    name: "#/Mm\xB2"
+    scale: 0
+  - exponent: 1
+    kind: 12
+    multiplier: 1.0
+    name: "#/Mm\xB2"
+    scale: 0
+  unit_2:
+  - exponent: -1
+    kind: 28
+    multiplier: 1.0
+    name: 1/s
+    scale: 0
+  unit_3:
+  - exponent: 1
+    kind: 28
+    multiplier: 1.0
+    name: s
+    scale: 0
+  unit_4:
+  - exponent: 0
+    kind: 6
+    multiplier: 1.0
+    name: '1'
+    scale: 0
+  unit_5:
+  - exponent: 0
+    kind: 6
+    multiplier: 1.0e-09
+    name: "\xB5l/(mol*s)"
+    scale: 0
+  - exponent: 3
+    kind: 22
+    multiplier: 1.0
+    name: "\xB5l/(mol*s)"
+    scale: 0
+  - exponent: -1
+    kind: 23
+    multiplier: 1.0
+    name: "\xB5l/(mol*s)"
+    scale: 0
+  - exponent: -1
+    kind: 28
+    multiplier: 1.0
+    name: "\xB5l/(mol*s)"
+    scale: 0
+  unit_6:
+  - exponent: 0
+    kind: 6
+    multiplier: 1.0e-06
+    name: "\xB5mol/l"
+    scale: 0
+  - exponent: 1
+    kind: 12
+    multiplier: 1.0
+    name: "\xB5mol/l"
+    scale: 0
+  - exponent: 1
+    kind: 6
+    multiplier: 6.02214179e+23
+    name: "\xB5mol/l"
+    scale: 0
+  - exponent: -3
+    kind: 22
+    multiplier: 0.1
+    name: "\xB5mol/l"
+    scale: 0
+  volume:
+  - exponent: 3
+    kind: 22
+    multiplier: 0.1
+    name: volume
+    scale: 0

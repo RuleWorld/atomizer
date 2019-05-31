@@ -1,0 +1,228 @@
+# Created by BioNetGen 2.5.0
+begin parameters
+    1 r1_mw0930c7cf_99a6_4a20_a33d_02fd90e424bb              0.240000  # Constant
+    2 r2_mw5b78650d_d92f_4602_bbe9_66d900ff312e              0.220000  # Constant
+    3 r3_mwec4950e3_ecf8_4077_9cd1_b70818e911b9              0.190000  # Constant
+    4 r4_mw9c4a9937_faff_4853_8a76_d17a084948d9              0.160000  # Constant
+    5 r5_mwb8d480f9_5783_4feb_aaf1_2f861b09e009              0.140000  # Constant
+    6 r6_mw58dfe861_b815_48b4_89e9_6f71cccb561e              0.095000  # Constant
+    7 r7_mwdf0efe39_4f88_4fc1_930b_55865b8d52f0              0.080000  # Constant
+    8 r8_mw4594ab28_d538_4a72_875a_d878e907020d              0.000000  # Constant
+    9 r9_mw7b7a1d20_f258_4e3d_9234_62db60126326              0.000060  # Constant
+   10 r10_mw5ea6c681_bf85_4ac5_9aac_536087a97950             1.000000  # Constant
+   11 r10_mw65a608c7_1026_4108_bb3d_f3358430aaf2             1.000000  # Constant
+   12 r11_mw106608bc_52fb_40e5_babb_cbb58aaaeed4             0.240000  # Constant
+   13 r12_mwe0f7b31e_2efc_481e_90d0_e86c3b8d0be4             0.125000  # Constant
+   14 r13_mw1981fa4d_c122_41a6_8c85_55a49d408c00             400.000000  # Constant
+   15 r13_mw340bc412_34ab_498a_bd42_47dd6cf025bd             1.000000  # Constant
+   16 r13_mw6cf7ac60_5bab_4b73_bb47_dc064486f000             2000.000000  # Constant
+   17 r14_mw87e9394c_7eef_4271_85bc_d1b0a96db1f2             0.000000  # Constant
+   18 r15_mwd84cf612_edaf_4dd9_9abd_003cc0569864             0.000000  # Constant
+   19 r16_mw051e0a03_1d45_448b_be4a_9d489e1b3ff9             0.000000  # Constant
+   20 r16_mw322ca6ab_81cf_4f6c_835e_48bb5f8b11de             0.000000  # Constant
+   21 r16_mwf9b630f8_c8a5_4fd0_bef1_92819b1257d2             0.000000  # Constant
+   22 r17_mwe479dc91_2774_4239_8212_60a330a84a76             0.860000  # Constant
+   23 r18_mwf5ba0e23_9a0b_4bf6_b0ea_9fbc91843b5c             0.100000  # Constant
+   24 r19_mw3bf6abba_fc8d_4254_bc9c_037ec64d3e12             1000.000000  # Constant
+   25 r19_mw4c1174b0_1cba_4d7c_bedb_c29d9f65c10c             1.000000  # Constant
+   26 r19_mw85474b5d_1b19_4388_bcee_098fbb23f2e0             700.000000  # Constant
+   27 r20_mwd01d5494_fdcd_494e_8652_87201fa5b291             0.002000  # Constant
+   28 r21_mw7ff2e94a_ac19_47ed_9127_14d385a1e544             1.000000  # Constant
+   29 r21_mwf8062aeb_69d6_416b_b877_9687ef6fbc80             1.000000  # Constant
+   30 r22_mw5805aaa6_5a0a_495b_a21b_16e6ba6f39bc             0.300000  # Constant
+   31 r23_mw658feef9_67a1_431f_95fa_7358c6b294d2             0.000000  # Constant
+   32 r23_mw8d03d46b_3832_4fe6_8a6b_467ef38af206             10.000000  # Constant
+   33 r23_mwf50b6519_aaf9_4cb0_a651_d5a3159d7390             10.000000  # Constant
+   34 r24_mw5b67154e_1851_4ba0_9491_7a14b2064c42             0.060000  # Constant
+   35 r25_mw202bb744_d70a_4cf2_b2db_0d9d360bdfb5             0.100000  # Constant
+   36 r26_mw3288f227_0208_435a_a41c_b1778f50008c             0.090000  # Constant
+   37 r27_mwe250484c_acc9_4453_9eb6_49cda54b2f1e             0.300000  # Constant
+   38 r28_mw2ba0a425_a224_4fa1_affc_bcc206027a3e             1.000000  # Constant
+   39 r28_mw8f586bdf_8d42_49c1_807a_670a1c49cbd9             1.000000  # Constant
+   40 r29_mwe808b2da_9ed2_421e_a8d9_3c3534d42ee0             0.200000  # Constant
+   41 r30_mw7246cef3_7a78_43b0_acb7_21533c394daa             0.001000  # Constant
+   42 r31_mw2081c907_9d37_48a0_8581_8b8f3d5f7148             0.100000  # Constant
+   43 r32_mw91a51f27_e4be_41a6_a967_b6a63c909652             1.000000  # Constant
+   44 r32_mwd7b0f9fb_1180_47bb_b8c0_be2f89aa1c59             1.000000  # Constant
+   45 r33_mw2a60d98a_bc06_4e05_b965_c920da8987dc             10.000000  # Constant
+   46 r33_mw3c07a768_8e7a_49bb_8a1d_fdc92192f92b             0.000000  # Constant
+   47 r33_mw9704b67a_2c16_4ac7_a311_2096ab426758             10.000000  # Constant
+   48 r34_mw9ca6d980_6fbd_4207_9f2c_c05e2b5b0502             0.000000  # Constant
+   49 r34_mwcffa9e49_67c6_4908_9314_6c16030c8989             0.000000  # Constant
+   50 r34_mwf32cef57_32ba_4c0f_bbaf_bbc90af4a8aa             0.000000  # Constant
+   51 r35_mw287bd1ba_fbc1_43a0_94ab_38a6336bbebb             10.000000  # Constant
+   52 r35_mw2db26dbd_dda3_4770_b923_d2725a80ccba             1.000000  # Constant
+   53 r35_mwb86b112e_674a_4e98_8ca4_3d0273a134d4             10.000000  # Constant
+   54 r36_mw1aca690a_9ee1_460f_bc28_780fb04c1a32             1.000000  # Constant
+   55 r36_mwf604d18f_ae32_4d08_bfef_f778aae8f24b             1.000000  # Constant
+   56 r37_mwf80a94ba_03ba_44f0_b793_4f60c20fd074             0.000000  # Constant
+   57 r38_mwce7a28b5_2f60_4228_a88f_ccd3a6213c3e             0.230000  # Constant
+end parameters
+begin functions
+    1 functionRate0() (0.24*1.0)/1.0
+    2 functionRate1() (0.22*1.0)/1.0
+    3 functionRate2() (0.19*1.0)/1.0
+    4 functionRate3() (0.16*1.0)/1.0
+    5 functionRate4() (0.14*1.0)/1.0
+    6 functionRate5() 0.095*1.0
+    7 functionRate6() 0.08*1.0
+    8 functionRate7() (((1e-15*1.0)*1.0)/1.0)/6.022e23
+    9 functionRate8() (((6e-05*1.0)*1.0)/1.0)/6.022e23
+   10 functionRate9() if((STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),(if((JAK1_2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0),(((((1.0*STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9)*1.0)/(1.0+(STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)))/1.0)/JAK1_2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22),0)/STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)/6.022e23
+   11 functionRate10() 0.24*1.0
+   12 functionRate11() 0.125*1.0
+   13 functionRate12() if((NFkB_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),((((400.0*((NFkB_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)^1.0))/(2000.0+((NFkB_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)^1.0)))/1.0)/NFkB_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)
+   14 functionRate13() (0.0*1.0)/1.0
+   15 functionRate14() 0.0*1.0
+   16 functionRate15() if((s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),((((0.0*((s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)^0.0))/(0.0+((s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)^0.0)))/1.0)/s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)
+   17 functionRate16() (0.86*1.0)/1.0
+   18 functionRate17() 0.1*1.0
+   19 functionRate18() if((s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),((((1000.0*((s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)^1.0))/(700.0+((s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)^1.0)))/1.0)/s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)
+   20 functionRate19() 0.002*1.0
+   21 functionRate20() if((STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),(if((JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0),(((((1.0*STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9)*1.0)/(1.0+(STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)))/1.0)/JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22),0)/STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)/6.022e23
+   22 functionRate21() 0.3*1.0
+   23 functionRate22() if((JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0),(if((SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),(((((1e-15*JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22)*1.0)/((10.0*(1+((SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)/10.0)))+(JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22*1.0)))/1.0)/SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)/JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22),0)/6.022e23
+   24 functionRate23() 0.06*1.0
+   25 functionRate24() (0.1*1.0)/1.0
+   26 functionRate25() (0.09*1.0)/1.0
+   27 functionRate26() (0.3*1.0)/1.0
+   28 functionRate27() if((STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),(if((ERK1_ERK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0),(((((1.0*STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9)*1.0)/(1.0+(STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)))/1.0)/ERK1_ERK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22),0)/STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)/6.022e23
+   29 functionRate28() 0.2*1.0
+   30 functionRate29() (((0.001*1.0)*1.0)/1.0)/6.022e23
+   31 functionRate30() 0.1*1.0
+   32 functionRate31() if((JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0),(((((1.0*JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22)*1.0)/(1.0+(JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22*1.0)))/1.0)/JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22),0)
+   33 functionRate32() if((JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0),(if((SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),(((((1e-15*JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22)*1.0)/((10.0*(1+((SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)/10.0)))+(JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22*1.0)))/1.0)/SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)/JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22),0)/6.022e23
+   34 functionRate33() if((s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),((((0.0*((s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)^0.0))/(0.0+((s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)^0.0)))/1.0)/s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)
+   35 functionRate34() if((s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),((((10.0*((s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)^1.0))/(10.0+((s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)^1.0)))/1.0)/s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)
+   36 functionRate35() if((STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0),(if((ERK1_ERK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0),(((((1.0*STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9)*1.0)/(1.0+(STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9*1.0)))/1.0)/ERK1_ERK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22),0)/STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9),0)/6.022e23
+   37 functionRate36() (((8e-09*1.0)*1.0)*1.0)/1.0
+   38 functionRate37() 0.23*1.0
+end functions
+begin species
+    1 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::$TLR2() 1000.0
+    2 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::$TLR6_1() 1000.0
+    3 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::$IL6_IL6R() 1000.0
+    4 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::$IL6R() 100000.0
+    5 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::$IL6() 1000.0
+    6 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::$LPG() 1000.0
+    7 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::IL6_IL6R_GP130() 1000.0
+    8 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::$IFN_g() 200.0
+    9 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::$IFN_gR() 150.0
+   10 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::IFNg_IFNgR() 800.0
+   11 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::$gp130() 1000.0
+   12 @mw664a2e7f_0c35_423c_ac5d_34090e629a69::TLR2_6_LPG() 900.0
+   13 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::MyD88() 800.0
+   14 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::IRAK1_IRAK4() 700.0
+   15 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::TRAF6() 600.0
+   16 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::TAK1_TAB1_2() 500.0
+   17 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::IKKbeta() 400.0
+   18 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::NFkB() 300.0
+   19 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::IL6() 100.0
+   20 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::STAT3_P() 90000.0
+   21 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::$JAK1_2() 2000.0
+   22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::s2_STAT3() 80000.0
+   23 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::$JAK2_1() 2000.0
+   24 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::SOCS1() 10000.0
+   25 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::TLP2() 200.0
+   26 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::MKK1_2() 250.0
+   27 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::$ERK1_ERK2() 100.0
+   28 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::$JAK2() 15000.0
+   29 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::STAT1() 100.0
+   30 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::STAT3() 20000.0
+   31 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9::NFkB() 200.0
+   32 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9::IL6() 250.0
+   33 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9::s2_STAT3() 9000.0
+   34 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9::STAT1() 100.0
+   35 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9::STAT3() 100.0
+   36 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9::SOCS1() 50000.0
+   37 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9::AIF() 0
+   38 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::STAT1_P() 0
+   39 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9::SOCS3() 0
+   40 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22::s2_STAT1() 0
+   41 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9::s2_STAT1() 0
+   42 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9::iNOS() 0
+end species
+begin reactions
+    1 13 14 functionRate0 #mw3e247db2_b375_4e41_9e33_bb760833ee16
+    2 14 15 functionRate1 #mwe089edae_0b7c_485a_814d_227b9a9ad5fd
+    3 15 16 functionRate2 #mw355d0180_1300_4b22_afd0_dca38ce33afe
+    4 16 17 functionRate3 #mw68476f54_ab4a_403c_af35_355d74054f82
+    5 17 18 functionRate4 #mw8248f0e8_00d0_44dc_ae79_b61f77b4c52c
+    6 32 19 functionRate5 #mw301aee85_afee_49b3_ad89_b1cc5c8567b1
+    7 19 5 functionRate6 #mw59a4b107_a52b_43b5_8415_3668e494102e
+    8 3,11 7 1*functionRate7 #mw2fe228f0_8489_473b_b52d_da641e63e7cb unit_conversion=1/1.0
+    9 4,5 3 1*functionRate8 #mwc6831066_978e_4f05_b58a_7b138e3ba727 unit_conversion=1/1.0
+   10 21,30 20 1*functionRate9 #mw3ea84261_760d_4fc7_b420_c728b0f6d90d unit_conversion=1/1.0
+   11 7 21 functionRate10 #mw4a4f5084_a8ec_4fd2_a74f_6db84a627a29
+   12 18 31 functionRate11 #mw1eec4037_93c1_4fe1_93d3_7e85a42216f7
+   13 31 32,34,35 functionRate12 #mwe737aa62_097e_474c_87d5_7b7eeaadd087
+   14 20 22 functionRate16 #mw35c5dd2a_d94c_4b60_a72d_561cb55f84f0
+   15 22 33 functionRate17 #mwd4d17665_ea8f_45cd_aeae_c8a3ea8d4115
+   16 33 37 functionRate18 #mw4764870e_b030_4ffe_861a_1660a6d08340
+   17 7 23 functionRate19 #mwddce3a0d_4301_48aa_ae63_37a44f2f2088
+   18 23,29 38 1*functionRate20 #mwa93a841c_769e_407d_8c81_f1831ca594dd unit_conversion=1/1.0
+   19 36 24 functionRate21 #mwbc1856f9_a538_4023_bce5_09484e8e71cf
+   20 24,23 23,24 1*functionRate22 #mw1f853efb_fa0c_47b5_8151_210a68961204 unit_conversion=1/1.0
+   21 34 29 functionRate23 #mwfdc768f1_5ae9_47dc_9506_b957dd352582
+   22 17 25 functionRate24 #mw35593d33_6426_452d_ad36_21f20cb38436
+   23 25 26 functionRate25 #mwb77c1134_efd5_47d0_8d36_02c3c68687c6
+   24 26 27 functionRate26 #mw9fb7e873_2840_486e_ac59_2329e9e9e45b
+   25 27,30 20 1*functionRate27 #mwb582e1ea_d2f2_4bcb_a843_661ce2e430e5 unit_conversion=1/1.0
+   26 35 30 functionRate28 #mwfe6ed8b6_844a_4bfd_bb0a_195c6fb5579e
+   27 8,9 10 1*functionRate29 #mw666be0bc_42c7_48cd_89b7_87e131f1e724 unit_conversion=1/1.0
+   28 10 28 functionRate30 #mw1d5d6ab3_4d84_4f27_a13a_c47c38be09de
+   29 28 38 functionRate31 #mw69e4cb2d_f85e_4107_b5cd_a9bafe0827ee
+   30 24,28 28,24 1*functionRate32 #mw29ed8c78_d683_42b9_90fb_69e2dca364ee unit_conversion=1/1.0
+   31 33 39 functionRate34 #mw0de495aa_28d6_4ae7_8c1a_247b3546ed40
+   32 27,29 38 1*functionRate35 #mw152eb150_14a4_40a8_bc56_0d6e3281a206 unit_conversion=1/1.0
+   33 1,2,6 12 1*functionRate36 #mwdd6b7201_bde8_4631_8e90_e53b986d539d unit_conversion=1/1.0/1.0
+   34 12 13 functionRate37 #mw00a624d9_79b2_424c_9362_50e77c3a3d6f
+   35 38 40 functionRate13 #mw5dd08c34_8422_4e63_a58d_a497237b3d46
+   36 40 41 functionRate14 #mw019a6415_bb9a_40a9_b627_5aa5fccedbc8
+   37 41 36 functionRate15 #mwc2dc1496_a57b_4ea5_ba81_838f3344915c
+   38 41 42 functionRate33 #mwbda33f89_b1c8_45c9_ad37_ec7130e4ba12
+end reactions
+begin groups
+    1 TLR2_mw664a2e7f_0c35_423c_ac5d_34090e629a69 1
+    2 TLR6_1_mw664a2e7f_0c35_423c_ac5d_34090e629a69 2
+    3 IL6_IL6R_mw664a2e7f_0c35_423c_ac5d_34090e629a69 3
+    4 IL6R_mw664a2e7f_0c35_423c_ac5d_34090e629a69 4
+    5 IL6_mw664a2e7f_0c35_423c_ac5d_34090e629a69 5
+    6 LPG_mw664a2e7f_0c35_423c_ac5d_34090e629a69 6
+    7 IL6_IL6R_GP130_mw664a2e7f_0c35_423c_ac5d_34090e629a69 7
+    8 IFN_g_mw664a2e7f_0c35_423c_ac5d_34090e629a69 8
+    9 IFN_gR_mw664a2e7f_0c35_423c_ac5d_34090e629a69 9
+   10 IFNg_IFNgR_mw664a2e7f_0c35_423c_ac5d_34090e629a69 10
+   11 gp130_mw664a2e7f_0c35_423c_ac5d_34090e629a69 11
+   12 TLR2_6_LPG_mw664a2e7f_0c35_423c_ac5d_34090e629a69 12
+   13 MyD88_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 13
+   14 IRAK1_IRAK4_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 14
+   15 TRAF6_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 15
+   16 TAK1_TAB1_2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 16
+   17 IKKbeta_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 17
+   18 NFkB_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 18
+   19 IL6_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 19
+   20 STAT3_P_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 20
+   21 STAT1_P_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 38
+   22 JAK1_2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 21
+   23 s2_STAT1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 40
+   24 s2_STAT3_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 22
+   25 JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 23
+   26 SOCS1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 24
+   27 TLP2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 25
+   28 MKK1_2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 26
+   29 ERK1_ERK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 27
+   30 JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 28
+   31 STAT1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 29
+   32 STAT3_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 30
+   33 NFkB_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 31
+   34 IL6_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 32
+   35 s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 41
+   36 s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 33
+   37 SOCS3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 39
+   38 STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 34
+   39 STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 35
+   40 SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 36
+   41 iNOS_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 42
+   42 AIF_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 37
+end groups
