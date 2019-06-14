@@ -537,11 +537,12 @@ but reaction is marked as reversible'.format(reactionID))
     def __getRawRules(self, reaction, symmetryFactors, parameterFunctions, translator, sbmlfunctions):
 
         zerospecies = ['emptyset','trash','sink','source']
+        # ASS - Issue is here
         if self.useID:
-            reactant = [(reactant.getSpecies(), reactant.getStoichiometry())
+            reactant = [(reactant.getSpecies(), reactant.getStoichiometry(), reactant.getSpecies())
                         for reactant in reaction.getListOfReactants() if
                         reactant.getSpecies().lower() not in zerospecies and reactant.getStoichiometry() not in [0,'0']]
-            product = [(product.getSpecies(), product.getStoichiometry())
+            product = [(product.getSpecies(), product.getStoichiometry(), product.getSpecies())
                        for product in reaction.getListOfProducts() if product.getSpecies().lower()
                        not in zerospecies and product.getStoichiometry() not in [0,'0']]
         else:
