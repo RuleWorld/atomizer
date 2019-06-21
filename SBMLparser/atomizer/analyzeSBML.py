@@ -287,7 +287,9 @@ class SBMLAnalyzer:
         maps a set of particles to the complete set of species using lexical analysis. This step is done
         independent of the reaction network.
         '''
-
+        
+        # ASS2019 - in Python3 species is a dictKey object and can't be marshaled, this should be both p2 and p3 compatible
+        species = list(species)
         equivalenceTranslator = {}
         dependencyGraph = {}
         localSpeciesDict = defaultdict(lambda : defaultdict(list))
