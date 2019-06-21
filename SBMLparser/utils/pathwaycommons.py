@@ -86,17 +86,34 @@ def queryActiveSite(nameStr,organism):
         retry += 1
         if organism:
             organismExtract = list(organism)[0].split('/')[-1]
-            xparams = 'query={0}+AND+organism:{1}&columns=entry name,id,feature(ACTIVE SITE)&format=tab&limit=5&sort=score'.format(nameStr, organismExtract)
+            # ASS - Updating the query to conform with a regular RESTful API request and work in Python3
+            xparams = {"query":"{}+AND+organism:{}".format(nameStr,organismExtract), 
+                       "columns": "name,id,feature(ACTIVE SITE)",
+                       "format": "tab", 
+                       "limit": "5", 
+                       "sort": "score"}
+            xparams = urllib.parse.urlencode(xparams).encode("utf-8")
             try:
-                response = urllib.request.urlopen(url, xparams).read()
+                xparams = urllib.parse.urlencode(xparams).encode("utf-8")
+                req = urllib.request.Request(url)
+                with urllib.request.urlopen(req, data=xparams) as f:
+                    response = f.read().decode("utf-8")
             except urllib.error.HTTPError:
                 logMess('ERROR:MSC03', 'A connection could not be established to uniprot')
 
         if response in ['', None]:
             url = 'http://www.uniprot.org/uniprot/?'
-            xparams = 'query={0}&columns=entry name,id,feature(ACTIVE SITE)&format=tab&limit=5&sort=score'.format(nameStr)
+            # ASS - Updating the query to conform with a regular RESTful API request and work in Python3
+            xparams = {"query":nameStr, 
+                       "columns": "name,id,feature(ACTIVE SITE)",
+                       "format": "tab", 
+                       "limit": "5", 
+                       "sort": "score"}
+            xparams = urllib.parse.urlencode(xparams).encode("utf-8")
             try:
-                response = urllib.request.urlopen(url, xparams).read()
+                req = urllib.request.Request(url, data=xparams)
+                with urllib.request.urlopen(req) as f:
+                    response = f.read().decode("utf-8")
             except urllib.error.HTTPError:
                 logMess('ERROR:MSC03', 'A connection could not be established to uniprot')
     if not response:
