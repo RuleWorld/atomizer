@@ -852,7 +852,15 @@ def sanityCheck(database):
         temp = sorted(repeat)
         logMess('ERROR:SCT241', '{0}:{1}:produce the same translation:{2}:{1}:was empied'.format(temp[0], temp[1], database.prunnedDependencyGraph[temp[0]][0]))
         if temp[1] in database.translator:
-            database.translator.pop(repeat[1])
+            # ASS2019 - Not sure if the right approach but the repeat[1] removal sometimes happens 
+            # twice on the same key and raises key error
+            try:
+                database.translator.pop(repeat[1])
+            except KeyError:
+                # ASS2019
+                # TODO: Add a warning here that we are removing the same key twice
+                # logMess("")?
+                pass
 
 
 def transformMolecules(parser, database, configurationFile, namingConventions,
