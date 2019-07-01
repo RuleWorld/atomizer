@@ -197,7 +197,17 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
                 elif argList[idx] == 'lambda':
                     
                     tmp = '('
-                    upperLimit = rindex(argList[idx+1],',')
+                    # ASS2019 - I'm not sure if this is an actual solution or 
+                    # this should just never happen. argList[idx+1] sometimes 
+                    # returns _only_ ['0'] and thus the following call fails with 
+                    # ValueError. Not sure if the list is built wrong or this 
+                    # result is not handled correctly. Either way, this, for now, 
+                    # skirts the issue. 
+                    try:
+                        upperLimit = rindex(argList[idx+1],',')
+                    except ValueError:
+                        idx += 1
+                        continue
                     parsedParams = []
                     for x in argList[idx+1][0:upperLimit]:
                         if x == ',':
