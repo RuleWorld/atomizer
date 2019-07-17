@@ -873,6 +873,9 @@ but reaction is marked as reversible'.format(reactionID))
         (compartmentName,dimensions,size)
         '''
         compartments = []
+        # ASS - return empty if we are not using compartments
+        if self.noCompartment:
+            return compartments
         unitDefinitions = self.getUnitDefinitions()
         if 'volume' in unitDefinitions:
             compartments.append('#volume units: {0}'.format('*'.join([x['name'] for x in unitDefinitions['volume']])))
@@ -1408,7 +1411,6 @@ but reaction is marked as reversible'.format(reactionID))
                     # ASS - Is this not supposed to be the version without compartments?
                     observablesText.append('Species {0} {1} #{2}'.format(modifiedName, tmp,rawSpecies['name']))
                     observablesDict[modifiedName] = '{0}'.format(modifiedName)
-                observablesDict[modifiedName] = '{0}_{1}'.format(modifiedName,rawSpecies['compartment'])
                 speciesTranslationDict[rawSpecies['identifier']] = tmp
 
         sorted(rawSpeciesName,key=len)

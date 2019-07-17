@@ -577,6 +577,9 @@ def changeNames(functions, dictionary):
         # in equations
         tmp = [tmp[0], ''.join(tmp[1:])]
         for key in [x for x in dictionary if x in tmp[1]]:
+            # ASS - if the key is equal to the value, this goes for an infinite loop
+            if key == dictionary[key]:
+                continue
             while re.search(r'([\W, ]|^){0}([\W, ]|$)'.format(key), tmp[1]):
                 tmp[1] = re.sub(r'([\W, ]|^){0}([\W, ]|$)'.format(key), r'\1{0}\2'.format(dictionary[key]), tmp[1])
         tmpArray.append('{0} = {1}'.format(tmp[0], tmp[1]))
