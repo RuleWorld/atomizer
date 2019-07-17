@@ -79,6 +79,14 @@ class SBML2BNGL:
         self.unitDefinitions = self.getUnitDefinitions()
         self.convertSubstanceUnits = False
 
+        # ASS - I think there should be a check for compartments right here
+        # to determine if a) any compartment is actually used and
+        # b) remove unused ones and c) if only one is used with volume
+        # 1.0, remove that and write a normal model without compartments
+        # The following will give access to all methods to this information
+        self.noCompartment = None
+        self.check_noCompartment()
+
         self.getSpecies()
         
     def setConversion(self,conversion):
@@ -1072,7 +1080,10 @@ but reaction is marked as reversible'.format(reactionID))
                 try:
                     comp = self.tags[rawArule[0]] 
                 except KeyError:
-                    self.tags[rawArule[0]] = "@cell"
+                    # ASS - We need to check of rate laws can specify compartments
+                    # if not, this needs to change with "noCompartment" change I'm implementing
+                    if not self.noCompartment:
+                        self.tags[rawArule[0]] = "@cell"
                 artificialReactions.append(writer.bnglReaction([], [[self.convertToName(rawArule[0]).strip(),1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw'))
                 #arules.append(writer.bnglFunction('({0}) - ({1})'.format(rawArule[1][0],rawArule[1][1]), '{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
                 if rawArule[0] in zparams:
@@ -1221,6 +1232,31 @@ but reaction is marked as reversible'.format(reactionID))
         #return ['%s %f' %(parameter.getId(),parameter.getValue()) for parameter in self.model.getListOfParameters() if parameter.getValue() != 0], [x.getId() for x in self.model.getListOfParameters() if x.getValue() == 0]
         return parameters, zparam
 
+
+    # ASS - trying to implement a more complete solution for 
+    # non compartmental models
+    def check_noCompartment(self, parameters=[]):
+        compartmentDict = {}
+        compartmentDict[''] = 1
+        for compartment in self.model.getListOfCompartments():
+            compartmentDict[compartment.getId()] = compartment.getSize()
+        self.noCompartment = False
+        # Get all rawSpecies
+        allRawSpecies = map(lambda x: self.getRawSpecies(x, parameters), self.model.getListOfSpecies())
+        # Pull all used compartments in those speices and make a set
+        allUsedCompartments = set(map(lambda x: x['compartment'], allRawSpecies))
+        # Basically, if we are using a single compartment of volume 1,
+        # we are not actually using a compartment, not from the POV of 
+        # BNGL. To improve readability, we want to just write a regular
+        # BNGL model instead of a cBNGL model. Especially true since
+        # this is the case for most SBML models.
+        if len(allUsedCompartments) == 1:
+            # We are using only 1 compartment, check volume
+            if compartmentDict[allUsedCompartments.pop()] == 1:
+                # we have 1 compartment and it's volume is 1
+                # just don't use compartments.
+                self.noCompartment = True
+
     def getSpecies(self, translator={}, parameters=[]):
         '''
         in sbml parameters and species have their own namespace. not so in
@@ -1264,7 +1300,12 @@ but reaction is marked as reversible'.format(reactionID))
             #if rawSpecies['returnID'] in self.boundaryConditionVariables:
             #    continue
             if (rawSpecies['compartment'] != ''):
-                self.tags[rawSpecies['identifier']] = '@%s' % (rawSpecies['compartment'])
+                # ASS - First change for "noCompartments"
+                if self.noCompartment:
+                    rawSpecies['compartment'] = ''
+                    self.tags[rawSpecies['identifier']] = ''
+                else:
+                    self.tags[rawSpecies['identifier']] = '@%s' % (rawSpecies['compartment'])
             if(rawSpecies['returnID'] in translator):
                 if rawSpecies['returnID'] in rawSpeciesName:
                     rawSpeciesName.remove(rawSpecies['returnID'])
@@ -1299,7 +1340,13 @@ but reaction is marked as reversible'.format(reactionID))
                 if rawSpecies['identifier'] in self.tags:
                     tmp2 = (self.tags[rawSpecies['identifier']])
                 if rawSpecies['initialAmount'] > 0.0:
-                    speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), rawSpecies['initialAmount'],rawSpecies['returnID'],rawSpecies['identifier']))
+                    # Removing the compartment section if we are not using it
+                    if self.noCompartment:
+                        speciesText.append('{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
+                            rawSpecies['initialAmount'],rawSpecies['returnID'],rawSpecies['identifier']))
+                    else:
+                        speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
+                            rawSpecies['initialAmount'],rawSpecies['returnID'],rawSpecies['identifier']))
                 elif rawSpecies['initialConcentration'] > 0.0:
                     if self.isConversion:
                         # convert to molecule counts
@@ -1311,22 +1358,43 @@ but reaction is marked as reversible'.format(reactionID))
                             newParameterStr = str(rawSpecies['initialConcentration'])
                         newParameter = newParameter * 6.022e23 # convertion to molecule counts                        
                         #get compartment size
-                        compartmentSize = self.model.getCompartment(rawSpecies['compartment']).getSize()
+                        if self.noCompartment:
+                            compartmentSize = 1.0
+                        else: 
+                            compartmentSize = self.model.getCompartment(rawSpecies['compartment']).getSize()
                         newParameter = compartmentSize * newParameter
                         if unitFlag:
-                            speciesText.append('{0}:{1}{2} {3} # {4}mol/L * 6.022e23/mol *{7}L #{5} #{6}'.format(tmp2, temp, str(tmp), 
-                                                                                    newParameter,newParameterStr,rawSpecies['returnID'],
-                                                                                    rawSpecies['identifier'], compartmentSize, concentrationUnits))
+                            if self.noCompartment:
+                                speciesText.append('{1}{2} {3} # {4}mol/L * 6.022e23/mol *{7}L #{5} #{6}'.format(tmp2, temp, str(tmp), 
+                                    newParameter,newParameterStr,rawSpecies['returnID'], rawSpecies['identifier'], compartmentSize, concentrationUnits))
+                            else:
+                                speciesText.append('{0}:{1}{2} {3} # {4}mol/L * 6.022e23/mol *{7}L #{5} #{6}'.format(tmp2, temp, str(tmp), 
+                                    newParameter,newParameterStr,rawSpecies['returnID'], rawSpecies['identifier'], compartmentSize, concentrationUnits))
                             unitFlag = False
                         else:
-                            speciesText.append('{0}:{1}{2} {3} #original {4}{8}  #{5} #{6}'.format(tmp2, temp, str(tmp), 
-                                                                                    newParameter,rawSpecies['initialConcentration'],rawSpecies['returnID'],
-                                                                                    rawSpecies['identifier'], compartmentSize, concentrationUnits))
+                            if self.noCompartment:
+                                speciesText.append('{1}{2} {3} #original {4}{8}  #{5} #{6}'.format(tmp2, temp, str(tmp), 
+                                    newParameter,rawSpecies['initialConcentration'],rawSpecies['returnID'], 
+                                    rawSpecies['identifier'], compartmentSize, concentrationUnits))
+                            else:
+                                speciesText.append('{0}:{1}{2} {3} #original {4}{8}  #{5} #{6}'.format(tmp2, temp, str(tmp), 
+                                    newParameter,rawSpecies['initialConcentration'],rawSpecies['returnID'], 
+                                    rawSpecies['identifier'], compartmentSize, concentrationUnits))
                     else:
-                        speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), rawSpecies['initialConcentration'],rawSpecies['returnID'],rawSpecies['identifier']))
+                        if self.noCompartment:
+                            speciesText.append('{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
+                                rawSpecies['initialConcentration'],rawSpecies['returnID'],rawSpecies['identifier']))
+                        else:
+                            speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
+                                rawSpecies['initialConcentration'],rawSpecies['returnID'],rawSpecies['identifier']))
 
                 elif rawSpecies['isConstant']:
-                    speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 0,rawSpecies['returnID'],rawSpecies['identifier']))
+                    if self.noCompartment:
+                        speciesText.append('{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 0,
+                            rawSpecies['returnID'],rawSpecies['identifier']))
+                    else:
+                        speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 0,
+                            rawSpecies['returnID'],rawSpecies['identifier']))
             if rawSpecies['returnID'] == 'e':
                 modifiedName = 'are'
             else:
@@ -1335,10 +1403,14 @@ but reaction is marked as reversible'.format(reactionID))
             if str(tmp) != '0':
                 if rawSpecies['compartment'] != '' and len(list(self.model.getListOfCompartments())) > 1:
                     observablesText.append('Species {0}_{3} @{3}:{1} #{2}'.format(modifiedName, tmp,rawSpecies['name'],rawSpecies['compartment']))
+                    observablesDict[modifiedName] = '{0}_{1}'.format(modifiedName,rawSpecies['compartment'])
                 else:
-                    observablesText.append('Species {0}_{3} @{3}:{1} #{2}'.format(modifiedName, tmp,rawSpecies['name'],rawSpecies['compartment']))
+                    # ASS - Is this not supposed to be the version without compartments?
+                    observablesText.append('Species {0} {1} #{2}'.format(modifiedName, tmp,rawSpecies['name']))
+                    observablesDict[modifiedName] = '{0}'.format(modifiedName)
                 observablesDict[modifiedName] = '{0}_{1}'.format(modifiedName,rawSpecies['compartment'])
                 speciesTranslationDict[rawSpecies['identifier']] = tmp
+
         sorted(rawSpeciesName,key=len)
         for species in rawSpeciesName:
             if translator[species].getSize()==1 and translator[species].molecules[0].name not in names:
@@ -1351,6 +1423,7 @@ but reaction is marked as reversible'.format(reactionID))
         #speciesText.append('$NullSpecies() 1')
 
         self.speciesMemory = []
+
         return list(set(moleculesText)),speciesText,observablesText,speciesTranslationDict, observablesDict, annotationInfo
 
     def getInitialAssignments(self, translator, param, zparam, molecules, initialConditions):
@@ -1373,9 +1446,16 @@ but reaction is marked as reversible'.format(reactionID))
             name = tmp['returnID']
             constant = '$' if species.getConstant() or species.getBoundaryCondition() else ''
             if name in  translator:
-                extendedStr = '@{0}:{2}{1}'.format(species.getCompartment(),translator[name],constant)
+                if self.noCompartment:
+                    extendedStr = '{1}{0}'.format(translator[name],constant)
+                else:
+                    extendedStr = '@{0}:{2}{1}'.format(species.getCompartment(),translator[name],constant)
             else:
-                extendedStr = '@{0}:{2}{1}()'.format(tmp['compartment'],standardizeName(tmp['name']),constant)
+                # ASS - deal with no compartment case
+                if self.noCompartment:
+                    extendedStr = '{1}{0}()'.format(standardizeName(tmp['name']),constant)
+                else:
+                    extendedStr = '@{0}:{2}{1}()'.format(tmp['compartment'],standardizeName(tmp['name']),constant)
             initConc = species.getInitialConcentration() if \
             species.isSetInitialConcentration() else species.getInitialAmount()
             pparam[species.getId()] = (initConc,extendedStr)
