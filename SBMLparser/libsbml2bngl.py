@@ -585,6 +585,25 @@ def changeNames(functions, dictionary):
         tmpArray.append('{0} = {1}'.format(tmp[0], tmp[1]))
     return tmpArray
 
+# ASS - We need to rename the functions if they are the same as obs
+def changeDefs(functions, dictionary):
+    '''
+    changes the names of the functions (RHS) instead of the LHS 
+    '''
+    tmpArray = []
+    for function in functions:
+        tmp = function.split(' = ')
+        # hack to avoid problems with less than equal or more than equal
+        # in equations
+        tmp = [tmp[0], ''.join(tmp[1:])]
+        for key in [x for x in dictionary if x in tmp[0]]:
+            # ASS - if the key is equal to the value, this goes for an infinite loop
+            if key == dictionary[key]:
+                continue
+            while re.search(r'([\W, ]|^){0}([\W, ]|$)'.format(key), tmp[0]):
+                tmp[0] = re.sub(r'([\W, ]|^){0}([\W, ]|$)'.format(key), r'\1{0}\2'.format(dictionary[key]), tmp[0])
+        tmpArray.append('{0} = {1}'.format(tmp[0], tmp[1]))
+    return tmpArray
 
 def changeRates(reactions, dictionary):
     """
@@ -780,6 +799,18 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     functions = unrollFunctions(functions)
     rules = changeRates(rules, aParameters)
+
+    # ASS - We need to check for identical observables and functions. If 
+    # they are the same, re-number them so avoid having identical names
+    # this comes up when we do non-compartmental models only really
+    idenObsFuncDict = {}
+    for obs in observables:
+        obsKey = obs.split(" ")[1]
+        for aObsKey in artificialObservables.keys():
+            if obsKey == aObsKey:
+                idenObsFuncDict[obsKey] = obsKey + "_func"
+    functions = changeDefs(functions, idenObsFuncDict)
+
     if len(compartments) > 1 and 'cell 3 1.0' not in compartments:
         compartments.append('cell 3 1.0')
 
