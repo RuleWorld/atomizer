@@ -1087,7 +1087,11 @@ but reaction is marked as reversible'.format(reactionID))
                     # if not, this needs to change with "noCompartment" change I'm implementing
                     if not self.noCompartment:
                         self.tags[rawArule[0]] = "@cell"
-                artificialReactions.append(writer.bnglReaction([], [[self.convertToName(rawArule[0]).strip(),1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw'))
+                # ASS - If self.useID is set, use the ID value, not the name
+                if self.useID:
+                    artificialReactions.append(writer.bnglReaction([], [[rawArule[0],1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw'))
+                else:
+                    artificialReactions.append(writer.bnglReaction([], [[self.convertToName(rawArule[0]).strip(),1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw'))
                 #arules.append(writer.bnglFunction('({0}) - ({1})'.format(rawArule[1][0],rawArule[1][1]), '{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
                 if rawArule[0] in zparams:
                     removeParameters.append('{0} 0'.format(rawArule[0]))
