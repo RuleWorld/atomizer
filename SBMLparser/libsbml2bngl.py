@@ -713,7 +713,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             if not compartment.startswith("#"):
                 def_compartment = compartment.split(" ")[0]
                 break
-    tags = '@{0}'.format(def_compartment)
+    if def_compartment != "":
+        tags = '@{0}'.format(def_compartment)
+    else:
+        tags = ""
 
     molecules.extend([x.split(' ')[0] for x in removeParams])
 
