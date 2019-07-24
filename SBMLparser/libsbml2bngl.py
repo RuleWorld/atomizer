@@ -699,8 +699,22 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         param.append('{0} 0'.format(element))
     param = [x for x in param if x not in removeParams]
 
+    # tags = '@{0}'.format(compartments[0].split(' ')[0]) if len(compartments) == 1 else '@cell'
+    # ASS - trying to remove @cell as a default compartment. Also, 0th compartment 
+    # is generally a comment. Here we are taking the first non-comment compartment as
+    # the default compartment if we are missing the compartment, generally for 
+    # SBML non-constant parameter starting values.
+    if len(compartments) == 0:
+        def_compartment = ""
+    elif len(compartments) == 1:
+        def_compartment = compartments[0].split(" ")[0]
+    else:
+        for compartment in compartments:
+            if not compartment.startswith("#"):
+                def_compartment = compartment.split(" ")[0]
+                break
+    tags = '@{0}'.format(def_compartment)
 
-    tags = '@{0}'.format(compartments[0].split(' ')[0]) if len(compartments) == 1 else '@cell'
     molecules.extend([x.split(' ')[0] for x in removeParams])
 
     if len(molecules) == 0:
@@ -799,6 +813,16 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     functions = unrollFunctions(functions)
     rules = changeRates(rules, aParameters)
+    # ASS - While it might be true that cell is always a default compartment
+    # in SBML, we don't need it in BNGL if it's not used
+
+    #if len(compartments) > 1 and 'cell 3 1.0' not in compartments:
+    #    compartments.append('cell 3 1.0')
+
+    ##sbml always has the 'cell' default compartment, even when it
+    ##doesn't declare it
+    #elif len(compartments) == 0 and len(molecules) != 0:
+    #    compartments.append('cell 3 1.0')
 
     # ASS - We need to check for identical observables and functions. If 
     # they are the same, re-number them so avoid having identical names
@@ -811,15 +835,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                 idenObsFuncDict[obsKey] = obsKey + "_func"
     functions = changeDefs(functions, idenObsFuncDict)
 
-    if len(compartments) > 1 and 'cell 3 1.0' not in compartments:
-        compartments.append('cell 3 1.0')
-
-    #sbml always has the 'cell' default compartment, even when it
-    #doesn't declare it
-    elif len(compartments) == 0 and len(molecules) != 0:
-        compartments.append('cell 3 1.0')
-
-
     if len(artificialRules) + len(rules) == 0:
         logMess('ERROR:SIM203', 'The file contains no reactions')
     if useArtificialRules or len(rules) == 0:
@@ -828,9 +843,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
         artificialRules.extend(rules)
         rules = artificialRules
-
-
-
     else:
         artificialRules =['#{0}'.format(x) for x in artificialRules]
         evaluate =  evaluation(len(observables), translator)

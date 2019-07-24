@@ -883,7 +883,9 @@ but reaction is marked as reversible'.format(reactionID))
             compartments.append('#volume units: L')
         for _,compartment in enumerate(self.model.getListOfCompartments()):
             compartmentInfo = self.__getRawCompartments(compartment)
-            name = 'cell' if compartmentInfo[0] == '' else compartmentInfo[0]
+            # ASS - removing "cell" as default compartment
+            # name = 'cell' if compartmentInfo[0] == '' else compartmentInfo[0]
+            name = compartmentInfo[0]
             if name != compartmentInfo[3] and compartmentInfo[3] != '':
                 compartments.append("%s %d %s #%s" % (name, compartmentInfo[1], compartmentInfo[2], compartmentInfo[3]))
             else:
@@ -948,7 +950,9 @@ but reaction is marked as reversible'.format(reactionID))
                     """
                     parameters.append('r%d_%s %f' % (index + 1, parameter[0], parameter[1]))
                     parameterDict[parameter[0]] = parameter[1]
-            compartmentList = [['cell', 1]]
+            #TODO: ASS - We would like to remove the default compartment if at all possible
+            compartmentList = []
+            # compartmentList = [['cell', 1]]
             compartmentList.extend([[self.__getRawCompartments(x)[0], self.__getRawCompartments(x)[2]] for x in self.model.getListOfCompartments()])
             threshold = 0
             if rawRules['numbers'][0] > threshold  or rawRules['rates'][0] in translator:
@@ -1039,7 +1043,9 @@ but reaction is marked as reversible'.format(reactionID))
         and parameters initialized as 0, so they need to be removed from the parameters list
         '''
 
-        compartmentList = [['cell',1]]
+        # ASS - trying to remove cell as a default compartment
+        compartmentList = []
+        # compartmentList = [['cell',1]]
         compartmentList.extend([[self.__getRawCompartments(x)[0], self.__getRawCompartments(x)[2]] for x in self.model.getListOfCompartments()])
 
         arules = []
@@ -1083,10 +1089,10 @@ but reaction is marked as reversible'.format(reactionID))
                 try:
                     comp = self.tags[rawArule[0]] 
                 except KeyError:
-                    # ASS - We need to check of rate laws can specify compartments
-                    # if not, this needs to change with "noCompartment" change I'm implementing
+                    # ASS - We need to default to an existing compartment if we are going 
+                    # to remove @cell as a default compartment
                     if not self.noCompartment:
-                        self.tags[rawArule[0]] = "@cell"
+                        self.tags[rawArule[0]] = "@" + compartmentList[0][0]
                 # ASS - If self.useID is set, use the ID value, not the name
                 if self.useID:
                     artificialReactions.append(writer.bnglReaction([], [[rawArule[0],1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw'))
