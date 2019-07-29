@@ -848,23 +848,17 @@ def sanityCheck(database):
         for key2 in range(key + 1, len(list(database.translator.keys()))):
             if stringrep[list(database.translator.keys())[key]] == stringrep[list(database.translator.keys())[key2]]:
                 repeats.add((list(database.translator.keys())[key], list(database.translator.keys())[key2]))
+    removed = []
     for repeat in repeats:
         temp = sorted(repeat)
         logMess('ERROR:SCT241', '{0}:{1}:produce the same translation:{2}:{1}:was empied'.format(temp[0], temp[1], database.prunnedDependencyGraph[temp[0]][0]))
-        if temp[1] in database.translator:
-            # ASS2019 - Not sure if the right approach but the repeat[1] removal sometimes happens 
-            # twice on the same key and raises key error
-            try:
-                database.translator.pop(repeat[1])
-            except KeyError:
-                # ASS2019
-                # TODO: Add a warning here that we are removing the same key twice
-                # logMess("")?
-                pass
+        if temp[1] in list(database.translator.keys()) and repeat[1] not in removed:
+            database.translator.pop(repeat[1])
+            removed.append(repeat[1])
 
 
 def transformMolecules(parser, database, configurationFile, namingConventions,
-                       speciesEquivalences=None, bioGridFlag=False):
+                       speciesEquivalences=None, bioGridFlag=False, memoizedResolver=True):
     """
     main method. Receives a parser configuration, a configurationFile and a
     list of user defined species equivalences and returns a dictionary
@@ -881,7 +875,8 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     pr.enable()
     '''
     database.parser = parser
-    sctsolver = resolveSCT.SCTSolver(database)
+    # ASS - Gotta pass in the option to memoize here
+    sctsolver = resolveSCT.SCTSolver(database, memoizedResolver)
     database = sctsolver.createSpeciesCompositionGraph(parser, configurationFile, namingConventions,
                                                 speciesEquivalences=speciesEquivalences, bioGridFlag=bioGridFlag)
 

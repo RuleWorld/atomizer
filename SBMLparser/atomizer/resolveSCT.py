@@ -15,8 +15,9 @@ import utils.pathwaycommons as pwcm
 
 class SCTSolver:
 
-    def __init__(self, database):
+    def __init__(self, database, memoizedResolver=False):
         self.database = database
+        self.memoizedResolver = memoizedResolver
 
     def createSpeciesCompositionGraph(self, parser, configurationFile, namingConventions,
                                       speciesEquivalences=None, bioGridFlag=False):
@@ -1059,8 +1060,12 @@ class SCTSolver:
         >>> sorted(dummy.resolveDependencyGraph(dependencyGraph2,'A_B_C'))
         [['A'], ['A'], ['B'], ['B'], ['C'], ['C']]
         '''
-        topCandidate = self.resolveDependencyGraphHelper(
-            dependencyGraph, reactant, [], withModifications)
+        if self.memoizedResolver:
+            topCandidate = self.resolveDependencyGraphHelper(
+                dependencyGraph, reactant, [], withModifications)
+        else:
+            topCandidate = self.unMemoizedResolveDependencyGraphHelper(
+                dependencyGraph, reactant, [], withModifications)
         return topCandidate
 
     @memoize
@@ -1118,3 +1123,55 @@ class SCTSolver:
         return result
 
 
+    def unMemoizedResolveDependencyGraphHelper(self, dependencyGraph, reactant, memory,
+                                     withModifications=False):
+        """
+        Helper function for resolveDependencyGraph that adds a memory field to resolveDependencyGraphHelper to avoid 
+        cyclical definitions problems 
+        >>> dummy = SCTSolver(None)
+        >>> dependencyGraph = {'EGF_EGFR_2':[['EGF_EGFR','EGF_EGFR']],'EGF_EGFR':[['EGF','EGFR']],'EGFR':[],'EGF':[],\
+        'EGFR_P':[['EGFR']],'EGF_EGFR_2_P':[['EGF_EGFR_2']]}
+        >>> dependencyGraph2 = {'A':[],'B':[],'C':[],'A_B':[['A','B']],'B_C':[['B','C']],'A_B_C':[['A_B','C'],['B_C','A']]}
+        >>> sorted(dummy.resolveDependencyGraphHelper(dependencyGraph, 'EGF_EGFR_2_P',[]))
+        [['EGF'], ['EGF'], ['EGFR'], ['EGFR']]
+       
+        >>> sorted(dummy.resolveDependencyGraphHelper(dependencyGraph, 'EGF_EGFR_2_P', [], withModifications=True))
+        [('EGF_EGFR_2', 'EGF_EGFR_2_P')]
+
+        >>> sorted(dummy.resolveDependencyGraphHelper(dependencyGraph2, 'A_B_C', []))
+        [['A'], ['A'], ['B'], ['B'], ['C'], ['C']]
+
+        >>> dependencyGraph3 = {'C1': [['C2']],'C2':[['C3']],'C3':[['C1']]}
+        >>> resolveDependencyGraphHelper(dummy.dependencyGraph3, 'C3', [], withModifications=True)
+        Traceback (innermost last):
+          File "<stdin>", line 1, in ?
+        CycleError
+        """
+        
+        result = []
+        # if type(reactant) == tuple:
+        #    return []
+        if reactant not in dependencyGraph or dependencyGraph[reactant] == [] or \
+                dependencyGraph[reactant] == [[reactant]]:
+            if not withModifications:
+                result.append([reactant])
+        else:
+            for option in dependencyGraph[reactant]:
+                tmp = []
+                for element in option:
+                    if element in memory and not withModifications:
+                        result.append([element])
+                        continue
+                    elif element in memory:
+                        #logMess(
+                        #    'ERROR:SCT201', 'dependency cycle detected on {0}'.format(element))
+                        raise atoAux.CycleError(memory)
+                    baseElement = self.unMemoizedResolveDependencyGraphHelper(dependencyGraph, element,
+                                                               memory + [element], withModifications)
+                    if baseElement is not None:
+                        tmp.extend(baseElement)
+                # if not withModifications:
+                result.extend(tmp)
+                if len(option) == 1 and withModifications and option[0] != reactant:
+                    result.append((option[0], reactant))
+        return result

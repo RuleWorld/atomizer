@@ -24,6 +24,7 @@ def defineConsole():
     parser.add_argument('-b', '--bionetgen-analysis', type=str, help='Set the BioNetGen path for context post analysis.')
     parser.add_argument('-s','--isomorphism-check', action='store_true', help='disallow atomizations that produce the same graph structure')
     parser.add_argument('-I','--ignore', action='store_true', help='ignore atomization translation errors')
+    parser.add_argument('-mr','--memoized_resolver', action='store_false', help='sometimes the dependency graph is too large and might cause a very large memory requirement. This option will slow the translator down but will decrease memory usage')
 
     return parser
 
@@ -45,6 +46,7 @@ def checkInput(namespace):
     options['isomorphismCheck'] = namespace.isomorphism_check
     options['ignore'] = namespace.ignore
     options['noConversion'] = namespace.no_conversion
+    options['memoizedResolver'] = namespace.memoized_resolver
     return options
 
 
@@ -55,7 +57,7 @@ def main():
     options = checkInput(namespace)
     returnArray = ls2b.analyzeFile(options['inputFile'], options['conventionFile'], options['useId'], options['namingConventions'],
                                    options['outputFile'], speciesEquivalence=options['userStructure'],
-                                   atomize=options['atomize'], bioGrid=False, pathwaycommons=options['pathwaycommons'], ignore=options['ignore'], noConversion = options['noConversion'])
+                                   atomize=options['atomize'], bioGrid=False, pathwaycommons=options['pathwaycommons'], ignore=options['ignore'], noConversion = options['noConversion'], memoizedResolver=options['memoizedResolver'])
 
     if namespace.bionetgen_analysis and returnArray:
         ls2b.postAnalyzeFile(options['outputFile'], namespace.bionetgen_analysis, returnArray.database)

@@ -472,7 +472,7 @@ def postAnalyzeString(outputFile, bngLocation, database):
     return returnArray
 
 def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, outputFile,
-                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False, noConversion=False):
+                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False, noConversion=False, memoizedResolver=True):
     '''
     one of the library's main entry methods. Process data from a file
     '''
@@ -513,7 +513,8 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     try:
         if atomize:
             translator, onlySynDec = mc.transformMolecules(parser, database, reactionDefinitions,
-                                                           namingConventions, speciesEquivalence, bioGrid)
+                                                           namingConventions, speciesEquivalence, bioGrid,
+                                                           memoizedResolver)
     except TranslationException as e:
         print("Found an error in {0}. Check log for more details. Use -I to ignore translation errors".format(e.value))
         if len(logMess.log) > 0:
