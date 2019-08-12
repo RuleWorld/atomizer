@@ -1007,6 +1007,34 @@ class SCTSolver:
                 counter += 1
         return counter
 
+    # ASS: From my testing the iterative version is not only identical
+    # but also significantly faster for most models since measure 
+    # graph doesn't get the same inputs, memoization doesn't pay off.
+    def measureGraph2(self, element, path):
+        '''
+        Identical to previous function but iterative instead of 
+        recursive
+        '''
+        counter = 1
+        if len(path) == 1:
+            if type(path[0]) == list or type(path[0]) == tuple:
+                counter += 1
+                # check inside
+                for x in path[0]:
+                    if x != '0' and x != element:
+                        counter += 1
+            else:
+                if path[0] != '0' and path[0] != element:
+                    counter +=1
+        else:
+            # it's a longer thing
+            counter += len(path)
+            # flatten and check
+            flat = [i for sb in path for i in sb if i]
+            for x in flat:
+                if x != '0' and x != element:
+                    counter += 1
+        return counter
 
     def weightDependencyGraph(self, dependencyGraph):
         '''
@@ -1027,7 +1055,9 @@ class SCTSolver:
                 path2 = self.resolveDependencyGraph(dependencyGraph, element, True)
             except atoAux.CycleError:
                 path2 = []
-            weight = self.measureGraph(element, path) + len(path2)
+            # ASS: Swapping to iterative version of the function
+            #weight = self.measureGraph(element, path) + len(path2)
+            weight = self.measureGraph2(element, path) + len(path2)
             weights.append([element, weight])
 
         weights = sorted(weights, key=lambda rule: (rule[1], len(rule[0])))
