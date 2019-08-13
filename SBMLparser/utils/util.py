@@ -74,6 +74,48 @@ class memoize(object):
         except KeyError:
             res = cache[key] = self.func(*args, **kw)
         return res
+# ASS: optimizing the memoization method used with 
+# resolveHelper method specifically to use less 
+# memory, important in certain larger models
+class memoizeMapped(object):
+    """
+    Optimized local cache for recursive resolveHelper method 
+    to limit memory usage
+    """
+    def __init__(self, func):
+        self.func = func
+        self.cache = {}
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self.func
+        return partial(self, obj)
+    def __call__(self, obj, gkey, react, mem, withMod):
+        key1 = gkey
+        key2 = react
+        # This memory hash is a bit suspect, 
+        key3 = hash(tuple(sorted(mem)))
+        key4 = withMod
+        try:
+            res = self.cache[key1][key2][key3][key4]
+        except KeyError:
+            try:
+                d = self.cache[key1]
+            except KeyError:
+                self.cache[key1] = {}
+            try:
+                d = self.cache[key1][key2]
+            except KeyError:
+                self.cache[key1][key2] = {}
+            try:
+                d = self.cache[key1][key2][key3]
+            except KeyError:
+                self.cache[key1][key2][key3] = {}
+            try:
+                d = self.cache[key1][key2][key3][key4]
+            except KeyError:
+                self.cache[key1][key2][key3][key4] = None
+            res = self.cache[key1][key2][key3][key4] = self.func(obj, gkey, react, mem, withMod)
+        return res
 
 
 class TranslationException(Exception):

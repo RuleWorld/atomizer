@@ -4,7 +4,7 @@ from . import analyzeSBML
 from collections import Counter, defaultdict
 import itertools
 from copy import deepcopy, copy
-from utils.util import logMess, memoize
+from utils.util import logMess, memoize, memoizeMapped
 from . import atomizationAux as atoAux
 import utils.pathwaycommons as pwcm
 
@@ -18,6 +18,8 @@ class SCTSolver:
     def __init__(self, database, memoizedResolver=False):
         self.database = database
         self.memoizedResolver = memoizedResolver
+        self.graph_map = {}
+        self.dg = None
 
     def createSpeciesCompositionGraph(self, parser, configurationFile, namingConventions,
                                       speciesEquivalences=None, bioGridFlag=False):
@@ -1063,6 +1065,38 @@ class SCTSolver:
         weights = sorted(weights, key=lambda rule: (rule[1], len(rule[0])))
         return weights
 
+    # ASS: New method to make hashes from graphs. Some key points
+    # 1) sorting is done to ensure same graph gives the same key, consistently
+    # 2) python internal hashing function is used for the hashing
+    # 3) should be very collision proof 
+    def make_key_from_graph(self, graph):
+        hashable_tuples = []
+        # If graph is empty just return the empty tuple result
+        if len(graph) == 0:
+            return marshal.dumps(hashable_tuples)
+        # So we don't modify original graph
+        tmpGraph = deepcopy(graph)
+        # This turns the graph into a traditional graph implementation 
+        # where there are no edges that go to nodes that do not exist in the 
+        # graph, I'm making sure every node exists in the graph itself
+        all_elems = set([item[0] for sublist in tmpGraph.values() for item in sublist if item])
+        for elem in all_elems:
+            try:
+                a = tmpGraph[elem]
+            except KeyError:
+                tmpGraph[elem] = []
+        # Now we should have a traditional graph implementation
+        # I also want to unroll every element to turn this into a hashable 
+        # touple of tuples type deal
+        for key in sorted(tmpGraph):
+            tmpGraph[key] = functools.reduce(lambda x,y: x+y, sorted(tmpGraph[key]), [])
+        # Now we can turn this into a proper hashable object
+        for key in sorted(tmpGraph):
+            hashable_tuples.append((key, tuple(tmpGraph[key])))
+        # Turn the list into tuples to it's hashable
+        hashable_tuples = tuple(hashable_tuples)
+        # return hash
+        return hashable_tuples.__hash__()
 
     def resolveDependencyGraph(self, dependencyGraph, reactant, withModifications=False):
         '''
@@ -1090,16 +1124,23 @@ class SCTSolver:
         >>> sorted(dummy.resolveDependencyGraph(dependencyGraph2,'A_B_C'))
         [['A'], ['A'], ['B'], ['B'], ['C'], ['C']]
         '''
+        gkey = self.make_key_from_graph(dependencyGraph)
+        try:
+            self.dg = self.graph_map[gkey]
+        except KeyError:
+            self.graph_map[gkey] = dependencyGraph
+            self.dg = dependencyGraph
+
         if self.memoizedResolver:
             topCandidate = self.resolveDependencyGraphHelper(
-                dependencyGraph, reactant, [], withModifications)
+                gkey, reactant, [], withModifications)
         else:
             topCandidate = self.unMemoizedResolveDependencyGraphHelper(
-                dependencyGraph, reactant, [], withModifications)
+                self.dg, reactant, [], withModifications)
         return topCandidate
 
-    @memoize
-    def resolveDependencyGraphHelper(self, dependencyGraph, reactant, memory,
+    @memoizeMapped
+    def resolveDependencyGraphHelper(self, gkey, reactant, memory,
                                      withModifications=False):
         """
         Helper function for resolveDependencyGraph that adds a memory field to resolveDependencyGraphHelper to avoid 
@@ -1127,12 +1168,12 @@ class SCTSolver:
         result = []
         # if type(reactant) == tuple:
         #    return []
-        if reactant not in dependencyGraph or dependencyGraph[reactant] == [] or \
-                dependencyGraph[reactant] == [[reactant]]:
+        if reactant not in self.dg or self.dg[reactant] == [] or \
+                self.dg[reactant] == [[reactant]]:
             if not withModifications:
                 result.append([reactant])
         else:
-            for option in dependencyGraph[reactant]:
+            for option in self.dg[reactant]:
                 tmp = []
                 for element in option:
                     if element in memory and not withModifications:
@@ -1142,7 +1183,7 @@ class SCTSolver:
                         #logMess(
                         #    'ERROR:SCT201', 'dependency cycle detected on {0}'.format(element))
                         raise atoAux.CycleError(memory)
-                    baseElement = self.resolveDependencyGraphHelper(dependencyGraph, element,
+                    baseElement = self.resolveDependencyGraphHelper(gkey, element,
                                                                memory + [element], withModifications)
                     if baseElement is not None:
                         tmp.extend(baseElement)
