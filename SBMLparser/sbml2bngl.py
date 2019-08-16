@@ -381,12 +381,12 @@ class SBML2BNGL:
         for element in ifStack:
             if ifStack[element] > 1:
                 # ASS - removing if statement from functional rate definitions
-                # rateR = 'if({0}>0, {1}/({0}^{2}),0)'.format(element, rateR, ifStack[element])
-                rateR = '{1}/({0}^{2})'.format(element, rateR, ifStack[element])
+                rateR = 'if({0}>0, {1}/({0}^{2}),0)'.format(element, rateR, ifStack[element])
+                #rateR = '{1}/({0}^{2})'.format(element, rateR, ifStack[element])
             else:
                 # ASS - removing if statement from functional rate definitions
-                # rateR = 'if({0}>0, {1}/{0},0)'.format(element, rateR)
-                rateR = '{1}/{0}'.format(element, rateR)
+                rateR = 'if({0}>0, {1}/{0},0)'.format(element, rateR)
+                #rateR = '{1}/{0}'.format(element, rateR)
 
         numFactors = max(math.getNumChildren(), len(ifStack))
         if pymath.isinf(highStoichoiMetryFactor):
@@ -477,13 +477,13 @@ class SBML2BNGL:
                     rateL, nl = self.removeFactorFromMath(math.deepCopy(), rReactant,
                                                           rProduct, parameterFunctions)
                     # ASS - removing if statement from functional rate definitions
-                    # rateL = "if({0}>= 0,{0},0)".format(rateL)
-                    rateL = "{0}".format(rateL)
+                    rateL = "if({0}>= 0,{0},0)".format(rateL)
+                    #rateL = "{0}".format(rateL)
                     rateR, nr = self.removeFactorFromMath(math.deepCopy(), rProduct,
                                                           rReactant, parameterFunctions)
                     # ASS - removing if statement from functional rate definitions
-                    # rateR = "if({0}< 0,-({0}),0)".format(rateR)
-                    rateR = "-({0})".format(rateR)
+                    rateR = "if({0}< 0,-({0}),0)".format(rateR)
+                    #rateR = "-({0})".format(rateR)
                     nl, nr = 1, 1
 
             else:
@@ -501,8 +501,8 @@ class SBML2BNGL:
 to never activate and has been to rate 0'.format(reactionID))
                     else:
                         # ASS - removing if statement from functional rate definitions
-                        # rateL = "if({0} >= 0, {0}, 0)".format(rateL)
-                        rateL = "{0}".format(rateL)
+                        rateL = "if({0} >= 0, {0}, 0)".format(rateL)
+                        #rateL = "{0}".format(rateL)
                         nl = 1
                 if nr > 0:
                     if nl == 0 and rateL not in parameterFunctions:
@@ -512,8 +512,8 @@ to never activate and has been to rate 0'.format(reactionID))
 to never activate (rate is never negative), setting reaction to unidirectional'.format(reactionID))
                     else:
                         # ASS - removing if statement from functional rate definitions
-                        # rateR = "if({0} < 0, -({0}), 0)".format(rateR)
-                        rateR = "-({0})".format(rateR)
+                        rateR = "if({0} < 0, -({0}), 0)".format(rateR)
+                        #rateR = "-({0})".format(rateR)
                         nr = 1
                 if ((nl == 0 and nr > 0) or (nr == 0 and nl > 0)) and (rateL in parameterFunctions or rateR in parameterFunctions):
                     logMess('WARNING:SIM102', 'In reaction {0}, rates cannot be divided into left hand side and right hand side \
@@ -1020,12 +1020,12 @@ but reaction is marked as reversible'.format(reactionID))
                     rateR = libsbml.formulaToString(arule.getMath().getRightChild().getLeftChild())
                 else:
                     # ASS - removing if statement from functional rate definitions
-                    # rateR = 'if({0}>0,({1})/{0},0)'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
-                    rateR = '({1})/{0}'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
+                    rateR = 'if({0}>0,({1})/{0},0)'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
+                    #rateR = '({1})/{0}'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
             else:
                 # ASS - removing if statement from functional rate definitions
-                # rateR = 'if({0}>0,({1})/{0},0)'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
-                rateR = '({1})/{0}'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
+                rateR = 'if({0}>0,({1})/{0},0)'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
+                #rateR = '({1})/{0}'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
         else:
             rateL = libsbml.formulaToString(arule.getMath())
             rateR = '0'
