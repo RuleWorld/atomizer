@@ -1269,6 +1269,7 @@ but reaction is marked as reversible'.format(reactionID))
                 # we have 1 compartment and it's volume is 1
                 # just don't use compartments.
                 self.noCompartment = True
+        self.speciesMemory = []
 
     def getSpecies(self, translator={}, parameters=[]):
         '''
