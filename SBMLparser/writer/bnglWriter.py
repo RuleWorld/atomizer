@@ -410,8 +410,7 @@ def extendFunction(function, subfunctionName,subfunction):
         body = subfunction.split(' = ')[1]
     except IndexError as e:
         print("A function doesn't have a definition: {}".format(subfunction))
-        import sys
-        sys.exit()
+        raise e
     while re.search(r'(\W|^){0}\([^)]*\)(\W|$)'.format(subfunctionName),function) != None:
         contentRule = pyparsing.Word(pyparsing.alphanums + '_.') |  ',' | '+' | '-' | '*' | '/' | '^' | '&' | '>' | '<' | '=' | '|'  
         parens     = pyparsing.nestedExpr( '(', ')', content=contentRule)

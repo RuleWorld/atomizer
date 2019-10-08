@@ -649,11 +649,14 @@ def createBindingRBM(element, translator, dependencyGraph, bioGridFlag, pathwayc
 
             molecule[0].components.append(newComponent1)
 
-            if newComponent1.name not in [x.name for x in translator[molecule[0].name].molecules[0].
-                                          components]:
-                translator[molecule[0].name].molecules[
-                    0].components.append(deepcopy(newComponent1))
-
+            try:
+                if newComponent1.name not in [x.name for x in translator[molecule[0].name].molecules[0].
+                                                                components]:
+                    translator[molecule[0].name].molecules[
+                        0].components.append(deepcopy(newComponent1))
+            except KeyError as e:
+                print("The translator doesn't know the molecule: {}".format(molecule[0].name))
+                raise e
             molecule[0].components[-1].bonds.append(bondIdx)
         flag = False
         # same thing for the other member of the bond
