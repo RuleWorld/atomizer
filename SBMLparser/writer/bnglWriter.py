@@ -404,7 +404,14 @@ def extendFunction(function, subfunctionName,subfunction):
             idx += 1
         return parsedString
     param = subfunction.split(' = ')[0][len(subfunctionName)+1:-1]
-    body = subfunction.split(' = ')[1]
+    # ASS2019: There are cases where the fuction doesn't have a definition and the 
+    # following line errors out with IndexError, let's handle it.
+    try:
+        body = subfunction.split(' = ')[1]
+    except IndexError as e:
+        print("A function doesn't have a definition: {}".format(subfunction))
+        import sys
+        sys.exit()
     while re.search(r'(\W|^){0}\([^)]*\)(\W|$)'.format(subfunctionName),function) != None:
         contentRule = pyparsing.Word(pyparsing.alphanums + '_.') |  ',' | '+' | '-' | '*' | '/' | '^' | '&' | '>' | '<' | '=' | '|'  
         parens     = pyparsing.nestedExpr( '(', ')', content=contentRule)
