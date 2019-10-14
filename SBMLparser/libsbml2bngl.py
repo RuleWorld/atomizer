@@ -568,14 +568,23 @@ def correctRulesWithParenthesis(rules, parameters):
 def changeNames(functions, dictionary):
     '''
     changes instances of keys in dictionary appeareing in functions to their corresponding
-    alternatives
+    ulternatives
     '''
     tmpArray = []
     for function in functions:
         tmp = function.split(' = ')
         # hack to avoid problems with less than equal or more than equal
         # in equations
-        tmp = [tmp[0], ''.join(tmp[1:])]
+
+        # ASS2019 - There are cases where we have more than one equal sign e.g. "= = 0&&"
+        # in an if statement, I _think_ we need to re-add the '=' we removed by doing 
+        # split 
+        if len(tmp[1:]) > 1:
+            print("we have multiple equal signs")
+            print(function)
+            print(tmp[1:])
+            print("rejoint:", "=".join(tmp[1:]))
+        tmp = [tmp[0], '='.join(tmp[1:])]
         for key in [x for x in dictionary if x in tmp[1]]:
             # ASS - if the key is equal to the value, this goes for an infinite loop
             if key == dictionary[key]:
@@ -807,7 +816,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                     sbmlfunctions[sbml2] = writer.extendFunction(sbmlfunctions[sbml2], sbml, sbmlfunctions[sbml])
 
     functions = reorderFunctions(functions)
-
 
     functions = changeNames(functions, aParameters)
     # change reference for observables with compartment name

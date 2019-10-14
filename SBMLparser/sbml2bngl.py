@@ -53,7 +53,6 @@ def unrollSBMLFunction(function, sbmlFunctions):
                     modificationFlag = True
                     recursionIndex +=1
                     break
-
     return function
 
 
