@@ -568,7 +568,7 @@ def correctRulesWithParenthesis(rules, parameters):
 def changeNames(functions, dictionary):
     '''
     changes instances of keys in dictionary appeareing in functions to their corresponding
-    ulternatives
+    alternatives
     '''
     tmpArray = []
     for function in functions:
@@ -579,11 +579,6 @@ def changeNames(functions, dictionary):
         # ASS2019 - There are cases where we have more than one equal sign e.g. "= = 0&&"
         # in an if statement, I _think_ we need to re-add the '=' we removed by doing 
         # split 
-        if len(tmp[1:]) > 1:
-            print("we have multiple equal signs")
-            print(function)
-            print(tmp[1:])
-            print("rejoint:", "=".join(tmp[1:]))
         tmp = [tmp[0], '='.join(tmp[1:])]
         for key in [x for x in dictionary if x in tmp[1]]:
             # ASS - if the key is equal to the value, this goes for an infinite loop
