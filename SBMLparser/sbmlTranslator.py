@@ -18,7 +18,7 @@ def defineConsole():
     parser.add_argument('-n', '--naming-conventions', type=str, help='Naming conventions file')
     parser.add_argument('-u', '--user-structures', type=str, help='User defined species')
     parser.add_argument('-id', '--molecule-id', action='store_true', help='use SBML molecule ids instead of names. IDs are less descriptive but more bngl friendly. Use only if the generated BNGL has syntactic errors')
-    parser.add_argument('-nc','--no-conversion', action='store_true', help='do not convert units. Copy straight from sbml to bngl')
+    parser.add_argument('-cu','--convert-units', action='store_false', help='convert units. Otherwise units are copied straight from sbml to bngl')
     parser.add_argument('-a', '--atomize', action='store_true', help='Infer molecular structure')
     parser.add_argument('-p', '--pathwaycommons', action='store_true', help='Use pathway commons to infer molecule binding. This setting requires an internet connection and will query the pathway commons web service.')
     parser.add_argument('-b', '--bionetgen-analysis', type=str, help='Set the BioNetGen path for context post analysis.')
@@ -45,7 +45,7 @@ def checkInput(namespace):
     options['bionetgenAnalysis'] = namespace.bionetgen_analysis
     options['isomorphismCheck'] = namespace.isomorphism_check
     options['ignore'] = namespace.ignore
-    options['noConversion'] = namespace.no_conversion
+    options['noConversion'] = namespace.convert_units
     options['memoizedResolver'] = namespace.memoized_resolver
     return options
 
