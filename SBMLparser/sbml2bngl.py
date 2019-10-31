@@ -458,8 +458,12 @@ class SBML2BNGL:
         else:
             if 'substance' not in self.unitDefinitions:
                 moleFlag = True
+            # ASS: Is this actually correct? For BioModel 26 this divides
+            # ever rate constant by N_a and it's wrong to do so?
             elif any([x['kind'] == 23 for x in self.unitDefinitions['substance']]):
-                moleFlag = True
+                # ASS: For now I'm disabling this flag flip
+                # moleFlag = True
+                pass
         #else if all([x['name'] != 'units' for x in self.unitDefinitions]):
         #    print self.unitDefinitions['substance']
         #divide by avogadros number to get volume per number per second units
