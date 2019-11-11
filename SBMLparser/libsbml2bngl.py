@@ -690,6 +690,16 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     aParameters, aRules, nonzparam, artificialRules, removeParams, artificialObservables = parser.getAssignmentRules(zparam, param, rawSpecies,
                                                                                                                      observablesDict, translator)
 
+    # ASS2019 - we need to adjust initial conditions of assignment rules
+    # so that they start with the correct values. While this doesn't
+    # impact model translation quality, it does make it difficult to 
+    # do automated testing 
+    try:
+        initialConditions = parser.adjustInitialConditions(param, initialConditions, artificialObservables, observables)
+    except:
+        import IPython
+        IPython.embed()
+
     compartments = parser.getCompartments()
     functions = []
     assigmentRuleDefinedParameters = []

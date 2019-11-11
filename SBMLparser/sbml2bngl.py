@@ -385,12 +385,12 @@ class SBML2BNGL:
         for element in ifStack:
             if ifStack[element] > 1:
                 # ASS - removing if statement from functional rate definitions
-                rateR = 'if({0}>0, {1}/({0}^{2}),0)'.format(element, rateR, ifStack[element])
-                #rateR = '{1}/({0}^{2})'.format(element, rateR, ifStack[element])
+                # rateR = 'if({0}>0, {1}/({0}^{2}),0)'.format(element, rateR, ifStack[element])
+                rateR = '{1}/({0}^{2} + __epsilon__)'.format(element, rateR, ifStack[element])
             else:
                 # ASS - removing if statement from functional rate definitions
-                rateR = 'if({0}>0, {1}/{0},0)'.format(element, rateR)
-                #rateR = '{1}/{0}'.format(element, rateR)
+                # rateR = 'if({0}>0, {1}/{0},0)'.format(element, rateR)
+                rateR = '{1}/({0} + __epsilon__)'.format(element, rateR)
 
         numFactors = max(math.getNumChildren(), len(ifStack))
         if pymath.isinf(highStoichoiMetryFactor):
@@ -460,6 +460,7 @@ class SBML2BNGL:
                 moleFlag = True
             # ASS: Is this actually correct? For BioModel 26 this divides
             # ever rate constant by N_a and it's wrong to do so?
+            # also, it's 23 because mole metaid is ...23
             elif any([x['kind'] == 23 for x in self.unitDefinitions['substance']]):
                 # ASS: For now I'm disabling this flag flip
                 # moleFlag = True
@@ -496,13 +497,13 @@ class SBML2BNGL:
                     rateL, nl = self.removeFactorFromMath(math.deepCopy(), rReactant,
                                                           rProduct, parameterFunctions)
                     # ASS - removing if statement from functional rate definitions
-                    rateL = "if({0}>= 0,{0},0)".format(rateL)
-                    #rateL = "{0}".format(rateL)
+                    #rateL = "if({0}>= 0,{0},0)".format(rateL)
+                    rateL = "({0} + __epsilon__)".format(rateL)
                     rateR, nr = self.removeFactorFromMath(math.deepCopy(), rProduct,
                                                           rReactant, parameterFunctions)
                     # ASS - removing if statement from functional rate definitions
-                    rateR = "if({0}< 0,-({0}),0)".format(rateR)
-                    #rateR = "-({0})".format(rateR)
+                    #rateR = "if({0}< 0,-({0}),0)".format(rateR)
+                    rateR = "-({0} + __epsilon__)".format(rateR)
                     nl, nr = 1, 1
 
             else:
@@ -520,8 +521,8 @@ class SBML2BNGL:
 to never activate and has been to rate 0'.format(reactionID))
                     else:
                         # ASS - removing if statement from functional rate definitions
-                        rateL = "if({0} >= 0, {0}, 0)".format(rateL)
-                        #rateL = "{0}".format(rateL)
+                        #rateL = "if({0} >= 0, {0}, 0)".format(rateL)
+                        rateL = "({0} + __epsilon__)".format(rateL)
                         nl = 1
                 if nr > 0:
                     if nl == 0 and rateL not in parameterFunctions:
@@ -531,8 +532,8 @@ to never activate and has been to rate 0'.format(reactionID))
 to never activate (rate is never negative), setting reaction to unidirectional'.format(reactionID))
                     else:
                         # ASS - removing if statement from functional rate definitions
-                        rateR = "if({0} < 0, -({0}), 0)".format(rateR)
-                        #rateR = "-({0})".format(rateR)
+                        #rateR = "if({0} < 0, -({0}), 0)".format(rateR)
+                        rateR = "-({0} + __epsilon__)".format(rateR)
                         nr = 1
                 if ((nl == 0 and nr > 0) or (nr == 0 and nl > 0)) and (rateL in parameterFunctions or rateR in parameterFunctions):
                     logMess('WARNING:SIM102', 'In reaction {0}, rates cannot be divided into left hand side and right hand side \
@@ -574,7 +575,6 @@ but reaction is marked as reversible'.format(reactionID))
         return rateL, rateR, nl, nr
 
     def __getRawRules(self, reaction, symmetryFactors, parameterFunctions, translator, sbmlfunctions):
-
         zerospecies = ['emptyset','trash','sink','source']
         # ASS - Issue is here
         if self.useID:
@@ -625,7 +625,6 @@ but reaction is marked as reversible'.format(reactionID))
         #rProduct = [(x.getSpecies(), x.getStoichiometry()) for x in reaction.getListOfProducts() if x.getSpecies() not in ['EmptySet']]
         rModifiers = [x.getSpecies() for x in reaction.getListOfModifiers() if x.getSpecies() != 'EmptySet']
         parameters = [(parameter.getId(), parameter.getValue(), parameter.getUnits()) for parameter in kineticLaw.getListOfParameters()]
-
         rateL = rateR = nl = nr = None
         if True:
             # TODO: For some reason creating a deepcopy of this screws everything up, even
@@ -1039,12 +1038,12 @@ but reaction is marked as reversible'.format(reactionID))
                     rateR = libsbml.formulaToString(arule.getMath().getRightChild().getLeftChild())
                 else:
                     # ASS - removing if statement from functional rate definitions
-                    rateR = 'if({0}>0,({1})/{0},0)'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
-                    #rateR = '({1})/{0}'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
+                    #rateR = 'if({0}>0,({1})/{0},0)'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
+                    rateR = '{1})/({0} + __epsilon__)'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
             else:
                 # ASS - removing if statement from functional rate definitions
-                rateR = 'if({0}>0,({1})/{0},0)'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
-                #rateR = '({1})/{0}'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
+                #rateR = 'if({0}>0,({1})/{0},0)'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
+                rateR = '{1})/({0} + __epsilon__)'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
         else:
             rateL = libsbml.formulaToString(arule.getMath())
             rateR = '0'
@@ -1054,6 +1053,91 @@ but reaction is marked as reversible'.format(reactionID))
             #variable = self.convertToName(variable).strip()
         #print arule.isAssignment(),arule.isRate()
         return variable,[rateL, rateR], arule.isAssignment(), arule.isRate()
+
+    def adjustInitialConditions(self, parameters, initialConditions, artificialObservables, observables):
+        '''
+        assignment rules require further adjustment after parsed 
+        to their initial values. While somewhat hacky, this does the
+        job. 
+        '''
+        # This gets the initial conditions we have to adjust
+        initCondsToAdjust = [x for x in artificialObservables.keys() if x.endswith("_ar")]
+
+        # return original values if nothing needs adjusted
+        if not (len(initCondsToAdjust) > 0):
+            return initialConditions
+
+        # These are the formulas we need to calculate dynamically
+        formulaToAdjustWith = [artificialObservables[x] for x in initCondsToAdjust]
+        # Next step might have issues if there are multiple = signs but it _really_ shouldn't have that since these are from libsml.formulaToString method
+        formulaToAdjustWith = [x.split("=")[-1] for x in formulaToAdjustWith]
+        # Now we have the formulas to dynamically calculate, let's get a parameter dictionary to replace parameters down the line
+        param_dict = dict([(x.split()[0],x.split()[1]) for x in parameters])
+        # we need to parse observables to map 
+        # names to species descriptions 
+        obs_map = {}
+        for iobs, obs in enumerate(observables):
+            splt = obs.split()
+            obs_map[splt[2]] = splt[1]
+
+        # Now  that we have observables, we can map the names
+        # to their initial values to be replaced later
+        initValMap = {}
+        initCondSplit = []
+        for initCond in initialConditions:
+            splt = initCond.split()
+            initCondSplit.append(splt)
+            # I'm a bit vary of this, not sure if this is 
+            # the only way the $ might appear honestly
+            # keep an eye out for bugs here
+            if splt[0].startswith("$"):
+                check_name = splt[0][1:]
+            else:
+                check_name = splt[0]
+            # if the name is in the observable species defs
+            if check_name in obs_map.keys():
+                # we slap that into our initial value map
+                initValMap[obs_map[check_name]] = splt[1]
+
+        # This is to allow us to just use .split to be able to 
+        # separate species/parameter stuff from math stuff
+        for iform, form in enumerate(formulaToAdjustWith):
+            formulaToAdjustWith[iform] = form.replace("(","( ").replace(")"," )").replace("-"," - ").replace("+"," + ").replace("*"," * ").replace("/"," / ")
+        # another list for split formulas
+        splitFormulas = []
+        for iform, form in enumerate(formulaToAdjustWith):
+            # Now we can split things and replace exactly, we can't do "x in y" type replacement since there are many names that match with minor differences with this naming scheme
+            splitFormulas.append(form.split())
+            # First replace parameters
+            for par_name in param_dict.keys():
+                for ielem, elem_name in enumerate(splitFormulas[iform]):
+                    if par_name == elem_name:
+                        splitFormulas[iform][ielem] = param_dict[par_name]
+            # Now replace species from initial conditions
+            for spec in initValMap.keys():
+                for ielem, elem_name in enumerate(splitFormulas[iform]):
+                    if spec == elem_name:
+                        print("replacing from init vals")
+                        splitFormulas[iform][ielem] = initValMap[spec]
+            # Now replace everything not converted with zeroes
+            for ielem, elem_name in enumerate(splitFormulas[iform]):
+                if re.search('[a-zA-Z]', elem_name):
+                    splitFormulas[iform][ielem] = '0'
+        # Make the full formulas
+        adjustedFormulas = [" ".join(x) for x in splitFormulas]
+        # Evaluate them
+        # TODO: Limit the scope to math and basics here
+        adjustedInitialValues = list(map(eval, adjustedFormulas))
+        # Re-write initial conditions
+        adjustedInitialConditions = []
+        for iic, initCond in enumerate(initCondSplit):
+            toAdjustCheck = initCond[-1].replace("#", "")+"_ar"
+            if toAdjustCheck in initCondsToAdjust:
+                initCondSplit[iic][1] = "{}".format(adjustedInitialValues[initCondsToAdjust.index(toAdjustCheck)])
+                adjustedInitialConditions.append(" ".join(initCondSplit[initCondsToAdjust.index(toAdjustCheck)]))
+        print(initialConditions)
+        print(adjustedInitialConditions)
+        return adjustedInitialConditions
         
     def getAssignmentRules(self, zparams, parameters, molecules, observablesDict, translator):
         '''
@@ -1061,7 +1145,6 @@ but reaction is marked as reversible'.format(reactionID))
         require special handling since rules are often both defined as rules 
         and parameters initialized as 0, so they need to be removed from the parameters list
         '''
-
         # ASS - trying to remove cell as a default compartment
         compartmentList = []
         # compartmentList = [['cell',1]]
@@ -1151,6 +1234,7 @@ but reaction is marked as reversible'.format(reactionID))
                     #tmp[0] = 'arj' + rawArule[0]
                     #rawArule= tmp
                     matches = [molecules[x] for x in molecules if molecules[x]['name'] == rawArule[0]]
+                    
                     if matches:
                         if matches[0]['isBoundary']:
                             artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
@@ -1262,6 +1346,11 @@ but reaction is marked as reversible'.format(reactionID))
                     parameters.append('{0} {1}'.format(parameterSpecs[0], parameterSpecs[1]))
 
         #return ['%s %f' %(parameter.getId(),parameter.getValue()) for parameter in self.model.getListOfParameters() if parameter.getValue() != 0], [x.getId() for x in self.model.getListOfParameters() if x.getValue() == 0]
+
+        # ASS
+        # TODO: This should only be done if __epsilon__ would be used
+        parameters.append("__epsilon__ 1e-8")
+
         return parameters, zparam
 
 
