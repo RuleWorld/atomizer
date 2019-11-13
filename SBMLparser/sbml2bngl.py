@@ -382,14 +382,13 @@ class SBML2BNGL:
 
         for element in remainderPatterns:
             ifStack.update([element])
+
         for element in ifStack:
             if ifStack[element] > 1:
                 # ASS - removing if statement from functional rate definitions
-                # rateR = 'if({0}>0, {1}/({0}^{2}),0)'.format(element, rateR, ifStack[element])
                 rateR = '{1}/({0}^{2} + __epsilon__)'.format(element, rateR, ifStack[element])
             else:
                 # ASS - removing if statement from functional rate definitions
-                # rateR = 'if({0}>0, {1}/{0},0)'.format(element, rateR)
                 rateR = '{1}/({0} + __epsilon__)'.format(element, rateR)
 
         numFactors = max(math.getNumChildren(), len(ifStack))
@@ -420,7 +419,6 @@ class SBML2BNGL:
                 if species.isSetInitialAmount():
                     return True
         return False
-
 
     def analyzeReactionRate(self, math, compartmentList, reversible, rReactant, rProduct, reactionID, parameterFunctions, rModifier=[], sbmlFunctions={}):
         """
@@ -459,7 +457,7 @@ class SBML2BNGL:
             if 'substance' not in self.unitDefinitions:
                 moleFlag = True
             # ASS: Is this actually correct? For BioModel 26 this divides
-            # ever rate constant by N_a and it's wrong to do so?
+            # every rate constant by N_a and it's wrong to do so?
             # also, it's 23 because mole metaid is ...23
             elif any([x['kind'] == 23 for x in self.unitDefinitions['substance']]):
                 # ASS: For now I'm disabling this flag flip
@@ -471,6 +469,8 @@ class SBML2BNGL:
 
         removedCompartments = [x for x in removedCompartments if x not in compartmentList]
         if reversible:
+            # We have a formula of the form X - Y which is the 
+            # standard one for reversible reactions 
             if math.getCharacter() == '-':
                 if math.getNumChildren() > 1:
                     rateL, nl = (self.removeFactorFromMath(
@@ -482,7 +482,9 @@ class SBML2BNGL:
                 else:
                     rateR, rateL, nr, nl = self.analyzeReactionRate(math.getChild(0), compartmentList,
                                                                     reversible, rProduct, rReactant, reactionID, parameterFunctions, rModifier, sbmlFunctions)
+            # We have a formula of the form X + Y
             elif math.getCharacter() == '+' and math.getNumChildren() > 1:
+                logMess('INFO:SIM001', 'The reaction {0} claims to be reversible and the rate law only has positive separable factors for forward and backwards rate constants. Trying to handle it but no guarantees.'.format(reactionID))
                 if(self.getIsTreeNegative(math.getRightChild())):
                     rateL, nl = (self.removeFactorFromMath(
                     math.getLeftChild().deepCopy(), rReactant, rProduct, parameterFunctions))
@@ -496,58 +498,29 @@ class SBML2BNGL:
                 else:
                     rateL, nl = self.removeFactorFromMath(math.deepCopy(), rReactant,
                                                           rProduct, parameterFunctions)
-                    # ASS - removing if statement from functional rate definitions
-                    #rateL = "if({0}>= 0,{0},0)".format(rateL)
-                    rateL = "({0} + __epsilon__)".format(rateL)
+                    rateL = "if({0}>= 0,{0},0)".format(rateL)
                     rateR, nr = self.removeFactorFromMath(math.deepCopy(), rProduct,
                                                           rReactant, parameterFunctions)
-                    # ASS - removing if statement from functional rate definitions
-                    #rateR = "if({0}< 0,-({0}),0)".format(rateR)
-                    rateR = "-({0} + __epsilon__)".format(rateR)
+                    rateR = "if({0}< 0,-({0}),0)".format(rateR)
                     nl, nr = 1, 1
 
+            # This entire section assumes that the fwd and back reactions
+            # have the same rate law which doesn't make sense. 
+            # It looks like some people forgot to adjust their reversible
+            # tag and this makes unidirectional reactions into bidirectional
+            # ones. Removing this entirely and replacing with a forced unidirectional translation
             else:
-                # reaction is bidirectional but i can't separate function into
-                # left hand side and right hand side
+                logMess('INFO:SIM002', 'The reaction {0} claims to be reversible but the rate law doesn\'t have separable factors for forward and backwards rate constants. Assuming unidirectional reaction.'.format(reactionID))
                 rateL, nl = self.removeFactorFromMath(math.deepCopy(), rReactant,
                                                       rProduct, parameterFunctions)
-                rateR, nr = self.removeFactorFromMath(math.deepCopy(), rProduct,
-                                                      rReactant, parameterFunctions)
-                if nl > 0:
-                    if nr == 0 and rateR not in parameterFunctions:
-                        rateL = '0'
-                        nl = -1
-                        logMess('INFO:SIM001', 'In reaction {0}, the left hand side has been determined \
-to never activate and has been to rate 0'.format(reactionID))
-                    else:
-                        # ASS - removing if statement from functional rate definitions
-                        #rateL = "if({0} >= 0, {0}, 0)".format(rateL)
-                        rateL = "({0} + __epsilon__)".format(rateL)
-                        nl = 1
-                if nr > 0:
-                    if nl == 0 and rateL not in parameterFunctions:
-                        rateR = '0'
-                        nr = -1
-                        logMess('INFO:SIM002', 'In reaction {0}, the right hand side has been determined \
-to never activate (rate is never negative), setting reaction to unidirectional'.format(reactionID))
-                    else:
-                        # ASS - removing if statement from functional rate definitions
-                        #rateR = "if({0} < 0, -({0}), 0)".format(rateR)
-                        rateR = "-({0} + __epsilon__)".format(rateR)
-                        nr = 1
-                if ((nl == 0 and nr > 0) or (nr == 0 and nl > 0)) and (rateL in parameterFunctions or rateR in parameterFunctions):
-                    logMess('WARNING:SIM102', 'In reaction {0}, rates cannot be divided into left hand side and right hand side \
-but reaction is marked as reversible'.format(reactionID))
-
-                #nl, nr = 1,1
+                rateR = '0'
+                nr = -1
         else:
             rateL, nl = (self.removeFactorFromMath(math.deepCopy(),
                                                    rReactant, rProduct, parameterFunctions))
 
             rateR, nr = '0', '-1'
 
-
-            
         #cBNGL and SBML treat the behavior of compartments in rate laws differently so we have to compensate for that
         if len(removedCompartments) > 0:
             #if the species initial conditions were defined as concentrations then correct for it and transform it to absolute counts
@@ -1038,12 +1011,10 @@ but reaction is marked as reversible'.format(reactionID))
                     rateR = libsbml.formulaToString(arule.getMath().getRightChild().getLeftChild())
                 else:
                     # ASS - removing if statement from functional rate definitions
-                    #rateR = 'if({0}>0,({1})/{0},0)'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
-                    rateR = '{1})/({0} + __epsilon__)'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
+                    rateR = '{1}/({0} + __epsilon__)'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
             else:
                 # ASS - removing if statement from functional rate definitions
-                #rateR = 'if({0}>0,({1})/{0},0)'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
-                rateR = '{1})/({0} + __epsilon__)'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
+                rateR = '{1}/({0} + __epsilon__)'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
         else:
             rateL = libsbml.formulaToString(arule.getMath())
             rateR = '0'
@@ -1067,6 +1038,7 @@ but reaction is marked as reversible'.format(reactionID))
         if not (len(initCondsToAdjust) > 0):
             return initialConditions
 
+        logMess('ERROR:SIM-TEMP','adjusting initial conditions')
         # These are the formulas we need to calculate dynamically
         formulaToAdjustWith = [artificialObservables[x] for x in initCondsToAdjust]
         # Next step might have issues if there are multiple = signs but it _really_ shouldn't have that since these are from libsml.formulaToString method
@@ -1117,7 +1089,6 @@ but reaction is marked as reversible'.format(reactionID))
             for spec in initValMap.keys():
                 for ielem, elem_name in enumerate(splitFormulas[iform]):
                     if spec == elem_name:
-                        print("replacing from init vals")
                         splitFormulas[iform][ielem] = initValMap[spec]
             # Now replace everything not converted with zeroes
             for ielem, elem_name in enumerate(splitFormulas[iform]):
@@ -1127,16 +1098,21 @@ but reaction is marked as reversible'.format(reactionID))
         adjustedFormulas = [" ".join(x) for x in splitFormulas]
         # Evaluate them
         # TODO: Limit the scope to math and basics here
-        adjustedInitialValues = list(map(eval, adjustedFormulas))
+        adjustedInitialValues = []
+        for form in adjustedFormulas:
+            try:
+                adjustedInitialValues.append(eval(form))
+            except SyntaxError:
+                adjustedInitialValues.append(0)
         # Re-write initial conditions
         adjustedInitialConditions = []
         for iic, initCond in enumerate(initCondSplit):
             toAdjustCheck = initCond[-1].replace("#", "")+"_ar"
             if toAdjustCheck in initCondsToAdjust:
                 initCondSplit[iic][1] = "{}".format(adjustedInitialValues[initCondsToAdjust.index(toAdjustCheck)])
-                adjustedInitialConditions.append(" ".join(initCondSplit[initCondsToAdjust.index(toAdjustCheck)]))
-        print(initialConditions)
-        print(adjustedInitialConditions)
+                adjustedInitialConditions.append(" ".join(initCond))
+            else:
+                adjustedInitialConditions.append(" ".join(initCond))
         return adjustedInitialConditions
         
     def getAssignmentRules(self, zparams, parameters, molecules, observablesDict, translator):
@@ -1349,7 +1325,7 @@ but reaction is marked as reversible'.format(reactionID))
 
         # ASS
         # TODO: This should only be done if __epsilon__ would be used
-        parameters.append("__epsilon__ 1e-8")
+        parameters.append("__epsilon__ 1e-100")
 
         return parameters, zparam
 

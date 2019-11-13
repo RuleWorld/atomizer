@@ -694,11 +694,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # so that they start with the correct values. While this doesn't
     # impact model translation quality, it does make it difficult to 
     # do automated testing 
-    try:
-        initialConditions = parser.adjustInitialConditions(param, initialConditions, artificialObservables, observables)
-    except:
-        import IPython
-        IPython.embed()
+    initialConditions = parser.adjustInitialConditions(param, initialConditions, artificialObservables, observables)
 
     compartments = parser.getCompartments()
     functions = []
