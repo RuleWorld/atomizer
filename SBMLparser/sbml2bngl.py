@@ -7,7 +7,7 @@ Created on Tue Dec  6 17:42:31 2011
 from copy import deepcopy, copy
 from writer import bnglWriter as writer
 log = {'species': [], 'reactions': []}
-import re
+import re, sympy
 from collections import Counter
 from collections import defaultdict
 import math as pymath
@@ -347,7 +347,6 @@ class SBML2BNGL:
     def removeFactorFromMath(self, math, reactants, products, artificialObservables):
         '''
         it also adds symmetry factors. this checks for symmetry in the species names
-        s
 
         artificialObservables: species names that are changed through assignment rules. their use requires special care when calculating a rate
         '''
@@ -359,6 +358,7 @@ class SBML2BNGL:
         # that a species appears on both sides of a reaction
         bothSides = False
         for x in processedReactants:
+            # this is the symmtery factor for the rate constant
             highStoichoiMetryFactor *= factorial(x[1])
             y = [i[1] for i in products if i[0] == x[0]]
             if len(y) > 0:
@@ -369,6 +369,7 @@ class SBML2BNGL:
             # than reactants (synthesis)
             if x[1] > y:
                 highStoichoiMetryFactor /= comb(int(x[1]), int(y), exact=True)
+            # print("HSMF comb: {}".format(highStoichoiMetryFactor))
             for counter in range(0, int(x[1])):
                 remainderPatterns.append(x[0])
         
@@ -383,6 +384,10 @@ class SBML2BNGL:
         for element in remainderPatterns:
             ifStack.update([element])
 
+        # This is here to denote if we are removing an extra factor
+        # of one of the elements (on top of the one that might or might
+        # not be there) so we have our element in the denominator
+        # hence the special treatment.
         for element in ifStack:
             if ifStack[element] > 1:
                 # ASS - removing if statement from functional rate definitions
@@ -391,7 +396,15 @@ class SBML2BNGL:
                 # ASS - removing if statement from functional rate definitions
                 rateR = '{1}/({0} + __epsilon__)'.format(element, rateR)
 
+        # what the hell is even this thing? math.getNumChild is at
+        # most 2 and only gives you if the operator is unary or binary
+        # really, ifStack has the things that are left-over after removal 
+        # from math object. I don't get what this number is.
+        print("math form {}".format(libsbml.formulaToString(math)))
+        print("math children {}".format(math.getNumChildren()))
+        print("remove if stack 2 {}".format(len(ifStack)))
         numFactors = max(math.getNumChildren(), len(ifStack))
+
         if pymath.isinf(highStoichoiMetryFactor):
             rateR = '{0} * 1e20'.format(rateR)
             logMess('ERROR:SIM204','Found usage of "inf" inside function {0}'.format(rateR))
@@ -411,6 +424,10 @@ class SBML2BNGL:
             # we are adding a factor to the rate so we need to account for it when 
             # we are constructing the bngl equation (we dont want constrant expressions in there)
             numFactors = max(1, numFactors)
+        print("reactants and products: {} \n {} \n".format(reactants, products))
+        print("HSMF: {}".format(highStoichoiMetryFactor))
+        print("rateR: {}".format(rateR))
+        print("numFactors: {}".format(numFactors))
         return rateR, numFactors
 
     def isAmount(self, reactantName):
@@ -419,6 +436,201 @@ class SBML2BNGL:
                 if species.isSetInitialAmount():
                     return True
         return False
+
+    def calculate_factor(self, react, prod, expr, removed):
+        '''
+        Calculates factors from reactants and products? 
+        '''
+        # What is REALLY going on here? It's related to symmetry but 
+        # eh?
+        ifStack = Counter()
+        remainderPatterns = []
+        highStoichoiMetryFactor = 1
+        processedReactants = self.preProcessStoichiometry(react)
+        # ASS: I'm doing a hack, this is a flag to indicate 
+        # that a species appears on both sides of a reaction
+        bothSides = False
+        for x in processedReactants:
+            # this is the symmtery factor for the rate constant
+            highStoichoiMetryFactor *= factorial(x[1])
+            y = [i[1] for i in prod if i[0] == x[0]]
+            if len(y) > 0:
+                bothSides = True
+            y = y[0] if len(y) > 0 else 0
+            if x[1] > y:
+                highStoichoiMetryFactor /= comb(int(x[1]), int(y), exact=True)
+            for counter in range(0, int(x[1])):
+                remainderPatterns.append(x[0])
+
+        for rem in removed:
+            if rem in remainderPatterns:
+                remainderPatterns.remove(rem)
+
+        for element in remainderPatterns:
+            ifStack.update([element])
+
+        # Replace certain symbols s.t. libsbml.parseFormula gets it 
+        expr = expr.replace("**","^")
+
+        numFactors = max(libsbml.parseFormula(expr).getNumChildren(), len(ifStack))
+        if pymath.isinf(highStoichoiMetryFactor):
+            rateR = '{0} * 1e20'.format(rateR)
+            logMess('ERROR:SIM204','Found usage of "inf" inside function {0}'.format(rateR))
+        elif highStoichoiMetryFactor != 1 and bothSides:
+            numFactors = max(1, numFactors)
+        return numFactors
+
+    def find_all_symbols(self, math):
+        import sympy 
+        from sympy.abc import _clash
+        all_syms = {}
+        all_syms.update(_clash)
+        names = []
+        l = math.getListOfNodes()
+        for inode in range(l.getSize()):
+            node = l.get(inode)
+            if node.getName() is not None:
+                names.append(node.getName())
+        names_dict = dict([(i, sympy.symbols(i)) for i in names])
+        all_syms.update(names_dict)
+        return all_syms
+
+    def preProcessMath(self, math, react, prod, reversible=True):
+        import sympy, IPython
+        from sympy.simplify import separatevars
+        # OK we want to implement symbolic math
+        # let's parse the formula and get non-numerical symbols
+        form = libsbml.formulaToString(math)
+        # Let's pull everything in the formula as symbols to use 
+        # with sympify 
+        sympy_locs = self.find_all_symbols(math)
+        # let's pull all names
+        all_names = [i[0] for i in react] + [i[0] for i in prod]
+        # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
+        sym = sympy.sympify(form, locals=sympy_locs)
+        # expand and take the terms out as left and right
+        exp = sympy.expand(sym)
+        # This shows if we can get X - Y 
+        if exp.is_Add:
+            l,r = exp.as_two_terms()
+            # Let's also ensure that we have a + and - term
+            if str(l).startswith("-") or str(r).startswith("-"):
+                if str(l).startswith("-"):
+                    fwd_expr = r
+                    back_expr = l
+                else:
+                    fwd_expr = l
+                    back_expr = r
+                # Also get and parse the symbols
+                #if react[0][1] == 2:
+                #    import ipdb
+                #    ipdb.set_trace()
+                react_bols = [x[0] for x in react]
+                prod_bols = [x[0] for x in prod]
+                all_bols = react_bols + prod_bols
+                all_obj = react + prod
+                react_symbols = sympy.symbols(react_bols)
+                prod_symbols = sympy.symbols(prod_bols)
+                all_symbols = sympy.symbols(all_bols)
+                # Now we can manipulate it 
+                react_expr = fwd_expr
+                removedL = []
+                add_eps_react = False
+                for ibol,bol in enumerate(react_symbols):
+                    # TODO: Check if sympy.symbols preserve ordering!!
+                    stoi = int(react[ibol][1])
+                    # Now we can remove it
+                    react_expr = react_expr/(bol ** stoi)
+                    removedL += [str(bol) for i in range(stoi)]
+                    n,d = react_expr.as_numer_denom()
+                    if bol in d.atoms():
+                        add_eps_react = True
+
+                # this multiplies the rate constant by 
+                # the stoichiometry value of a given reactant
+                # Not sure if this actually works?
+                #for rem in set(removedL):
+                #    react_expr = react_expr * removedL.count(rem)
+
+                prod_expr = back_expr
+                removedR = []
+                add_eps_prod = False
+                for ibol,bol in enumerate(prod_symbols):
+                    # TODO: Check if sympy.symbols preserve ordering!!
+                    stoi = int(prod[ibol][1])
+                    # Now we can remove it
+                    prod_expr = prod_expr/(bol ** stoi)
+                    removedR += [str(bol) for i in range(stoi)]
+                    n,d = prod_expr.as_numer_denom()
+                    if bol in d.atoms():
+                        add_eps_prod = True
+                # this multiplies the rate constant by 
+                # the stoichiometry value of a given reactant
+                # Not sure if this actually works?
+                #for rem in set(removedR):
+                #    prod_expr = prod_expr * removedR.count(rem)
+
+                prod_expr = prod_expr * -1
+                # TODO: We still need to figure out if we have 
+                # our reactant/products in our expressions and
+                # if so set the nl/nr values accordingly
+                
+                # Reproducing current behavior + expansion
+                re_proc = react_expr.evalf().simplify()
+                pe_proc = prod_expr.evalf().simplify()
+
+                # Adding epsilon if we have to
+                # TODO: Figure out a way to pool everything 
+                # that can go to 0 and check for those instead of 
+                # just the reactants and products! 
+                if add_eps_react:
+                    n,d = re_proc.as_numer_denom()
+                    rateL = str(n) + "/(" + str(d) + "+__epsilon__)"
+                else:
+                    rateL = str(re_proc)
+                if add_eps_prod:
+                    n,d = pe_proc.as_numer_denom()
+                    rateR = str(n) + "/(" + str(d) + "+__epsilon__)"
+                else:
+                    rateR = str(pe_proc)
+                # Fixing small things, 1.0 multiplication is in 
+                # SymPy and for some reason doesn't simplify
+                rateL = rateL.replace("1.0*","").replace("*1.0","")
+                rateR = rateR.replace("1.0*","").replace("*1.0","")
+                nl = self.calculate_factor(react, prod, rateL, removedL)
+                nr = self.calculate_factor(prod, react, rateR, removedR)
+                # BNG power function is ^ and not **
+                rateL = rateL.replace("**","^")
+                rateR = rateR.replace("**","^")
+                return rateL, rateR, nl, nr, True
+        # if not simply reversible, rely on the SBML spec
+        if reversible:
+            print("SBML claims reversiblity but the kinetic law is not easily separable, assuming irreversible reaction.")
+        # Also get and parse the symbols
+        react_bols = [x[0] for x in react]
+        react_symbols = sympy.symbols(react_bols)
+        # Now we can manipulate it 
+        react_expr = exp
+        removedL = []
+        for ibol,bol in enumerate(react_symbols):
+            # TODO: Check if sympy.symbols preserve ordering!!
+            stoi = int(react[ibol][1])
+            # Now we can remove it
+            react_expr = react_expr/(bol * stoi)
+            removedL += [str(bol) for i in range(stoi)]
+        re_proc = react_expr.evalf().simplify()
+        rateL = str(re_proc).replace("1.0*","").replace("*1.0","")
+        nl = self.calculate_factor(react, prod, rateL, removedL)
+        rateL = rateL.replace("**","^")
+        # Make unidirectional
+        rateR = "0"
+        nr = -1
+        reversible = False
+        # Check to ensure we don't have a negative 
+        # rate constant
+        if rateL.startswith("-"):
+            print("rateL starts with -, this should never happen")
+        return rateL, rateR, nl, nr, reversible
 
     def analyzeReactionRate(self, math, compartmentList, reversible, rReactant, rProduct, reactionID, parameterFunctions, rModifier=[], sbmlFunctions={}):
         """
@@ -467,67 +679,21 @@ class SBML2BNGL:
         #    print self.unitDefinitions['substance']
         #divide by avogadros number to get volume per number per second units
 
-        removedCompartments = [x for x in removedCompartments if x not in compartmentList]
         if reversible:
-            # We have a formula of the form X - Y which is the 
-            # standard one for reversible reactions 
-            if math.getCharacter() == '-':
-                if math.getNumChildren() > 1:
-                    rateL, nl = (self.removeFactorFromMath(
-                                 math.getLeftChild().deepCopy(), rReactant,
-                                 rProduct, parameterFunctions))
-                    rateR, nr = (self.removeFactorFromMath(
-                                 math.getRightChild().deepCopy(), rProduct,
-                                 rReactant, parameterFunctions))
-                else:
-                    rateR, rateL, nr, nl = self.analyzeReactionRate(math.getChild(0), compartmentList,
-                                                                    reversible, rProduct, rReactant, reactionID, parameterFunctions, rModifier, sbmlFunctions)
-            # We have a formula of the form X + Y
-            elif math.getCharacter() == '+' and math.getNumChildren() > 1:
-                logMess('INFO:SIM001', 'The reaction {0} claims to be reversible and the rate law only has positive separable factors for forward and backwards rate constants. Trying to handle it but no guarantees.'.format(reactionID))
-                if(self.getIsTreeNegative(math.getRightChild())):
-                    rateL, nl = (self.removeFactorFromMath(
-                    math.getLeftChild().deepCopy(), rReactant, rProduct, parameterFunctions))
-                    rateR, nr = (self.removeFactorFromMath(
-                    math.getRightChild().deepCopy(), rProduct, rReactant, parameterFunctions))
-                elif(self.getIsTreeNegative(math.getLeftChild())):
-                    rateR, nr = (self.removeFactorFromMath(
-                                 math.getLeftChild().deepCopy(), rProduct, rReactant, parameterFunctions))
-                    rateL, nl = (self.removeFactorFromMath(
-                    math.getRightChild().deepCopy(), rReactant, rProduct, parameterFunctions))
-                else:
-                    rateL, nl = self.removeFactorFromMath(math.deepCopy(), rReactant,
-                                                          rProduct, parameterFunctions)
-                    rateL = "if({0}>= 0,{0},0)".format(rateL)
-                    rateR, nr = self.removeFactorFromMath(math.deepCopy(), rProduct,
-                                                          rReactant, parameterFunctions)
-                    rateR = "if({0}< 0,-({0}),0)".format(rateR)
-                    nl, nr = 1, 1
-
-            # This entire section assumes that the fwd and back reactions
-            # have the same rate law which doesn't make sense. 
-            # It looks like some people forgot to adjust their reversible
-            # tag and this makes unidirectional reactions into bidirectional
-            # ones. Removing this entirely and replacing with a forced unidirectional translation
-            else:
-                logMess('INFO:SIM002', 'The reaction {0} claims to be reversible but the rate law doesn\'t have separable factors for forward and backwards rate constants. Assuming unidirectional reaction.'.format(reactionID))
-                rateL, nl = self.removeFactorFromMath(math.deepCopy(), rReactant,
-                                                      rProduct, parameterFunctions)
-                rateR = '0'
-                nr = -1
+            MrateL, MrateR, Mnl, Mnr, uRev = self.preProcessMath(math, rReactant, rProduct)
         else:
-            rateL, nl = (self.removeFactorFromMath(math.deepCopy(),
-                                                   rReactant, rProduct, parameterFunctions))
+            MrateL, MrateR, Mnl, Mnr, uRev = self.preProcessMath(math, rReactant, rProduct, reversible=False)
+        # Let's check what happens if I just replace this machinery
 
-            rateR, nr = '0', '-1'
+        removedCompartments = [x for x in removedCompartments if x not in compartmentList]
 
         #cBNGL and SBML treat the behavior of compartments in rate laws differently so we have to compensate for that
         if len(removedCompartments) > 0:
             #if the species initial conditions were defined as concentrations then correct for it and transform it to absolute counts
             if len(rReactant) == 2 and not (self.isAmount(rReactant[0][0]) or self.isAmount(rReactant[1][0])):
                 if moleFlag:
-                    rateL = '({0}) / 6.022e23'.format(rateL)
-                    nl += 1
+                    MrateL = '({0}) / 6.022e23'.format(MrateL)
+                    Mnl += 1
                 #rateL = '({0}) * ({1})'.format(rateL,' * '.join(removedCompartments))
                 #nl += 1
                 #pass
@@ -536,16 +702,16 @@ class SBML2BNGL:
                 #rateL = '({0}) / ({1})'.format(rateL,' * '.join(removedCompartments))
                 #nl += 1
                 #pass
-            if nr != '-1':
+            if Mnr != '-1':
                 if len(rProduct) == 2 and len(rReactant) == 1 and not (self.isAmount(rProduct[0][0]) or self.isAmount(rProduct[1][0])):
                     if moleFlag:
-                        rateR = '({0}) / 6.022e23'.format(rateR)
-                        nl += 1
+                        MrateR = '({0}) / 6.022e23'.format(MrateR)
+                        Mnl += 1
 
                     #rateR = '({0}) * {1}'.format(rateR,' * '.join(removedCompartments))
                     #nr += 1
                     #pass
-        return rateL, rateR, nl, nr
+        return MrateL, MrateR, Mnl, Mnr, uRev
 
     def __getRawRules(self, reaction, symmetryFactors, parameterFunctions, translator, sbmlfunctions):
         zerospecies = ['emptyset','trash','sink','source']
@@ -613,8 +779,7 @@ class SBML2BNGL:
 
             # remove compartments from expression. also separate left hand and right hand side
 
-
-            rateL, rateR, nl, nr = self.analyzeReactionRate(math, compartmentList,
+            rateL, rateR, nl, nr, uReversible = self.analyzeReactionRate(math, compartmentList,
                 reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers, sbmlfunctions)
 
             if rateR == '0':
@@ -626,7 +791,7 @@ class SBML2BNGL:
             if not self.useID:
                 rateL = self.convertToName(rateL)
                 rateR = self.convertToName(rateR)
-            if reversible:
+            if uReversible:
                 pass
             # return compartments if the reaction is unimolecular
             # they were removed in the first palce because its easier to handle
@@ -641,7 +806,7 @@ class SBML2BNGL:
                              rateR = '{0} * {1}'.format(rateR,compartment.getSize())
             '''
         return {'reactants': reactant, 'products': product, 'parameters': parameters, 'rates': [rateL, rateR],
-                'reversible': reversible, 'reactionID': reaction.getId(), 'numbers': [nl, nr], 'modifiers': rModifiers}
+                'reversible': uReversible, 'reactionID': reaction.getId(), 'numbers': [nl, nr], 'modifiers': rModifiers}
 
     def getReactionCenter(self, reactant, product, translator):
         rcomponent = Counter()
@@ -941,9 +1106,7 @@ class SBML2BNGL:
                     """
                     parameters.append('r%d_%s %f' % (index + 1, parameter[0], parameter[1]))
                     parameterDict[parameter[0]] = parameter[1]
-            #TODO: ASS - We would like to remove the default compartment if at all possible
             compartmentList = []
-            # compartmentList = [['cell', 1]]
             compartmentList.extend([[self.__getRawCompartments(x)[0], self.__getRawCompartments(x)[2]] for x in self.model.getListOfCompartments()])
             threshold = 0
             if rawRules['numbers'][0] > threshold  or rawRules['rates'][0] in translator:
