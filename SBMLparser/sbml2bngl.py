@@ -14,6 +14,9 @@ import math as pymath
 from utils.util import logMess, TranslationException
 import libsbml
 
+import sympy, IPython
+from sympy.abc import _clash
+
 def factorial(x):
     temp = x
     acc = 1
@@ -481,8 +484,6 @@ class SBML2BNGL:
         return numFactors
 
     def find_all_symbols(self, math):
-        import sympy 
-        from sympy.abc import _clash
         all_syms = {}
         all_syms.update(_clash)
         names = []
@@ -493,144 +494,8 @@ class SBML2BNGL:
                 names.append(node.getName())
         names_dict = dict([(i, sympy.symbols(i)) for i in names])
         all_syms.update(names_dict)
+        all_syms.update({"pow":pow})
         return all_syms
-
-    def preProcessMath(self, math, react, prod, reversible=True):
-        import sympy, IPython
-        from sympy.simplify import separatevars
-        # OK we want to implement symbolic math
-        # let's parse the formula and get non-numerical symbols
-        form = libsbml.formulaToString(math)
-        # Let's pull everything in the formula as symbols to use 
-        # with sympify 
-        sympy_locs = self.find_all_symbols(math)
-        # let's pull all names
-        all_names = [i[0] for i in react] + [i[0] for i in prod]
-        # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
-        sym = sympy.sympify(form, locals=sympy_locs)
-        # expand and take the terms out as left and right
-        exp = sympy.expand(sym)
-        # This shows if we can get X - Y 
-        if exp.is_Add:
-            l,r = exp.as_two_terms()
-            # Let's also ensure that we have a + and - term
-            if str(l).startswith("-") or str(r).startswith("-"):
-                if str(l).startswith("-"):
-                    fwd_expr = r
-                    back_expr = l
-                else:
-                    fwd_expr = l
-                    back_expr = r
-                # Also get and parse the symbols
-                #if react[0][1] == 2:
-                #    import ipdb
-                #    ipdb.set_trace()
-                react_bols = [x[0] for x in react]
-                prod_bols = [x[0] for x in prod]
-                all_bols = react_bols + prod_bols
-                all_obj = react + prod
-                react_symbols = sympy.symbols(react_bols)
-                prod_symbols = sympy.symbols(prod_bols)
-                all_symbols = sympy.symbols(all_bols)
-                # Now we can manipulate it 
-                react_expr = fwd_expr
-                removedL = []
-                add_eps_react = False
-                for ibol,bol in enumerate(react_symbols):
-                    # TODO: Check if sympy.symbols preserve ordering!!
-                    stoi = int(react[ibol][1])
-                    # Now we can remove it
-                    react_expr = react_expr/(bol ** stoi)
-                    removedL += [str(bol) for i in range(stoi)]
-                    n,d = react_expr.as_numer_denom()
-                    if bol in d.atoms():
-                        add_eps_react = True
-
-                # this multiplies the rate constant by 
-                # the stoichiometry value of a given reactant
-                # Not sure if this actually works?
-                #for rem in set(removedL):
-                #    react_expr = react_expr * removedL.count(rem)
-
-                prod_expr = back_expr
-                removedR = []
-                add_eps_prod = False
-                for ibol,bol in enumerate(prod_symbols):
-                    # TODO: Check if sympy.symbols preserve ordering!!
-                    stoi = int(prod[ibol][1])
-                    # Now we can remove it
-                    prod_expr = prod_expr/(bol ** stoi)
-                    removedR += [str(bol) for i in range(stoi)]
-                    n,d = prod_expr.as_numer_denom()
-                    if bol in d.atoms():
-                        add_eps_prod = True
-                # this multiplies the rate constant by 
-                # the stoichiometry value of a given reactant
-                # Not sure if this actually works?
-                #for rem in set(removedR):
-                #    prod_expr = prod_expr * removedR.count(rem)
-
-                prod_expr = prod_expr * -1
-                # TODO: We still need to figure out if we have 
-                # our reactant/products in our expressions and
-                # if so set the nl/nr values accordingly
-                
-                # Reproducing current behavior + expansion
-                re_proc = react_expr.evalf().simplify()
-                pe_proc = prod_expr.evalf().simplify()
-
-                # Adding epsilon if we have to
-                # TODO: Figure out a way to pool everything 
-                # that can go to 0 and check for those instead of 
-                # just the reactants and products! 
-                if add_eps_react:
-                    n,d = re_proc.as_numer_denom()
-                    rateL = str(n) + "/(" + str(d) + "+__epsilon__)"
-                else:
-                    rateL = str(re_proc)
-                if add_eps_prod:
-                    n,d = pe_proc.as_numer_denom()
-                    rateR = str(n) + "/(" + str(d) + "+__epsilon__)"
-                else:
-                    rateR = str(pe_proc)
-                # Fixing small things, 1.0 multiplication is in 
-                # SymPy and for some reason doesn't simplify
-                rateL = rateL.replace("1.0*","").replace("*1.0","")
-                rateR = rateR.replace("1.0*","").replace("*1.0","")
-                nl = self.calculate_factor(react, prod, rateL, removedL)
-                nr = self.calculate_factor(prod, react, rateR, removedR)
-                # BNG power function is ^ and not **
-                rateL = rateL.replace("**","^")
-                rateR = rateR.replace("**","^")
-                return rateL, rateR, nl, nr, True
-        # if not simply reversible, rely on the SBML spec
-        if reversible:
-            print("SBML claims reversiblity but the kinetic law is not easily separable, assuming irreversible reaction.")
-        # Also get and parse the symbols
-        react_bols = [x[0] for x in react]
-        react_symbols = sympy.symbols(react_bols)
-        # Now we can manipulate it 
-        react_expr = exp
-        removedL = []
-        for ibol,bol in enumerate(react_symbols):
-            # TODO: Check if sympy.symbols preserve ordering!!
-            stoi = int(react[ibol][1])
-            # Now we can remove it
-            react_expr = react_expr/(bol * stoi)
-            removedL += [str(bol) for i in range(stoi)]
-        re_proc = react_expr.evalf().simplify()
-        rateL = str(re_proc).replace("1.0*","").replace("*1.0","")
-        nl = self.calculate_factor(react, prod, rateL, removedL)
-        rateL = rateL.replace("**","^")
-        # Make unidirectional
-        rateR = "0"
-        nr = -1
-        reversible = False
-        # Check to ensure we don't have a negative 
-        # rate constant
-        if rateL.startswith("-"):
-            print("rateL starts with -, this should never happen")
-        return rateL, rateR, nl, nr, reversible
 
     def analyzeReactionRate(self, math, compartmentList, reversible, rReactant, rProduct, reactionID, parameterFunctions, rModifier=[], sbmlFunctions={}):
         """
@@ -679,11 +544,183 @@ class SBML2BNGL:
         #    print self.unitDefinitions['substance']
         #divide by avogadros number to get volume per number per second units
 
-        if reversible:
-            MrateL, MrateR, Mnl, Mnr, uRev = self.preProcessMath(math, rReactant, rProduct)
-        else:
-            MrateL, MrateR, Mnl, Mnr, uRev = self.preProcessMath(math, rReactant, rProduct, reversible=False)
-        # Let's check what happens if I just replace this machinery
+        # I'm removing the function defined and putting the code in here 
+        # directly
+        react = rReactant
+        prod = rProduct
+        rateL = None
+        rateR = None
+
+        # Run the following if you want to see what this block 
+        # does
+        #import ipdb
+        #ipdb.set_trace()
+
+        # OK we want to implement symbolic math
+        # let's parse the formula and get non-numerical symbols
+        form = libsbml.formulaToString(math)
+        # Let's pull everything in the formula as symbols to use 
+        # with sympify 
+        sympy_locs = self.find_all_symbols(math)
+        # let's pull all names
+        all_names = [i[0] for i in react] + [i[0] for i in prod]
+        # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
+        sym = sympy.sympify(form, locals=sympy_locs)
+        # expand and take the terms out as left and right
+        exp = sympy.expand(sym)
+        # This shows if we can get X - Y 
+        if exp.is_Add:
+            l,r = exp.as_two_terms()
+            # Let's also ensure that we have a + and - term
+            if str(l).startswith("-") or str(r).startswith("-"):
+                if str(l).startswith("-"):
+                    fwd_expr = r
+                    back_expr = l
+                else:
+                    fwd_expr = l
+                    back_expr = r
+                # Also get and parse the symbols
+                #if react[0][1] == 2:
+                #    import ipdb
+                #    ipdb.set_trace()
+                react_bols = [x[0] for x in react]
+                prod_bols = [x[0] for x in prod]
+                all_bols = react_bols + prod_bols
+                all_obj = react + prod
+                react_symbols = sympy.symbols(react_bols)
+                prod_symbols = sympy.symbols(prod_bols)
+                all_symbols = sympy.symbols(all_bols)
+                # Now we can manipulate it 
+                react_expr = fwd_expr
+                removedL = []
+                for ibol,bol in enumerate(react_symbols):
+                    # TODO: Check if sympy.symbols preserve ordering!!
+                    stoi = int(react[ibol][1])
+                    # Now we can remove it
+                    react_expr = react_expr/(bol ** stoi)
+                    removedL += [str(bol) for i in range(stoi)]
+
+                # Check if we can get 0 in the denominator
+                add_eps_react = False
+                n,d = react_expr.as_numer_denom()
+                for ibol,bol in enumerate(react_symbols):
+                    if bol in d.atoms():
+                        d = d.subs(bol, 0)
+                if d == 0:
+                    print("denomiator can be 0 thus we are adding a small value epsilon")
+                    add_eps_react = True
+
+                # this multiplies the rate constant by 
+                # the stoichiometry value of a given reactant
+                # Not sure if this actually works?
+                #for rem in set(removedL):
+                #    react_expr = react_expr * removedL.count(rem)
+
+                prod_expr = back_expr
+                removedR = []
+                for ibol,bol in enumerate(prod_symbols):
+                    # TODO: Check if sympy.symbols preserve ordering!!
+                    stoi = int(prod[ibol][1])
+                    # Now we can remove it
+                    prod_expr = prod_expr/(bol ** stoi)
+                    removedR += [str(bol) for i in range(stoi)]
+
+                # Check if we can get 0 in the denominator
+                add_eps_prod = False
+                n,d = prod_expr.as_numer_denom()
+                for ibol,bol in enumerate(prod_symbols):
+                    if bol in d.atoms():
+                        d = d.subs(bol, 0)
+                if d == 0:
+                    print("denomiator can be 0 thus we are adding a small value epsilon")
+                    add_eps_prod = True
+
+                # this multiplies the rate constant by 
+                # the stoichiometry value of a given reactant
+                # Not sure if this actually works?
+                #for rem in set(removedR):
+                #    prod_expr = prod_expr * removedR.count(rem)
+
+                prod_expr = prod_expr * -1
+                # TODO: We still need to figure out if we have 
+                # our reactant/products in our expressions and
+                # if so set the nl/nr values accordingly
+                
+                # Reproducing current behavior + expansion
+                re_proc = react_expr.evalf().simplify()
+                pe_proc = prod_expr.evalf().simplify()
+
+                # Adding epsilon if we have to
+                # TODO: Figure out a way to pool everything 
+                # that can go to 0 and check for those instead of 
+                # just the reactants and products! 
+                if add_eps_react:
+                    n,d = re_proc.as_numer_denom()
+                    rateL = str(n) + "/(" + str(d) + "+__epsilon__)"
+                else:
+                    rateL = str(re_proc)
+                if add_eps_prod:
+                    n,d = pe_proc.as_numer_denom()
+                    rateR = str(n) + "/(" + str(d) + "+__epsilon__)"
+                else:
+                    rateR = str(pe_proc)
+                # Fixing small things, 1.0 multiplication is in 
+                # SymPy and for some reason doesn't simplify
+                rateL = rateL.replace("1.0*","").replace("*1.0","")
+                rateR = rateR.replace("1.0*","").replace("*1.0","")
+                nl = self.calculate_factor(react, prod, rateL, removedL)
+                nr = self.calculate_factor(prod, react, rateR, removedR)
+                # BNG power function is ^ and not **
+                rateL = rateL.replace("**","^")
+                rateR = rateR.replace("**","^")
+        if rateL is None:
+            # if not simply reversible, rely on the SBML spec
+            if reversible:
+                print("SBML claims reversiblity but the kinetic law is not easily separable, assuming irreversible reaction.")
+            # Also get and parse the symbols
+            react_bols = [x[0] for x in react]
+            react_symbols = sympy.symbols(react_bols)
+            # Now we can manipulate it 
+            react_expr = exp
+            removedL = []
+            for ibol,bol in enumerate(react_symbols):
+                # TODO: Check if sympy.symbols preserve ordering!!
+                stoi = int(react[ibol][1])
+                # Now we can remove it
+                react_expr = react_expr/(bol ** stoi)
+                removedL += [str(bol) for i in range(stoi)]
+
+            # Check if we can get the denominator to be 0
+            add_eps_react = False
+            n,d = react_expr.as_numer_denom()
+            for ibol,bol in enumerate(react_symbols):
+                if bol in d.atoms():
+                    d = d.subs(bol, 0)
+            if d == 0:
+                print("denomiator can be 0 thus we are adding a small value epsilon")
+                add_eps_react = True
+
+            re_proc = react_expr.evalf().simplify()
+            if add_eps_react:
+                n,d = re_proc.as_numer_denom()
+                rateL = str(n) + "/(" + str(d) + "+__epsilon__)"
+            else:
+                rateL = str(re_proc)
+            rateL = rateL.replace("1.0*","").replace("*1.0","")
+            nl = self.calculate_factor(react, prod, rateL, removedL)
+            rateL = rateL.replace("**","^")
+            # Make unidirectional
+            rateR = "0"
+            nr = -1
+            reversible = False
+            # Check to ensure we don't have a negative 
+            # rate constant
+            if rateL.startswith("-"):
+                print("rateL starts with -, this should never happen")
+        MrateL = rateL
+        MrateR = rateR
+        Mnl, Mnr = nl, nr
+        uRev = reversible
 
         removedCompartments = [x for x in removedCompartments if x not in compartmentList]
 
@@ -1079,6 +1116,8 @@ class SBML2BNGL:
         database.rawreactions = []
         if len(self.model.getListOfReactions()) == 0:
             logMess('WARNING:SIM104', 'Model contains no natural reactions, all reactions are produced by SBML rules')
+        # At the end of this loop, we want to go in and adjust any cases
+        # where a value that can go to 0 is in the denominator
         for index, reaction in enumerate(self.model.getListOfReactions()):
             parameterDict = {}
             # symmetry factors for components with the same name
@@ -1156,6 +1195,8 @@ class SBML2BNGL:
             reactions.append(writer.bnglReaction(reactants, products, functionName, self.tags, translator,
                              (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),
                              rawRules['reversible'], reactionName=rawRules['reactionID'], comment=modifierComment))
+
+        # TODO: Get in there and adjust denominators
 
         if atomize:
             self.getReactions.__func__.functionFlag = True
