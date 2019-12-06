@@ -181,6 +181,10 @@ class SBML2BNGL:
             initialValue = species.getInitialConcentration()
         else:
             initialValue = species.getInitialAmount()
+            # we need to ensure we have concentrations
+            species_comp = species.compartment
+            compVol = self.compartmentDict[species_comp]
+            initialValue /= float(compVol)
         isConstant = species.getConstant()
         isBoundary = species.getBoundaryCondition()
         # FIXME: this condition means that a variable/species can be changed
@@ -510,9 +514,10 @@ class SBML2BNGL:
             rProduct -- a string list of the products.
             sbmlFunctions -- a list of possible nested functiosn taht we need to remove
         """
-        removedCompartments = copy(compartmentList)
-        math = self.getPrunnedTree(math, compartmentList)
+        # removedCompartments = copy(compartmentList)
+        # math = self.getPrunnedTree(math, compartmentList)
 
+        # We turn the AST object to string first
         mathstring = libsbml.formulaToString(math)
         #unroll sbml functions
         mathstring =  unrollSBMLFunction(mathstring, sbmlFunctions)
@@ -522,27 +527,27 @@ class SBML2BNGL:
         if temp:
             math = temp
 
-        moleFlag = False
-        if any([element[0] in self.speciesUnits for element in rReactant]):
-            for element in rReactant:
-                if element[0] in self.speciesUnits and self.speciesUnits[element[0]] in self.unitDefinitions:
-                    if self.unitDefinitions[self.speciesUnits[element[0]]] == 23:
-                        moleFlag = True
-                    else:
-                        moleFlag = False
-        else:
-            if 'substance' not in self.unitDefinitions:
-                moleFlag = True
-            # ASS: Is this actually correct? For BioModel 26 this divides
-            # every rate constant by N_a and it's wrong to do so?
-            # also, it's 23 because mole metaid is ...23
-            elif any([x['kind'] == 23 for x in self.unitDefinitions['substance']]):
-                # ASS: For now I'm disabling this flag flip
-                # moleFlag = True
-                pass
-        #else if all([x['name'] != 'units' for x in self.unitDefinitions]):
-        #    print self.unitDefinitions['substance']
-        #divide by avogadros number to get volume per number per second units
+        # moleFlag = False
+        # if any([element[0] in self.speciesUnits for element in rReactant]):
+        #     for element in rReactant:
+        #         if element[0] in self.speciesUnits and self.speciesUnits[element[0]] in self.unitDefinitions:
+        #             if self.unitDefinitions[self.speciesUnits[element[0]]] == 23:
+        #                 moleFlag = True
+        #             else:
+        #                 moleFlag = False
+        # else:
+        #     if 'substance' not in self.unitDefinitions:
+        #         moleFlag = True
+        #     # ASS: Is this actually correct? For BioModel 26 this divides
+        #     # every rate constant by N_a and it's wrong to do so?
+        #     # also, it's 23 because mole metaid is ...23
+        #     elif any([x['kind'] == 23 for x in self.unitDefinitions['substance']]):
+        #         # ASS: For now I'm disabling this flag flip
+        #         # moleFlag = True
+        #         pass
+        # #else if all([x['name'] != 'units' for x in self.unitDefinitions]):
+        # #    print self.unitDefinitions['substance']
+        # #divide by avogadros number to get volume per number per second units
 
         # I'm removing the function defined and putting the code in here 
         # directly
@@ -553,8 +558,8 @@ class SBML2BNGL:
 
         # Run the following if you want to see what this block 
         # does
-        #import ipdb
-        #ipdb.set_trace()
+        # import ipdb
+        # ipdb.set_trace()
 
         # OK we want to implement symbolic math
         # let's parse the formula and get non-numerical symbols
@@ -566,6 +571,14 @@ class SBML2BNGL:
         all_names = [i[0] for i in react] + [i[0] for i in prod]
         # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
         sym = sympy.sympify(form, locals=sympy_locs)
+        # Remove compartments
+        compartments_to_remove = [sympy.symbols(comp) for comp in compartmentList]
+        # This is not correct, we need to know what compartment
+        # is on what side which is not currently being provided
+        for comp in compartments_to_remove:
+            if comp in sym.atoms():
+                sym = sym/comp
+        # IPython.embed()
         # expand and take the terms out as left and right
         exp = sympy.expand(sym)
         # This shows if we can get X - Y 
@@ -594,7 +607,6 @@ class SBML2BNGL:
                 react_expr = fwd_expr
                 removedL = []
                 for ibol,bol in enumerate(react_symbols):
-                    # TODO: Check if sympy.symbols preserve ordering!!
                     stoi = int(react[ibol][1])
                     # Now we can remove it
                     react_expr = react_expr/(bol ** stoi)
@@ -607,7 +619,7 @@ class SBML2BNGL:
                     if bol in d.atoms():
                         d = d.subs(bol, 0)
                 if d == 0:
-                    print("denomiator can be 0 thus we are adding a small value epsilon")
+                    print("denominator can be 0 thus we are adding a small value epsilon")
                     add_eps_react = True
 
                 # this multiplies the rate constant by 
@@ -619,7 +631,6 @@ class SBML2BNGL:
                 prod_expr = back_expr
                 removedR = []
                 for ibol,bol in enumerate(prod_symbols):
-                    # TODO: Check if sympy.symbols preserve ordering!!
                     stoi = int(prod[ibol][1])
                     # Now we can remove it
                     prod_expr = prod_expr/(bol ** stoi)
@@ -632,7 +643,7 @@ class SBML2BNGL:
                     if bol in d.atoms():
                         d = d.subs(bol, 0)
                 if d == 0:
-                    print("denomiator can be 0 thus we are adding a small value epsilon")
+                    print("denominator can be 0 thus we are adding a small value epsilon")
                     add_eps_prod = True
 
                 # this multiplies the rate constant by 
@@ -656,23 +667,25 @@ class SBML2BNGL:
                 # just the reactants and products! 
                 if add_eps_react:
                     n,d = re_proc.as_numer_denom()
-                    rateL = str(n) + "/(" + str(d) + "+__epsilon__)"
+                    rateL = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
                 else:
                     rateL = str(re_proc)
                 if add_eps_prod:
                     n,d = pe_proc.as_numer_denom()
-                    rateR = str(n) + "/(" + str(d) + "+__epsilon__)"
+                    rateR = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
                 else:
                     rateR = str(pe_proc)
                 # Fixing small things, 1.0 multiplication is in 
                 # SymPy and for some reason doesn't simplify
                 rateL = rateL.replace("1.0*","").replace("*1.0","")
                 rateR = rateR.replace("1.0*","").replace("*1.0","")
-                nl = self.calculate_factor(react, prod, rateL, removedL)
-                nr = self.calculate_factor(prod, react, rateR, removedR)
+                # nl = self.calculate_factor(react, prod, rateL, removedL)
+                # nr = self.calculate_factor(prod, react, rateR, removedR)
+                nl, nr = 2, 2 
                 # BNG power function is ^ and not **
                 rateL = rateL.replace("**","^")
                 rateR = rateR.replace("**","^")
+                reversible = True
         if rateL is None:
             # if not simply reversible, rely on the SBML spec
             if reversible:
@@ -684,7 +697,6 @@ class SBML2BNGL:
             react_expr = exp
             removedL = []
             for ibol,bol in enumerate(react_symbols):
-                # TODO: Check if sympy.symbols preserve ordering!!
                 stoi = int(react[ibol][1])
                 # Now we can remove it
                 react_expr = react_expr/(bol ** stoi)
@@ -697,17 +709,18 @@ class SBML2BNGL:
                 if bol in d.atoms():
                     d = d.subs(bol, 0)
             if d == 0:
-                print("denomiator can be 0 thus we are adding a small value epsilon")
+                print("denominator can be 0 thus we are adding a small value epsilon")
                 add_eps_react = True
 
             re_proc = react_expr.evalf().simplify()
             if add_eps_react:
                 n,d = re_proc.as_numer_denom()
-                rateL = str(n) + "/(" + str(d) + "+__epsilon__)"
+                rateL = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
             else:
                 rateL = str(re_proc)
             rateL = rateL.replace("1.0*","").replace("*1.0","")
-            nl = self.calculate_factor(react, prod, rateL, removedL)
+            # nl = self.calculate_factor(react, prod, rateL, removedL)
+            nl = 2
             rateL = rateL.replace("**","^")
             # Make unidirectional
             rateR = "0"
@@ -722,32 +735,34 @@ class SBML2BNGL:
         Mnl, Mnr = nl, nr
         uRev = reversible
 
-        removedCompartments = [x for x in removedCompartments if x not in compartmentList]
+        #IPython.embed()
 
-        #cBNGL and SBML treat the behavior of compartments in rate laws differently so we have to compensate for that
-        if len(removedCompartments) > 0:
-            #if the species initial conditions were defined as concentrations then correct for it and transform it to absolute counts
-            if len(rReactant) == 2 and not (self.isAmount(rReactant[0][0]) or self.isAmount(rReactant[1][0])):
-                if moleFlag:
-                    MrateL = '({0}) / 6.022e23'.format(MrateL)
-                    Mnl += 1
-                #rateL = '({0}) * ({1})'.format(rateL,' * '.join(removedCompartments))
-                #nl += 1
-                #pass
-            elif len(rModifier) > 0:
-                pass
-                #rateL = '({0}) / ({1})'.format(rateL,' * '.join(removedCompartments))
-                #nl += 1
-                #pass
-            if Mnr != '-1':
-                if len(rProduct) == 2 and len(rReactant) == 1 and not (self.isAmount(rProduct[0][0]) or self.isAmount(rProduct[1][0])):
-                    if moleFlag:
-                        MrateR = '({0}) / 6.022e23'.format(MrateR)
-                        Mnl += 1
+        # removedCompartments = [x for x in removedCompartments if x not in compartmentList]
 
-                    #rateR = '({0}) * {1}'.format(rateR,' * '.join(removedCompartments))
-                    #nr += 1
-                    #pass
+        ##cBNGL and SBML treat the behavior of compartments in rate laws differently so we have to compensate for that
+        #if len(removedCompartments) > 0:
+        #    #if the species initial conditions were defined as concentrations then correct for it and transform it to absolute counts
+        #    if len(rReactant) == 2 and not (self.isAmount(rReactant[0][0]) or self.isAmount(rReactant[1][0])):
+        #        if moleFlag:
+        #            MrateL = '({0}) / 6.022e23'.format(MrateL)
+        #            Mnl += 1
+        #        #rateL = '({0}) * ({1})'.format(rateL,' * '.join(removedCompartments))
+        #        #nl += 1
+        #        #pass
+        #    elif len(rModifier) > 0:
+        #        pass
+        #        #rateL = '({0}) / ({1})'.format(rateL,' * '.join(removedCompartments))
+        #        #nl += 1
+        #        #pass
+        #    if Mnr != '-1':
+        #        if len(rProduct) == 2 and len(rReactant) == 1 and not (self.isAmount(rProduct[0][0]) or self.isAmount(rProduct[1][0])):
+        #            if moleFlag:
+        #                MrateR = '({0}) / 6.022e23'.format(MrateR)
+        #                Mnl += 1
+
+        #            #rateR = '({0}) * {1}'.format(rateR,' * '.join(removedCompartments))
+        #            #nr += 1
+        #            #pass
         return MrateL, MrateR, Mnl, Mnr, uRev
 
     def __getRawRules(self, reaction, symmetryFactors, parameterFunctions, translator, sbmlfunctions):
@@ -1231,6 +1246,7 @@ class SBML2BNGL:
 
     def adjustInitialConditions(self, parameters, initialConditions, artificialObservables, observables):
         '''
+        TODO: Use Sympy for this!!!
         assignment rules require further adjustment after parsed 
         to their initial values. While somewhat hacky, this does the
         job. 
@@ -1266,6 +1282,7 @@ class SBML2BNGL:
             # I'm a bit vary of this, not sure if this is 
             # the only way the $ might appear honestly
             # keep an eye out for bugs here
+            # TODO: Check this, $ means a fixed parameter
             if splt[0].startswith("$"):
                 check_name = splt[0][1:]
             else:
@@ -1300,13 +1317,12 @@ class SBML2BNGL:
                     splitFormulas[iform][ielem] = '0'
         # Make the full formulas
         adjustedFormulas = [" ".join(x) for x in splitFormulas]
-        # Evaluate them
-        # TODO: Limit the scope to math and basics here
+        # Evaluate them using Sympy
         adjustedInitialValues = []
         for form in adjustedFormulas:
             try:
-                adjustedInitialValues.append(eval(form))
-            except SyntaxError:
+                adjustedInitialValues.append(sympy.sympify(form))
+            except:
                 adjustedInitialValues.append(0)
         # Re-write initial conditions
         adjustedInitialConditions = []
@@ -1537,10 +1553,10 @@ class SBML2BNGL:
     # ASS - trying to implement a more complete solution for 
     # non compartmental models
     def check_noCompartment(self, parameters=[]):
-        compartmentDict = {}
-        compartmentDict[''] = 1
+        self.compartmentDict = {}
+        self.compartmentDict[''] = 1
         for compartment in self.model.getListOfCompartments():
-            compartmentDict[compartment.getId()] = compartment.getSize()
+            self.compartmentDict[compartment.getId()] = compartment.getSize()
         self.noCompartment = False
         # Get all rawSpecies
         allRawSpecies = map(lambda x: self.getRawSpecies(x, parameters), self.model.getListOfSpecies())
@@ -1553,7 +1569,7 @@ class SBML2BNGL:
         # this is the case for most SBML models.
         if len(allUsedCompartments) == 1:
             # We are using only 1 compartment, check volume
-            if compartmentDict[allUsedCompartments.pop()] == 1:
+            if self.compartmentDict[allUsedCompartments.pop()] == 1:
                 # we have 1 compartment and it's volume is 1
                 # just don't use compartments.
                 self.noCompartment = True
