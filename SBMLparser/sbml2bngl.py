@@ -492,14 +492,25 @@ class SBML2BNGL:
         all_syms.update(_clash)
         names = []
         l = math.getListOfNodes()
+        replace_dict = {}
         for inode in range(l.getSize()):
             node = l.get(inode)
+            # Sympy doesn't like "def" in our string
+            if node.getName() == "def":
+                names.append("__DEF__")
+                replace_dict["def"] = "__DEF__"
+                continue
             if node.getName() is not None:
                 names.append(node.getName())
         names_dict = dict([(i, sympy.symbols(i)) for i in names])
         all_syms.update(names_dict)
         all_syms.update({"pow":pow})
-        return all_syms
+        # let's parse the formula and get non-numerical symbols
+        form = libsbml.formulaToString(math)
+        # If we need to replace anything
+        for it in replace_dict.items():
+            form = form.replace(it[0],it[1])
+        return form, all_syms, replace_dict
 
     def analyzeReactionRate(self, math, compartmentList, reversible, rReactant, rProduct, reactionID, parameterFunctions, rModifier=[], sbmlFunctions={}):
         """
@@ -561,12 +572,9 @@ class SBML2BNGL:
         # import ipdb
         # ipdb.set_trace()
 
-        # OK we want to implement symbolic math
-        # let's parse the formula and get non-numerical symbols
-        form = libsbml.formulaToString(math)
         # Let's pull everything in the formula as symbols to use 
         # with sympify 
-        sympy_locs = self.find_all_symbols(math)
+        form, sympy_locs, replace_dict = self.find_all_symbols(math)
         # let's pull all names
         all_names = [i[0] for i in react] + [i[0] for i in prod]
         # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
@@ -735,6 +743,9 @@ class SBML2BNGL:
         Mnl, Mnr = nl, nr
         uRev = reversible
 
+        for it in replace_dict.items():
+            MrateL = MrateL.replace(it[1],it[0])
+            MrateR = MrateR.replace(it[1],it[0])
         #IPython.embed()
 
         # removedCompartments = [x for x in removedCompartments if x not in compartmentList]
