@@ -1321,7 +1321,10 @@ class SBML2BNGL:
         adjustedInitialValues = []
         for form in adjustedFormulas:
             try:
-                adjustedInitialValues.append(sympy.sympify(form))
+                val = sympy.sympify(form)
+                if str(val) == "nan":
+                    val = 0
+                adjustedInitialValues.append()
             except:
                 adjustedInitialValues.append(0)
         # Re-write initial conditions
