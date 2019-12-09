@@ -184,6 +184,7 @@ class SBML2BNGL:
             # we need to ensure we have concentrations
             species_comp = species.compartment
             compVol = self.compartmentDict[species_comp]
+            # TODO: Handle unit conversions here if units are given
             initialValue /= float(compVol)
         isConstant = species.getConstant()
         isBoundary = species.getBoundaryCondition()
@@ -499,6 +500,10 @@ class SBML2BNGL:
             if node.getName() == "def":
                 names.append("__DEF__")
                 replace_dict["def"] = "__DEF__"
+                continue
+            if node.getName() == "lambda":
+                names.append("__LAMBDA__")
+                replace_dict["lambda"] = "__LAMBDA__"
                 continue
             if node.getName() is not None:
                 names.append(node.getName())
