@@ -690,7 +690,9 @@ class SBML2BNGL:
                     rateR = str(pe_proc)
                 # Fixing small things, 1.0 multiplication is in 
                 # SymPy and for some reason doesn't simplify
+                rateL = rateL.replace("**1.0","")
                 rateL = rateL.replace("1.0*","").replace("*1.0","")
+                rateR = rateR.replace("**1.0","")
                 rateR = rateR.replace("1.0*","").replace("*1.0","")
                 # nl = self.calculate_factor(react, prod, rateL, removedL)
                 # nr = self.calculate_factor(prod, react, rateR, removedR)
@@ -703,6 +705,8 @@ class SBML2BNGL:
             # if not simply reversible, rely on the SBML spec
             if reversible:
                 print("SBML claims reversiblity but the kinetic law is not easily separable, assuming irreversible reaction.")
+            import ipdb
+            ipdb.set_trace()
             # Also get and parse the symbols
             react_bols = [x[0] for x in react]
             react_symbols = sympy.symbols(react_bols)
@@ -731,6 +735,7 @@ class SBML2BNGL:
                 rateL = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
             else:
                 rateL = str(re_proc)
+            rateL = rateL.replace("**1.0","")
             rateL = rateL.replace("1.0*","").replace("*1.0","")
             # nl = self.calculate_factor(react, prod, rateL, removedL)
             nl = 2
