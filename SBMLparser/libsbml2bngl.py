@@ -807,6 +807,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     functions.extend(aRules)
 
     processFunctions(functions, sbmlfunctions, artificialObservables, rateFunctions)
+
     for interation in range(0, 3):
         for sbml2 in sbmlfunctions:
             for sbml in sbmlfunctions:
@@ -815,29 +816,49 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                 if sbml in sbmlfunctions[sbml2]:
                     sbmlfunctions[sbml2] = writer.extendFunction(sbmlfunctions[sbml2], sbml, sbmlfunctions[sbml])
 
+    # 
     functions = reorderFunctions(functions)
-
+    # 
     functions = changeNames(functions, aParameters)
     # change reference for observables with compartment name
     functions = changeNames(functions, observablesDict)
-#     print([x for x in functions if 'functionRate60' in x])
-
+    # 
     functions = unrollFunctions(functions)
     rules = changeRates(rules, aParameters)
-    # ASS - While it might be true that cell is always a default compartment
-    # in SBML, we don't need it in BNGL if it's not used
 
-    #if len(compartments) > 1 and 'cell 3 1.0' not in compartments:
-    #    compartments.append('cell 3 1.0')
+    # Parameter replacement leaves a lot of unevaluated
+    # math behing and it looks really ugly. I'm going 
+    # to parse this and try to evaluate it all
 
-    ##sbml always has the 'cell' default compartment, even when it
-    ##doesn't declare it
-    #elif len(compartments) == 0 and len(molecules) != 0:
-    #    compartments.append('cell 3 1.0')
+    # TODO: This needs more love, I'm definitely not 
+    # handling certain things I normally handle in sbml2bnl 
+    # using sympy, port those in or turn them into importable
+    # stuff
+    try: 
+        import sympy
+        new_funcs = []
+        for func in functions:
+            splt = func.split("=")
+            assert len(splt) == 2, "More than one '=' in function {}".format(func)
+            n,f = splt
+            fs = sympy.sympify(f, locals=parser.all_syms)
+            new_f = str(fs.nsimplify())
+            new_f = new_f.replace("**", "^")
+            new_funcs.append(n + " = " + new_f)
+            functions = new_funcs
+    except:
+        # This is not essential, let's just move on if 
+        # sympify fails. This catch-all is here because 
+        # I know there will be random small things and that 
+        # this bit is entirely optional
+        pass
+
 
     # ASS - We need to check for identical observables and functions. If 
     # they are the same, re-number them so avoid having identical names
     # this comes up when we do non-compartmental models only really
+    # due to the naming scheme of STUFF_COMPNAME but still should be
+    # handled somehow
     idenObsFuncDict = {}
     for obs in observables:
         obsKey = obs.split(" ")[1]
