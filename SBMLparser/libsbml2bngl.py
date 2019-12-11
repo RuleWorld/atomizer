@@ -691,11 +691,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     aParameters, aRules, nonzparam, artificialRules, removeParams, artificialObservables = parser.getAssignmentRules(zparam, param, rawSpecies,
                                                                                                                      observablesDict, translator)
 
-    # ASS2019 - we need to adjust initial conditions of assignment rules
-    # so that they start with the correct values. While this doesn't
-    # impact model translation quality, it does make it difficult to 
-    # do automated testing 
-    initialConditions = parser.adjustInitialConditions(param, initialConditions, artificialObservables, observables)
 
     compartments = parser.getCompartments()
     functions = []
@@ -885,6 +880,11 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         # this bit is entirely optional
         pass
 
+    # ASS2019 - we need to adjust initial conditions of assignment rules
+    # so that they start with the correct values. While this doesn't
+    # impact model translation quality, it does make it difficult to 
+    # do automated testing  
+    initialConditions = parser.adjustInitialConditions(param, initialConditions, artificialObservables, observables, functions)
 
     # ASS - We need to check for identical observables and functions. If 
     # they are the same, re-number them so avoid having identical names

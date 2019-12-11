@@ -16,6 +16,7 @@ import libsbml
 
 import sympy, IPython
 from sympy.abc import _clash
+from sympy.printing.str import StrPrinter
 
 def factorial(x):
     temp = x
@@ -559,7 +560,6 @@ class SBML2BNGL:
         # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
         sym = sympy.sympify(form, locals=self.all_syms)
         # Remove compartments if we use them. 
-        # IPython.embed()
         if not self.noCompartment:
             compartments_to_remove = [sympy.symbols(comp) for comp in compartmentList]
             # TODO: This is not fully correct, we need to know what 
@@ -1209,25 +1209,33 @@ class SBML2BNGL:
         #print arule.isAssignment(),arule.isRate()
         return variable,[rateL, rateR], arule.isAssignment(), arule.isRate()
 
-    def adjustInitialConditions(self, parameters, initialConditions, artificialObservables, observables):
+    def adjustInitialConditions(self, parameters, initialConditions, artificialObservables, observables, functions):
         '''
-        TODO: Use Sympy for this!!!
         assignment rules require further adjustment after parsed 
-        to their initial values. While somewhat hacky, this does the
-        job. 
+        to their initial values.  
         '''
+        # We'll need this to write nicely
+        prnter = StrPrinter({'full_prec': False})    
         # This gets the initial conditions we have to adjust
         initCondsToAdjust = [x for x in artificialObservables.keys() if x.endswith("_ar")]
 
         # return original values if nothing needs adjusted
-        if not (len(initCondsToAdjust) > 0):
+        if len(initCondsToAdjust) == 0:
             return initialConditions
 
-        logMess('ERROR:SIM-TEMP','adjusting initial conditions')
+        logMess('DEBUG:ARUL001','adjusting assignment rule initial conditions')
         # These are the formulas we need to calculate dynamically
-        formulaToAdjustWith = [artificialObservables[x] for x in initCondsToAdjust]
-        # Next step might have issues if there are multiple = signs but it _really_ shouldn't have that since these are from libsml.formulaToString method
-        formulaToAdjustWith = [x.split("=")[-1] for x in formulaToAdjustWith]
+        formulaToAdjustWith = {}
+        for cond in initCondsToAdjust:
+            form = artificialObservables[cond]
+            name = form.split("=")[0].split()[0]
+            for func in functions:
+                splt = func.split("=")
+                if len(splt) > 2:
+                    logMess("WARNING:ARUL002","There are multiple = signs in function {}".format(splt[0]))
+                if name == splt[0].split()[0]:
+                    # This avoids issues with multiple = signs
+                    formulaToAdjustWith[name] = splt[-1]
         # Now we have the formulas to dynamically calculate, let's get a parameter dictionary to replace parameters down the line
         param_dict = dict([(x.split()[0],x.split()[1]) for x in parameters])
         # we need to parse observables to map 
@@ -1247,7 +1255,7 @@ class SBML2BNGL:
             # I'm a bit vary of this, not sure if this is 
             # the only way the $ might appear honestly
             # keep an eye out for bugs here
-            # TODO: Check this, $ means a fixed parameter
+            # TODO: Check this, $ means a fixed parameter?
             if splt[0].startswith("$"):
                 check_name = splt[0][1:]
             else:
@@ -1259,37 +1267,38 @@ class SBML2BNGL:
 
         # This is to allow us to just use .split to be able to 
         # separate species/parameter stuff from math stuff
-        for iform, form in enumerate(formulaToAdjustWith):
-            formulaToAdjustWith[iform] = form.replace("(","( ").replace(")"," )").replace("-"," - ").replace("+"," + ").replace("*"," * ").replace("/"," / ")
-        # another list for split formulas
-        splitFormulas = []
-        for iform, form in enumerate(formulaToAdjustWith):
-            # Now we can split things and replace exactly, we can't do "x in y" type replacement since there are many names that match with minor differences with this naming scheme
-            splitFormulas.append(form.split())
-            # First replace parameters
-            for par_name in param_dict.keys():
-                for ielem, elem_name in enumerate(splitFormulas[iform]):
-                    if par_name == elem_name:
-                        splitFormulas[iform][ielem] = param_dict[par_name]
-            # Now replace species from initial conditions
-            for spec in initValMap.keys():
-                for ielem, elem_name in enumerate(splitFormulas[iform]):
-                    if spec == elem_name:
-                        splitFormulas[iform][ielem] = initValMap[spec]
-            # Now replace everything not converted with zeroes
-            for ielem, elem_name in enumerate(splitFormulas[iform]):
-                if re.search('[a-zA-Z]', elem_name):
-                    splitFormulas[iform][ielem] = '0'
-        # Make the full formulas
-        adjustedFormulas = [" ".join(x) for x in splitFormulas]
+        sympy_forms = {}
+        for item in formulaToAdjustWith.items():
+            name, form = item
+            sympy_forms[name] = sympy.sympify(form, locals=self.all_syms)
+        sympy_subs = {}
+        # We need to replace the values in sympy formulas
+        for item in sympy_forms.items():
+            name, form = item
+            # Looping over parameters and replacing
+            for par_item in param_dict.items():
+                pn, pv = par_item
+                ps, pvs = sympy.symbols(pn), sympy.Number(pv)
+                form = form.subs(ps,pvs)
+            # Replacing species from initial conditions
+            for spec_item in initValMap.items():
+                sn, sv = spec_item
+                ss, svs = sympy.symbols(sn), sympy.Number(sv)
+                form = form.subs(ss,svs)
+            # And now converting the rest to zeros so we have a value
+            # that we can fully evaluate
+            for atm in form.atoms(sympy.Symbol):
+                form = form.subs(atm, 0)
+            sympy_subs[name] = form.evalf()
         # Evaluate them using Sympy
         adjustedInitialValues = []
-        for form in adjustedFormulas:
+        for item in sympy_subs.items():
+            name, val = item
             try:
-                val = sympy.sympify(form)
-                if str(val) == "nan":
+                val_str = prnter.doprint(val)
+                if val_str == "nan":
                     val = 0
-                adjustedInitialValues.append()
+                adjustedInitialValues.append(val)
             except:
                 adjustedInitialValues.append(0)
         # Re-write initial conditions
@@ -1297,7 +1306,8 @@ class SBML2BNGL:
         for iic, initCond in enumerate(initCondSplit):
             toAdjustCheck = initCond[-1].replace("#", "")+"_ar"
             if toAdjustCheck in initCondsToAdjust:
-                initCondSplit[iic][1] = "{}".format(adjustedInitialValues[initCondsToAdjust.index(toAdjustCheck)])
+                val = adjustedInitialValues[initCondsToAdjust.index(toAdjustCheck)]
+                initCondSplit[iic][1] = "{}".format(prnter.doprint(val))
                 adjustedInitialConditions.append(" ".join(initCond))
             else:
                 adjustedInitialConditions.append(" ".join(initCond))
