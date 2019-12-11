@@ -30,6 +30,8 @@ import pprint
 import fnmatch
 from collections import defaultdict
 
+import sympy
+from sympy.printing.str import StrPrinter
 # returntype for the sbml analyzer translator and helper functions
 AnalysisResults = namedtuple('AnalysisResults', ['rlength', 'slength', 'reval', 'reval2', 'clength', 'rdf', 'finalString', 'speciesDict', 'database', 'annotation'])
 
@@ -133,7 +135,7 @@ def validateReactionUsage(reactant, reactions):
     return None
 
 
-def readFromString(inputString, reactionDefinitions, useID, speciesEquivalence=None, atomize=False, loggingStream=None):
+def readFromString(inputString, reactionDefinitions, useID, speciesEquivalence=None, atomize=False, loggingStream=None, replaceLocParams=True):
     '''
     one of the library's main entry methods. Process data from a string
     '''
@@ -147,7 +149,7 @@ def readFromString(inputString, reactionDefinitions, useID, speciesEquivalence=N
 
     reader = libsbml.SBMLReader()
     document = reader.readSBMLFromString(inputString)
-    parser =SBML2BNGL(document.getModel(), useID)
+    parser =SBML2BNGL(document.getModel(), useID, replaceLocParams=replaceLocParams)
 
     bioGrid = False
     pathwaycommons = True
@@ -176,9 +178,8 @@ def readFromString(inputString, reactionDefinitions, useID, speciesEquivalence=N
     #logging.getLogger().flush()
     if loggingStream:
         finishStreamLog(console)
-
     returnArray = analyzeHelper(document, reactionDefinitions,
-                         useID, '', speciesEquivalence, atomize, translator, database)
+                         useID, '', speciesEquivalence, atomize, translator, database, replaceLocParams=replaceLocParams)
 
     if atomize and onlySynDec:
         returnArray = list(returnArray)
@@ -430,7 +431,7 @@ def postAnalysisHelper(outputFile, bngLocation, database):
 
 
 
-def postAnalyzeFile(outputFile, bngLocation, database):
+def postAnalyzeFile(outputFile, bngLocation, database, replaceLocParams=True):
     """
     Performs a postcreation file analysis based on context information
     """
@@ -440,7 +441,7 @@ def postAnalyzeFile(outputFile, bngLocation, database):
 
     # recreate file using information from the post analysis
     returnArray = analyzeHelper(database.document, database.reactionDefinitions, database.useID,
-                                outputFile, database.speciesEquivalence, database.atomize, database.translator, database)
+                                outputFile, database.speciesEquivalence, database.atomize, database.translator, database, replaceLocParams=replaceLocParams)
     with open(outputFile, 'w') as f:
         f.write(returnArray.finalString)
     # recompute bng-xml file
@@ -472,7 +473,7 @@ def postAnalyzeString(outputFile, bngLocation, database):
     return returnArray
 
 def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, outputFile,
-                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False, noConversion=False, memoizedResolver=True):
+                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False, noConversion=False, memoizedResolver=True, replaceLocParams=True):
     '''
     one of the library's main entry methods. Process data from a file
     '''
@@ -491,7 +492,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     if document.getModel() == None:
         print('File {0} could not be recognized as a valid SBML file'.format(bioNumber))
         return
-    parser =SBML2BNGL(document.getModel(), useID)
+    parser =SBML2BNGL(document.getModel(), useID, replaceLocParams=replaceLocParams)
     parser.setConversion(not noConversion)
     database = structures.Databases()
     database.assumptions = defaultdict(set)
@@ -538,7 +539,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     database.atomize = atomize
     database.isConversion = not noConversion
 
-    returnArray = analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator, database)
+    returnArray = analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator, database, replaceLocParams=replaceLocParams)
 
     with open(outputFile, 'w') as f:
         f.write(returnArray.finalString)
@@ -646,14 +647,14 @@ def unrollFunctions(functions):
     return functions
 
 
-def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator, database, bioGrid=False):
+def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquivalence, atomize, translator, database, bioGrid=False, replaceLocParams=True):
     '''
     taking the atomized dictionary and a series of data structure, this method
     does the actual string output.
     '''
 
     useArtificialRules = False
-    parser = SBML2BNGL(document.getModel(), useID)
+    parser = SBML2BNGL(document.getModel(), useID, replaceLocParams=replaceLocParams)
     parser.setConversion(database.isConversion)
     #database = structures.Databases()
     #database.assumptions = defaultdict(set)
@@ -803,7 +804,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             artificialObservables.pop(flag)
 
     sbmlfunctions = parser.getSBMLFunctions()
-
     functions.extend(aRules)
 
     processFunctions(functions, sbmlfunctions, artificialObservables, rateFunctions)
@@ -834,19 +834,51 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # handling certain things I normally handle in sbml2bnl 
     # using sympy, port those in or turn them into importable
     # stuff
+    # TODO: Check if we need epsilons here instead
+    prnter = StrPrinter({'full_prec': False})    
     try: 
-        import sympy
         new_funcs = []
         for func in functions:
             splt = func.split("=")
             assert len(splt) == 2, "More than one '=' in function {}".format(func)
             n,f = splt
             fs = sympy.sympify(f, locals=parser.all_syms)
-            new_f = str(fs.nsimplify())
+            # import IPython
+            # IPython.embed()
+            smpl = fs.nsimplify().evalf().simplify()
+            # Epsilon checking
+            n,d = smpl.as_numer_denom()
+            # I don't want to touch the current rate parsing so 
+            # I'll remove it and then add it back if needed
+            #import ipdb
+            #ipdb.set_trace()
+            had_epsilon = False
+            if parser.all_syms["__epsilon__"] in d.atoms():
+                d = d - parser.all_syms["__epsilon__"]
+                had_epsilon = True
+            for item in parser.all_syms.items():
+                k, s = item
+                if s in d.atoms():
+                    d = d.subs(s, 0)
+            if d == 0:
+                if had_epsilon:
+                    new_f = prnter.doprint(smpl)
+                else:
+                    n,d = smpl.as_numer_denom()
+                    print("denominator can be 0, post-parameter")
+                    new_f = "(" + prnter.doprint(n) + ")/(" + prnter.doprint(d) + " __epsilon__)"
+            else:
+                new_f = prnter.doprint(smpl)
             new_f = new_f.replace("**", "^")
-            new_funcs.append(n + " = " + new_f)
-            functions = new_funcs
+            # We want to do this if it makes the rate constant
+            # more readable
+            if len(new_f) < len(func):
+                new_funcs.append(prnter.doprint(n) + " = " + new_f)
+            else: 
+                new_funcs.append(func)
+        functions = new_funcs
     except:
+        #raise
         # This is not essential, let's just move on if 
         # sympify fails. This catch-all is here because 
         # I know there will be random small things and that 

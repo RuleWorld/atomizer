@@ -64,9 +64,10 @@ class SBML2BNGL:
     contains methods for extracting and formatting those sbml elements
     that are translatable into bngl
     '''
-    def __init__(self, model, useID=True):
+    def __init__(self, model, useID=True, replaceLocParams=True):
 
         self.useID = useID
+        self.replaceLocParams = replaceLocParams
         self.model = model
         self.tags = {}
         self.speciesUnits = {}
@@ -96,6 +97,7 @@ class SBML2BNGL:
         self.all_syms = {}
         self.all_syms.update(_clash)
         self.all_syms.update({"pow":pow})
+        self.all_syms["__epsilon__"] = sympy.symbols("__epsilon__")
         
     def setConversion(self,conversion):
         self.isConversion = conversion
@@ -556,7 +558,8 @@ class SBML2BNGL:
         all_names = [i[0] for i in react] + [i[0] for i in prod]
         # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
         sym = sympy.sympify(form, locals=self.all_syms)
-        # Remove compartments if we use them
+        # Remove compartments if we use them. 
+        # IPython.embed()
         if not self.noCompartment:
             compartments_to_remove = [sympy.symbols(comp) for comp in compartmentList]
             # TODO: This is not fully correct, we need to know what 
@@ -564,7 +567,17 @@ class SBML2BNGL:
             # being provided to this function
             for comp in compartments_to_remove:
                 if comp in sym.atoms():
-                    sym = sym*comp
+                    # Further issue, I know that this should be 
+                    # a multiplication but for BMD2 this is actually a 
+                    # problem? In fact, it looks like this is the case
+                    # for regular mass action in SBML? 
+                    # This doesn't look right and it is a current 
+                    # hack?
+                    n,d = sym.as_numer_denom()
+                    if comp in n.atoms():
+                        sym = sym/comp
+                    else:
+                        sym = sym*comp
         # expand and take the terms out as left and right
         exp = sympy.expand(sym)
         # This shows if we can get X - Y 
@@ -626,8 +639,8 @@ class SBML2BNGL:
                 # if so set the nl/nr values accordingly
                 
                 # Reproducing current behavior + expansion
-                re_proc = react_expr.evalf().simplify().nsimplify()
-                pe_proc = prod_expr.evalf().simplify().nsimplify()
+                re_proc = react_expr.nsimplify().evalf().simplify()
+                pe_proc = prod_expr.nsimplify().evalf().simplify()
 
                 # Adding epsilon if we have to
                 # TODO: Figure out a way to pool everything 
@@ -675,7 +688,7 @@ class SBML2BNGL:
             if d == 0:
                 print("denominator can be 0 thus we are adding a small value epsilon")
                 add_eps_react = True
-            re_proc = react_expr.evalf().simplify().nsimplify()
+            re_proc = react_expr.nsimplify().evalf().simplify()
             if add_eps_react:
                 n,d = re_proc.as_numer_denom()
                 rateL = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
@@ -1069,8 +1082,11 @@ class SBML2BNGL:
             logMess('WARNING:SIM104', 'Model contains no natural reactions, all reactions are produced by SBML rules')
         # At the end of this loop, we want to go in and adjust any cases
         # where a value that can go to 0 is in the denominator
+        # import ipdb
+        # ipdb.set_trace()
         for index, reaction in enumerate(self.model.getListOfReactions()):
             parameterDict = {}
+            currParamConv = {}
             # symmetry factors for components with the same name
             sl, sr = self.reduceComponentSymmetryFactors(reaction, translator, functions)
             sbmlfunctions = self.getSBMLFunctions()
@@ -1094,8 +1110,10 @@ class SBML2BNGL:
                         parameterDict[parameter[0]] = parameter[1]
                     else:
                     """
-                    parameters.append('r%d_%s %f' % (index + 1, parameter[0], parameter[1]))
+                    curr_param = 'r%d_%s %f' % (index + 1, parameter[0], parameter[1])
+                    parameters.append(curr_param)
                     parameterDict[parameter[0]] = parameter[1]
+                    currParamConv[parameter[0]] = curr_param
             compartmentList = []
             compartmentList.extend([[self.__getRawCompartments(x)[0], self.__getRawCompartments(x)[2]] for x in self.model.getListOfCompartments()])
             threshold = 0
@@ -1114,12 +1132,19 @@ class SBML2BNGL:
             if rawRules['reversible']:
                 if rawRules['numbers'][0] > threshold or rawRules['rates'][0] in translator:
                     if self.getReactions.functionFlag:
-                        functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'], compartmentList, parameterDict, self.reactionDictionary))
+                        # TODO: local parameter replacement flag
+                        if self.replaceLocParams:
+                            functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'], compartmentList, parameterDict, self.reactionDictionary))
+                        else:
+                            functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'], compartmentList, currParamConv, self.reactionDictionary))
                 if rawRules['numbers'][1] > threshold  or rawRules['rates'][1] in translator:
                     functionName2 = '%s%dm()' % (functionTitle, index)
                     if self.getReactions.functionFlag:
-                        functions.append(writer.bnglFunction(rawRules['rates'][1], functionName2, rawRules['products'],
-                                         compartmentList, parameterDict, self.reactionDictionary))
+                        # TODO: local parameter replacement flag
+                        if self.replaceLocParams:
+                            functions.append(writer.bnglFunction(rawRules['rates'][1], functionName2, rawRules['products'],compartmentList, parameterDict, self.reactionDictionary))
+                        else: 
+                            functions.append(writer.bnglFunction(rawRules['rates'][1], functionName2, rawRules['products'],compartmentList, currParamConv, self.reactionDictionary))
                     self.reactionDictionary[rawRules['reactionID']] = '({0} - {1})'.format(functionName, functionName2)
                     functionName = '{0},{1}'.format(functionName, functionName2)
                 else:
@@ -1135,8 +1160,11 @@ class SBML2BNGL:
                 if rawRules['numbers'][0] > threshold or rawRules['rates'][0] in translator:
 
                     if self.getReactions.functionFlag:
-                        functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'],
-                                                             compartmentList, parameterDict, self.reactionDictionary))
+                        # TODO: local parameter replacement flag
+                        if self.replaceLocParams:
+                            functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'],compartmentList, parameterDict, self.reactionDictionary))
+                        else:
+                            functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'],compartmentList, currParamConv, self.reactionDictionary))
                     self.reactionDictionary[rawRules['reactionID']] = '{0}'.format(functionName)
             #reactants = [x for x in rawRules[0] if x[0] not in self.boundaryConditionVariables]
             #products = [x for x in rawRules[1] if x[0] not in self.boundaryConditionVariables]
