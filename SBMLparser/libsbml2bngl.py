@@ -861,7 +861,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                 else:
                     n,d = smpl.as_numer_denom()
                     logMess('WARNING:RATE001', 'Post-parameter replacement for reaction {}, the denominator can be 0, adding an epsilon to avoid discontinuities')
-                    new_f = "(" + prnter.doprint(n) + ")/(" + prnter.doprint(d) + " __epsilon__)"
+                    new_f = "(" + prnter.doprint(n) + ")/(" + prnter.doprint(d) + "+ __epsilon__)"
             else:
                 new_f = prnter.doprint(smpl)
             new_f = new_f.replace("**", "^")
@@ -870,7 +870,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             if len(new_f) < len(func):
                 new_funcs.append(splt[0] + " = " + new_f)
             else: 
-                new_funcs.append(splt[0] + " = " + func)
+                new_funcs.append(func)
         functions = new_funcs
     except:
         #raise

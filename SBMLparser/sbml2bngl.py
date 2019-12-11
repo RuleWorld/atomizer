@@ -560,24 +560,26 @@ class SBML2BNGL:
         # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
         sym = sympy.sympify(form, locals=self.all_syms)
         # Remove compartments if we use them. 
-        if not self.noCompartment:
-            compartments_to_remove = [sympy.symbols(comp) for comp in compartmentList]
-            # TODO: This is not fully correct, we need to know what 
-            # compartment is on what side which is not currently 
-            # being provided to this function
-            for comp in compartments_to_remove:
-                if comp in sym.atoms():
-                    # Further issue, I know that this should be 
-                    # a multiplication but for BMD2 this is actually a 
-                    # problem? In fact, it looks like this is the case
-                    # for regular mass action in SBML? 
-                    # This doesn't look right and it is a current 
-                    # hack?
-                    n,d = sym.as_numer_denom()
-                    if comp in n.atoms():
-                        sym = sym/comp
-                    else:
-                        sym = sym*comp
+        #if not self.noCompartment:
+        compartments_to_remove = [sympy.symbols(comp) for comp in compartmentList]
+        # TODO: This is not fully correct, we need to know what 
+        # compartment is on what side which is not currently 
+        # being provided to this function
+        for comp in compartments_to_remove:
+            if comp in sym.atoms():
+                # Further issue, I know that this should be 
+                # a multiplication but for BMD2 this is actually a 
+                # problem? In fact, it looks like this is the case
+                # for regular mass action in SBML? 
+                # This doesn't look right and it is a current 
+                # hack?
+                n,d = sym.as_numer_denom()
+                if comp in n.atoms():
+                    sym = sym/comp
+                elif comp in d.atoms():
+                    sym = sym*comp
+                else:
+                    pass
         # expand and take the terms out as left and right
         exp = sympy.expand(sym)
         # This shows if we can get X - Y 
@@ -1460,6 +1462,7 @@ class SBML2BNGL:
                         print '////',rawArule[0]
             '''
             #arules.append('%s = %s' %(rawArule[0],newRule))
+        #TODO: Sympy evaluation of artificial observables/reactions
         return aParameters, arules, zRules, artificialReactions, removeParameters, artificialObservables
 
     def convertToStandardUnits(self, parameterValue, unitDefinition):
