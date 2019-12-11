@@ -865,7 +865,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                     new_f = prnter.doprint(smpl)
                 else:
                     n,d = smpl.as_numer_denom()
-                    print("denominator can be 0, post-parameter")
+                    logMess('WARNING:???', 'Post-parameter replacement for reaction {}, the denominator can be 0, adding an epsilon to avoid discontinuities')
                     new_f = "(" + prnter.doprint(n) + ")/(" + prnter.doprint(d) + " __epsilon__)"
             else:
                 new_f = prnter.doprint(smpl)
@@ -1307,67 +1307,4 @@ def listFiles(minReactions, directory):
     print(len(outputList))
 
 if __name__ == "__main__":
-    #identifyNamingConvention()
-    #processDatabase()
-
-    #main2()
-    '''
-    analyzeFile('../XMLExamples/curated/BIOMD0000000007.xml', resource_path('config/reactionDefinitions.json'),
-                    False, resource_path('config/namingConventions.json'),
-                    'BIOMD0000000027.xml' + '.bngl',
-                    speciesEquivalence=None, atomize=True, bioGrid=False)
-    '''
     main2()
-    #processFile3('XMLExamples/noncurated/MODEL2463576061.x5ml')
-    #processFile3('XMLExamples/jws/dupreez2.xml')
-    #processFile3('XMLExamples/non_curated/MODEL1012220002.xml')
-    #output=48
-    #processFile3('XMLExamples/curated/BIOMD00000000151.xml', bioGrid=False)
-
-    #param  = [452]
-    '''
-    param = 2
-    #use 105 as an example for (2, 2) reactions
-    #527
-
-
-    analyzeFile('XMLExamples/curated/BIOMD%010i.xml' % param, resource_path('config/reactionDefinitions.json'),
-                    False, resource_path('config/namingConventions.json'),
-                    'complex2/output' + str(param) + '.bngl', speciesEquivalence=None, atomize=True, bioGrid=False)
-
-    '''
-    '''
-    analyzeFile('plain2_sbml.xml', resource_path('config/reactionDefinitions.json'),
-                    False, resource_path('config/namingConventions.json'),
-
-    '''
-    '''
-    analyzeFile('XMLExamples/BMID000000142971.xml', resource_path('config/reactionDefinitions.json'),
-                    False, resource_path('config/namingConventions.json'),
-                    'complex/BMID000000142971.xml' + '.bngl', speciesEquivalence=None, atomize=True, bioGrid=False)
-
-    '''
-    '''
-    param = '00870'
-    analyzeFile('test/testl2v4/{0}/{0}-sbml-l2v4.xml'.format(param), 'reactionDefinitions/reactionDefinition7.json',
-                    False, resource_path('config/namingConventions.json'),
-                    'complex/output' + str(param) + '.bngl', speciesEquivalence=None, atomize=True, bioGrid=False)
-    '''
-    #processFile3('XMLExamples/curated/BIOMD0000000048.xml', customDefinitions=None, atomize=True)
-    #processFile3('/home/proto/Downloads/compartment_test_sbml.xml', customDefinitions=None, atomize=True)
-    #processDir('XMLExamples/curated/')
-    #processFile3('hexamer.xml')
-    #with open('dimer.xml', 'r') as f:
-    #    r = f.read()
-    #print(readFromString(r, resource_path('config/reactionDefinitions.json'), False, None, True))
-    #statFiles()
-    #main2()
-    #print(readFromString('dsfsdf', resource_path('config/reactionDefinitions.json'), False))
-    #processFile2()
-    #listFiles(50, './XMLExamples/curated/')
-#todo: some of the assignmentRules defined must be used instead of parameters. remove from the paraemter
-#definitions those that are defined as 0'
-#2:figure out which assignment rules are being used in reactions. Done before the substitution for id;s
-#http://nullege.com/codes/show/src@s@e@semanticsbml-HEAD@semanticSBML@annotate.py
-#http://wiki.geneontology.org/index.php/Example_Queries#Find_terms_by_GO_ID
-#http://www.geneontology.org/GO.database.shtml

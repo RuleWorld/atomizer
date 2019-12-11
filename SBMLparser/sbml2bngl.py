@@ -416,9 +416,9 @@ class SBML2BNGL:
         # most 2 and only gives you if the operator is unary or binary
         # really, ifStack has the things that are left-over after removal 
         # from math object. I don't get what this number is.
-        print("math form {}".format(libsbml.formulaToString(math)))
-        print("math children {}".format(math.getNumChildren()))
-        print("remove if stack 2 {}".format(len(ifStack)))
+        # print("math form {}".format(libsbml.formulaToString(math)))
+        # print("math children {}".format(math.getNumChildren()))
+        # print("remove if stack 2 {}".format(len(ifStack)))
         numFactors = max(math.getNumChildren(), len(ifStack))
 
         if pymath.isinf(highStoichoiMetryFactor):
@@ -440,10 +440,10 @@ class SBML2BNGL:
             # we are adding a factor to the rate so we need to account for it when 
             # we are constructing the bngl equation (we dont want constrant expressions in there)
             numFactors = max(1, numFactors)
-        print("reactants and products: {} \n {} \n".format(reactants, products))
-        print("HSMF: {}".format(highStoichoiMetryFactor))
-        print("rateR: {}".format(rateR))
-        print("numFactors: {}".format(numFactors))
+        #print("reactants and products: {} \n {} \n".format(reactants, products))
+        #print("HSMF: {}".format(highStoichoiMetryFactor))
+        #print("rateR: {}".format(rateR))
+        #print("numFactors: {}".format(numFactors))
         return rateR, numFactors
 
     def isAmount(self, reactantName):
@@ -612,7 +612,7 @@ class SBML2BNGL:
                     if bol in d.atoms():
                         d = d.subs(bol, 0)
                 if d == 0:
-                    print("denominator can be 0 thus we are adding a small value epsilon")
+                    logMess('WARNING:???', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
                     add_eps_react = True
 
                 prod_expr = back_expr
@@ -630,7 +630,7 @@ class SBML2BNGL:
                     if bol in d.atoms():
                         d = d.subs(bol, 0)
                 if d == 0:
-                    print("denominator can be 0 thus we are adding a small value epsilon")
+                    logMess('WARNING:???', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
                     add_eps_prod = True
 
                 prod_expr = prod_expr * -1
@@ -666,7 +666,7 @@ class SBML2BNGL:
         if rateL is None:
             # if not simply reversible, rely on the SBML spec
             if reversible:
-                print("SBML claims reversiblity but the kinetic law is not easily separable, assuming irreversible reaction.")
+                logMess('WARNING:???', 'SBML claims reversibility of reaction {} but the kinetic law is not easily separated to forward and backward rate constants. Assuming irreversible reaction instead.'.format(reactionID))
             # Also get and parse the symbols
             react_bols = [x[0] for x in react]
             react_symbols = sympy.symbols(react_bols)
@@ -686,7 +686,7 @@ class SBML2BNGL:
                 if bol in d.atoms():
                     d = d.subs(bol, 0)
             if d == 0:
-                print("denominator can be 0 thus we are adding a small value epsilon")
+                logMess('WARNING:???', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
                 add_eps_react = True
             re_proc = react_expr.nsimplify().evalf().simplify()
             if add_eps_react:
@@ -703,7 +703,7 @@ class SBML2BNGL:
             # Check to ensure we don't have a negative 
             # rate constant
             if rateL.startswith("-"):
-                print("rateL starts with -, this should never happen")
+                logMess('WARNING:???', 'After analysis, forward rate constant of reaction {} starts with - which is likely an error.'.format(reactionID))
         MrateL = rateL
         MrateR = rateR
         Mnl, Mnr = nl, nr
