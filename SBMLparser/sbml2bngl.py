@@ -1110,10 +1110,11 @@ class SBML2BNGL:
                         parameterDict[parameter[0]] = parameter[1]
                     else:
                     """
+                    curr_param_name = 'r%d_%s' % (index + 1, parameter[0])
                     curr_param = 'r%d_%s %f' % (index + 1, parameter[0], parameter[1])
                     parameters.append(curr_param)
                     parameterDict[parameter[0]] = parameter[1]
-                    currParamConv[parameter[0]] = curr_param
+                    currParamConv[parameter[0]] = curr_param_name
             compartmentList = []
             compartmentList.extend([[self.__getRawCompartments(x)[0], self.__getRawCompartments(x)[2]] for x in self.model.getListOfCompartments()])
             threshold = 0
