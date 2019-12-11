@@ -873,9 +873,9 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             # We want to do this if it makes the rate constant
             # more readable
             if len(new_f) < len(func):
-                new_funcs.append(prnter.doprint(n) + " = " + new_f)
+                new_funcs.append(splt[0] + " = " + new_f)
             else: 
-                new_funcs.append(func)
+                new_funcs.append(splt[0] + " = " + func)
         functions = new_funcs
     except:
         #raise
