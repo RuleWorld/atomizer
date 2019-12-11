@@ -247,9 +247,11 @@ def defaultReactionDefinition():
         json.dump(final, fp)
 
 
-def setupLog(fileName, level):
-    logging.basicConfig(filename=fileName, level=level, filemode='w')
-
+def setupLog(fileName, level, quietMode=False):
+    if quietMode:
+        logging.basicConfig(filename=fileName, level=level, filemode='w')
+    else:
+        logging.basicConfig(level=level)
 
 def setupStreamLog(console):
     formatter = logging.Formatter('%(name)-10s:%(levelname)-8s:%(message)s')

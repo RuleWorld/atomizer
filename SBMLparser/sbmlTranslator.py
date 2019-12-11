@@ -26,6 +26,7 @@ def defineConsole():
     parser.add_argument('-I','--ignore', action='store_true', help='ignore atomization translation errors')
     parser.add_argument('-mr','--memoized-resolver', default=False, action='store_true', help='sometimes the dependency graph is too large and might cause a very large memory requirement. This option will slow the translator down but will decrease memory usage')
     parser.add_argument('-k','--keep-local-parameters', default=False, action='store_true', help='this option will keep the local parameters unresolved so that they can be controlled from the parameter section in the BNGL. Without this option, local parameters will be resolved to their values in functions')
+    parser.add_argument('-q','--quiet-mode', default=False, action='store_true', help='this option will supress logging into STDIO and instead will write the logging into a file')
 
     return parser
 
@@ -49,6 +50,7 @@ def checkInput(namespace):
     options['noConversion'] = namespace.convert_units
     options['memoizedResolver'] = namespace.memoized_resolver
     options['replaceLocParams'] = not namespace.keep_local_parameters
+    options['quietMode'] = namespace.quiet_mode
     return options
 
 
@@ -59,7 +61,7 @@ def main():
     options = checkInput(namespace)
     returnArray = ls2b.analyzeFile(options['inputFile'], options['conventionFile'], options['useId'], options['namingConventions'],
                                    options['outputFile'], speciesEquivalence=options['userStructure'],
-                                   atomize=options['atomize'], bioGrid=False, pathwaycommons=options['pathwaycommons'], ignore=options['ignore'], noConversion = options['noConversion'], memoizedResolver=options['memoizedResolver'], replaceLocParams=options['replaceLocParams'])
+                                   atomize=options['atomize'], bioGrid=False, pathwaycommons=options['pathwaycommons'], ignore=options['ignore'], noConversion = options['noConversion'], memoizedResolver=options['memoizedResolver'], replaceLocParams=options['replaceLocParams'], quietMode=options['quietMode'])
 
     if namespace.bionetgen_analysis and returnArray:
         ls2b.postAnalyzeFile(options['outputFile'], namespace.bionetgen_analysis, returnArray.database, replaceLocParams=options['replaceLocParams'])

@@ -612,7 +612,7 @@ class SBML2BNGL:
                     if bol in d.atoms():
                         d = d.subs(bol, 0)
                 if d == 0:
-                    logMess('WARNING:???', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
+                    logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
                     add_eps_react = True
 
                 prod_expr = back_expr
@@ -630,7 +630,7 @@ class SBML2BNGL:
                     if bol in d.atoms():
                         d = d.subs(bol, 0)
                 if d == 0:
-                    logMess('WARNING:???', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
+                    logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
                     add_eps_prod = True
 
                 prod_expr = prod_expr * -1
@@ -666,7 +666,7 @@ class SBML2BNGL:
         if rateL is None:
             # if not simply reversible, rely on the SBML spec
             if reversible:
-                logMess('WARNING:???', 'SBML claims reversibility of reaction {} but the kinetic law is not easily separated to forward and backward rate constants. Assuming irreversible reaction instead.'.format(reactionID))
+                logMess('WARNING:RATE002', 'SBML claims reversibility of reaction {} but the kinetic law is not easily separated to forward and backward rate constants. Assuming irreversible reaction instead.'.format(reactionID))
             # Also get and parse the symbols
             react_bols = [x[0] for x in react]
             react_symbols = sympy.symbols(react_bols)
@@ -686,7 +686,7 @@ class SBML2BNGL:
                 if bol in d.atoms():
                     d = d.subs(bol, 0)
             if d == 0:
-                logMess('WARNING:???', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
+                logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
                 add_eps_react = True
             re_proc = react_expr.nsimplify().evalf().simplify()
             if add_eps_react:
@@ -703,7 +703,7 @@ class SBML2BNGL:
             # Check to ensure we don't have a negative 
             # rate constant
             if rateL.startswith("-"):
-                logMess('WARNING:???', 'After analysis, forward rate constant of reaction {} starts with - which is likely an error.'.format(reactionID))
+                logMess('WARNING:RATE003', 'After analysis, forward rate constant of reaction {} starts with - which is likely an error.'.format(reactionID))
         MrateL = rateL
         MrateR = rateR
         Mnl, Mnr = nl, nr

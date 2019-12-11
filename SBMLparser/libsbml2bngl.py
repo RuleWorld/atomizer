@@ -473,7 +473,7 @@ def postAnalyzeString(outputFile, bngLocation, database):
     return returnArray
 
 def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, outputFile,
-                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False, noConversion=False, memoizedResolver=True, replaceLocParams=True):
+                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False, noConversion=False, memoizedResolver=True, replaceLocParams=True, quietMode=False):
     '''
     one of the library's main entry methods. Process data from a file
     '''
@@ -482,7 +482,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     pr = cProfile.Profile()
     pr.enable()
     '''
-    setupLog(outputFile + '.log', logging.DEBUG)
+    setupLog(outputFile + '.log', logging.DEBUG, quietMode=quietMode)
 
     logMess.log = []
     logMess.counter = -1
@@ -865,7 +865,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                     new_f = prnter.doprint(smpl)
                 else:
                     n,d = smpl.as_numer_denom()
-                    logMess('WARNING:???', 'Post-parameter replacement for reaction {}, the denominator can be 0, adding an epsilon to avoid discontinuities')
+                    logMess('WARNING:RATE001', 'Post-parameter replacement for reaction {}, the denominator can be 0, adding an epsilon to avoid discontinuities')
                     new_f = "(" + prnter.doprint(n) + ")/(" + prnter.doprint(d) + " __epsilon__)"
             else:
                 new_f = prnter.doprint(smpl)
