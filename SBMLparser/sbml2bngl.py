@@ -99,6 +99,9 @@ class SBML2BNGL:
         self.all_syms.update(_clash)
         self.all_syms.update({"pow":pow})
         self.all_syms["__epsilon__"] = sympy.symbols("__epsilon__")
+        # We are trying to replace things that we know 
+        # are only in assignment rules in functions
+        self.only_assignment_dict = {}
         
     def setConversion(self,conversion):
         self.isConversion = conversion
@@ -241,7 +244,8 @@ class SBML2BNGL:
             self.speciesMemory.append(standardizedName)
 
         if boundaryCondition:
-            self.boundaryConditionVariables.append(standardizedName)
+            if standardizedName not in self.boundaryConditionVariables:
+                self.boundaryConditionVariables.append(standardizedName)
         self.speciesDictionary[identifier] = standardizedName
         returnID = identifier if self.useID else \
             self.speciesDictionary[identifier]
@@ -584,22 +588,24 @@ class SBML2BNGL:
         exp = sympy.expand(sym)
         # This shows if we can get X - Y 
         if exp.is_Add:
-            l,r = exp.as_two_terms()
+            react_expr,prod_expr = self.gather_terms(exp)
+            #l,r = exp.as_two_terms()
             # Let's also ensure that we have a + and - term
-            if str(l).startswith("-") or str(r).startswith("-"):
-                if str(l).startswith("-"):
-                    fwd_expr = r
-                    back_expr = l
-                else:
-                    fwd_expr = l
-                    back_expr = r
+            #if str(l).startswith("-") or str(r).startswith("-"):
+            #    if str(l).startswith("-"):
+            #        fwd_expr = r
+            #        back_expr = l
+            #    else:
+            #        fwd_expr = l
+            #        back_expr = r
+            if prod_expr is not None:
                 # Also get and parse the symbols
                 react_bols = [x[0] for x in react]
                 prod_bols = [x[0] for x in prod]
                 react_symbols = sympy.symbols(react_bols)
                 prod_symbols = sympy.symbols(prod_bols)
                 # Now we can manipulate it 
-                react_expr = fwd_expr
+                #react_expr = fwd_expr
                 removedL = []
                 for ibol,bol in enumerate(react_symbols):
                     stoi = int(react[ibol][1])
@@ -617,7 +623,7 @@ class SBML2BNGL:
                     logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
                     add_eps_react = True
 
-                prod_expr = back_expr
+                #prod_expr = back_expr
                 removedR = []
                 for ibol,bol in enumerate(prod_symbols):
                     stoi = int(prod[ibol][1])
@@ -635,7 +641,7 @@ class SBML2BNGL:
                     logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
                     add_eps_prod = True
 
-                prod_expr = prod_expr * -1
+                # prod_expr = prod_expr * -1
                 # TODO: We still need to figure out if we have 
                 # our reactant/products in our expressions and
                 # if so set the nl/nr values accordingly
@@ -1084,8 +1090,6 @@ class SBML2BNGL:
             logMess('WARNING:SIM104', 'Model contains no natural reactions, all reactions are produced by SBML rules')
         # At the end of this loop, we want to go in and adjust any cases
         # where a value that can go to 0 is in the denominator
-        # import ipdb
-        # ipdb.set_trace()
         for index, reaction in enumerate(self.model.getListOfReactions()):
             parameterDict = {}
             currParamConv = {}
@@ -1135,7 +1139,7 @@ class SBML2BNGL:
             if rawRules['reversible']:
                 if rawRules['numbers'][0] > threshold or rawRules['rates'][0] in translator:
                     if self.getReactions.functionFlag:
-                        # TODO: local parameter replacement flag
+                        # local parameter replacement flag
                         if self.replaceLocParams:
                             functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'], compartmentList, parameterDict, self.reactionDictionary))
                         else:
@@ -1143,7 +1147,7 @@ class SBML2BNGL:
                 if rawRules['numbers'][1] > threshold  or rawRules['rates'][1] in translator:
                     functionName2 = '%s%dm()' % (functionTitle, index)
                     if self.getReactions.functionFlag:
-                        # TODO: local parameter replacement flag
+                        # local parameter replacement flag
                         if self.replaceLocParams:
                             functions.append(writer.bnglFunction(rawRules['rates'][1], functionName2, rawRules['products'],compartmentList, parameterDict, self.reactionDictionary))
                         else: 
@@ -1163,7 +1167,7 @@ class SBML2BNGL:
                 if rawRules['numbers'][0] > threshold or rawRules['rates'][0] in translator:
 
                     if self.getReactions.functionFlag:
-                        # TODO: local parameter replacement flag
+                        # local parameter replacement flag
                         if self.replaceLocParams:
                             functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'],compartmentList, parameterDict, self.reactionDictionary))
                         else:
@@ -1178,37 +1182,99 @@ class SBML2BNGL:
                              (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),
                              rawRules['reversible'], reactionName=rawRules['reactionID'], comment=modifierComment))
 
-        # TODO: Get in there and adjust denominators
-
         if atomize:
             self.getReactions.__func__.functionFlag = True
         return parameters, reactions, functions
 
+    def gather_terms(self, exp): 
+        pos, neg = [], []
+        l,r = exp.as_two_terms()
+        resolve = [l,r]
+        while len(resolve) > 0:
+            elem = resolve.pop()
+            if elem.is_Add:
+                l,r = elem.as_two_terms()
+                resolve += [l,r]
+            else:
+                # TODO: Do we have a better check?
+                if str(elem).startswith("-"):
+                    neg.append(elem)
+                else:
+                    pos.append(elem)
+        # FIXME: Return None correctly 
+        l, r = None, None
+        if len(pos) > 0:
+            l = pos.pop(0)
+        if len(pos) > 0:
+            for e in pos:
+                l += e
+        if len(neg) > 0:
+            r = -1*neg.pop(0)
+        if len(neg) > 0:
+            for e in neg:
+                r += -1*e
+        # IPython.embed()
+        return l,r 
+
     def __getRawAssignmentRules(self, arule):
         variable = arule.getVariable()
-        
-        # try to separate into positive and negative sections
-        if arule.getMath().getCharacter() == '-' and arule.getMath().getNumChildren() > 1 and not arule.isAssignment():
-            rateL = libsbml.formulaToString(arule.getMath().getLeftChild())
-            if(arule.getMath().getRightChild().getCharacter()) == '*':
-                if libsbml.formulaToString(arule.getMath().getRightChild().getLeftChild()) == variable:
-                    rateR = libsbml.formulaToString(arule.getMath().getRightChild().getRightChild())
-                elif libsbml.formulaToString(arule.getMath().getRightChild().getRightChild()) == variable:
-                    rateR = libsbml.formulaToString(arule.getMath().getRightChild().getLeftChild())
-                else:
-                    # ASS - removing if statement from functional rate definitions
-                    rateR = '{1}/({0} + __epsilon__)'.format(variable, libsbml.formulaToString(arule.getMath().getRightChild()))
-            else:
-                # ASS - removing if statement from functional rate definitions
-                rateR = '{1}/({0} + __epsilon__)'.format(variable, libsbml.formulaToString((arule.getMath().getRightChild())))
+        var = sympy.symbols(variable)
+        if variable not in self.all_syms.keys():
+            self.all_syms[variable] = var
+        # Sympy stuff 
+        form, replace_dict = self.find_all_symbols(arule.getMath())
+        sym = sympy.sympify(form, locals=self.all_syms)
+        # FIXME: Epsilon dealing
+        # FIXME: Gotta figure out how to pull out mass action as usual
+        if not arule.isAssignment():
+            # expand and take the terms out as left and right
+            exp = sympy.expand(sym)
+            rateL = None
+            rateR = None
+            # This shows if we can get X - Y 
+            if exp.is_Add:
+                react_expr,prod_expr = self.gather_terms(exp)
+                # Let's also ensure that we have a + and - term
+                if prod_expr is not None:
+                    # Remove mass action
+                    prod_expr = prod_expr/var
+                    # Check for epsilon
+                    add_eps_prod = False
+                    n,d = prod_expr.as_numer_denom()
+                    for bol in d.atoms():
+                        d = d.subs(bol, 0)
+                    if d == 0:
+                        add_eps_prod = True
+                    # Reproducing current behavior + expansion
+                    re_proc = react_expr.nsimplify().evalf().simplify()
+                    pe_proc = prod_expr.nsimplify().evalf().simplify()
+                    # Adding epsilon if we have to
+                    # TODO: Figure out a way to pool everything 
+                    # that can go to 0 and check for those instead of 
+                    # just the reactants and products! 
+                    rateL = str(re_proc)
+                    if add_eps_prod:
+                        n,d = pe_proc.as_numer_denom()
+                        rateR = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
+                    else:
+                        rateR = str(re_proc)
+                    rateL = rateL.replace("**","^")
+                    rateR = rateR.replace("**","^")
+            if rateL is None:
+                # if not simply reversible, rely on the SBML spec
+                react_expr = exp
+                re_proc = react_expr.nsimplify().evalf().simplify()
+                rateL = str(re_proc)
+                rateL = rateL.replace("**","^")
+                # Make unidirectional
+                rateR = "0"
         else:
-            rateL = libsbml.formulaToString(arule.getMath())
+            rateL = str(sym)
             rateR = '0'
         if not self.useID:
             rateL = self.convertToName(rateL)
             rateR = self.convertToName(rateR)
-            #variable = self.convertToName(variable).strip()
-        #print arule.isAssignment(),arule.isRate()
+        # IPython.embed()
         return variable,[rateL, rateR], arule.isAssignment(), arule.isRate()
 
     def adjustInitialConditions(self, parameters, initialConditions, artificialObservables, observables, functions):
@@ -1321,6 +1387,10 @@ class SBML2BNGL:
         require special handling since rules are often both defined as rules 
         and parameters initialized as 0, so they need to be removed from the parameters list
         '''
+        # FIXME: This function removes compartment info and this leads to mis-replacement of variables downstream. e.g. Calc@ER and Calc@MIT both gets written as Calc and downstream the replacement is wrong. This is why you don't immediately process shit into strings, Jose. 
+
+        #import ipdb
+        #ipdb.set_trace()
         # ASS - trying to remove cell as a default compartment
         compartmentList = []
         # compartmentList = [['cell',1]]
@@ -1350,12 +1420,6 @@ class SBML2BNGL:
                 if rawArule[0] in self.boundaryConditionVariables:
                     logMess('WARNING:SIM105','rate rules ({0}) \
                     are not properly supported in BioNetGen simulator'.format(rawArule[0]))
-
-                    #aParameters[rawArule[0]] = 'arj' + rawArule[0] 
-                    #tmp = list(rawArule)
-                    #tmp[0] = 'arj' + rawArule[0]
-                    #rawArule = tmp
-
 
                 rateLaw1 = rawArule[1][0]
                 rateLaw2 = rawArule[1][1]
@@ -1426,10 +1490,27 @@ class SBML2BNGL:
 
                 elif rawArule[0] in molecules:
                     if molecules[rawArule[0]]['isBoundary']:
-                        artificialObservables[rawArule[0]+'_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                        # We should probably re-write this with the name since that's what's used other places
+                        name = molecules[rawArule[0]]['returnID']
+                        artificialObservables[name+'_ar'] = writer.bnglFunction(rawArule[1][0],name+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                        # TODO: Let's store what we know are assignment rules. We can maybe assume that, if something has an assignment rule, it can't in turn be in a reaction? If this is wrong, we can't model this anyway, so we should probably just make an assumption and let people know.
+                        self.only_assignment_dict[name] = name+"_ar"
+                        continue
+                    else: 
+                        # if not boundary but is a species, Jose
+                        # is turning this into an assignment rule
+                        # with a different name (uses ID). 
+                        # It looks as if the goal was to handle 
+                        # both situations via renaming. 
+                        # FIXME: This is very likely broken but 
+                        # I'm not 100% sure how it breaks things. 
+                        name = molecules[rawArule[0]]['returnID']
+                        artificialObservables[name+'_ar'] = writer.bnglFunction(rawArule[1][0],name+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                        self.only_assignment_dict[name] = name+"_ar"
                         continue
                 else:
                     #check if it is defined as an observable
+                    # TODO: What is going on here? 
                     candidates =  [idx for idx,x in enumerate(observablesDict) if rawArule[0] == x]
                     assigObsFlag = False
                     for idx in candidates:
@@ -1440,8 +1521,12 @@ class SBML2BNGL:
                     if assigObsFlag:
                         continue
                 # if its not a param/species/observable
-                artificialObservables[rawArule[0]] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
-
+                # TODO: now, if we replace this with the returnID do we 
+                # overlap with it's other possible uses?
+                #name = molecules[rawArule[0]]['returnID']
+                #self.only_assignment_dict[name] = name+"_ar"
+                #artificialObservables[name+'_ar'] = writer.bnglFunction(rawArule[1][0],name+'()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                artificialObservables[rawArule[0]+'_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
             else:
                 '''
                 if for whatever reason you have a rule that is not assigment
@@ -1463,6 +1548,8 @@ class SBML2BNGL:
             '''
             #arules.append('%s = %s' %(rawArule[0],newRule))
         #TODO: Sympy evaluation of artificial observables/reactions
+            # IPython.embed()
+
         return aParameters, arules, zRules, artificialReactions, removeParameters, artificialObservables
 
     def convertToStandardUnits(self, parameterValue, unitDefinition):
@@ -1596,8 +1683,12 @@ class SBML2BNGL:
         unitFlag = True
         for species in self.model.getListOfSpecies():
             rawSpecies = self.getRawSpecies(species, parameters)
-            #if rawSpecies['returnID'] in self.boundaryConditionVariables:
-            #    continue
+            # # ASS: So, we need to handle boundary variables differently 
+            # # and shouldn't be rules IMO. 
+            # if rawSpecies['returnID'] in self.boundaryConditionVariables:
+            #     # TODO: Make sure we don't need to have constant species
+            #     # in seed species and if we do, handle it here
+            #     continue
             if (rawSpecies['compartment'] != ''):
                 # ASS - First change for "noCompartments"
                 if self.noCompartment:
@@ -1620,7 +1711,7 @@ class SBML2BNGL:
                             qual = parts[1].lower() + ''.join([x.capitalize() for x in parts[2:]])
                             entry = ', '.join([':'.join(x.split('/')[-2:]) for x in speciesAnnotationInfo[rawSpecies['returnID']][annotation]])
                             annotationTemp.append('#^ {0}:{1} {2}'.format(header,qual, entry))
-                    
+                     
                     moleculesText.append(translator[rawSpecies['returnID']].str2())
                     if rawSpecies['returnID'] in speciesAnnotationInfo:
                         annotationInfo['moleculeTypes'][translator[rawSpecies['returnID']].str2()] = annotationTemp
@@ -1717,11 +1808,9 @@ class SBML2BNGL:
 
         annotationInfo['species'] = speciesAnnotationInfo
 
-        #moleculesText.append('NullSpecies()')
-        #speciesText.append('$NullSpecies() 1')
-
         self.speciesMemory = []
 
+        # IPython.embed()
         return list(set(moleculesText)),speciesText,observablesText,speciesTranslationDict, observablesDict, annotationInfo
 
     def getInitialAssignments(self, translator, param, zparam, molecules, initialConditions):

@@ -374,6 +374,56 @@ def recursiveSearch(dictionary, element, visitedFunctions=[]):
             tmp += (recursiveSearch(dictionary, item, [item] + visitedFunctions))
     return tmp
 
+def reorder_and_replace_arules(functions, parser):
+    # TODO: Check if we need full_prec, make it optional
+    prnter = StrPrinter({'full_prec': False})    
+    func_names = []
+    # get full func names and initialize dependency graph
+    dep_dict = {}
+    for func in functions:
+        splt = func.split("=")
+        # TODO: turn this into warning
+        assert len(splt) == 2, "More than one '=' in function {}".format(func)
+        n,f = splt
+        name = n.rstrip().replace("()","")
+        func_names.append(name)
+        dep_dict[name] = []
+    # make dependency graph between funcs only
+    func_dict = {}
+    new_funcs = []
+    # Let's replace and build dependency map
+    for func in functions:
+        splt = func.split("=")
+        # TODO: turn this into warning
+        assert len(splt) == 2, "More than one '=' in function {}".format(func)
+        n,f = splt
+        fs = sympy.sympify(f, locals=parser.all_syms)
+        fname = n.rstrip().replace("()","")
+        # replace here since it affects dependency
+        for item in parser.only_assignment_dict.items():
+            oname, nname = item
+            osym, ns = sympy.symbols(oname + "," + nname)
+            fs = fs.subs(osym,ns)
+        func_dict[fname] = fs
+        # need to build a dependency graph to figure out what to 
+        # write first
+        list_of_deps = list(map(str, fs.atoms(sympy.Symbol)))
+        for dep in list_of_deps:
+            if dep in func_names:
+                dep_dict[fname].append(dep)
+    # Now reorder accordingly
+    # FIXME: This is not exactly correct and doesn't fully 
+    # resolve dependencies. Come up with a legitimate algorithm
+    # to figure out function ordering
+    ordered_funcs = sorted(dep_dict.keys(), key=lambda x: len(dep_dict[x]))
+    # print ordered functions and return
+    for fname in ordered_funcs:
+        fs = func_dict[fname]
+        # clean up some whitespace here
+        func_str = prnter.doprint(fs)
+        func_str = func_str.replace("**","^")
+        new_funcs.append(fname + "() = " + func_str)
+    return new_funcs
 
 def reorderFunctions(functions):
     """
@@ -652,7 +702,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     taking the atomized dictionary and a series of data structure, this method
     does the actual string output.
     '''
-
     useArtificialRules = False
     parser = SBML2BNGL(document.getModel(), useID, replaceLocParams=replaceLocParams)
     parser.setConversion(database.isConversion)
@@ -829,24 +878,22 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # handling certain things I normally handle in sbml2bnl 
     # using sympy, port those in or turn them into importable
     # stuff
-    # TODO: Check if we need epsilons here instead
+    # TODO: Check if full_prec is bad, make it optional
     prnter = StrPrinter({'full_prec': False})    
     try: 
         new_funcs = []
         for func in functions:
             splt = func.split("=")
+            # TODO: turn this into a normal warning
             assert len(splt) == 2, "More than one '=' in function {}".format(func)
             n,f = splt
             fs = sympy.sympify(f, locals=parser.all_syms)
-            # import IPython
-            # IPython.embed()
             smpl = fs.nsimplify().evalf().simplify()
             # Epsilon checking
             n,d = smpl.as_numer_denom()
             # I don't want to touch the current rate parsing so 
             # I'll remove it and then add it back if needed
-            #import ipdb
-            #ipdb.set_trace()
+            # TODO: mentioned above is a temporary solution
             had_epsilon = False
             if parser.all_syms["__epsilon__"] in d.atoms():
                 d = d - parser.all_syms["__epsilon__"]
@@ -867,10 +914,12 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             new_f = new_f.replace("**", "^")
             # We want to do this if it makes the rate constant
             # more readable
-            if len(new_f) < len(func):
-                new_funcs.append(splt[0] + " = " + new_f)
-            else: 
-                new_funcs.append(func)
+            # FIXME: This doesn't mesh well with AR replacement
+            #if len(new_f) < len(func):
+            #    new_funcs.append(splt[0] + " = " + new_f)
+            #else: 
+            #    new_funcs.append(func)
+            new_funcs.append(splt[0] + " = " + new_f)
         functions = new_funcs
     except:
         #raise
@@ -879,7 +928,9 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         # I know there will be random small things and that 
         # this bit is entirely optional
         pass
-
+    
+    functions = reorder_and_replace_arules(functions, parser)
+    
     # ASS2019 - we need to adjust initial conditions of assignment rules
     # so that they start with the correct values. While this doesn't
     # impact model translation quality, it does make it difficult to 
