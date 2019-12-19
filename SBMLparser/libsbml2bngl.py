@@ -387,18 +387,27 @@ def reorder_and_replace_arules(functions, parser):
         n,f = splt
         name = n.rstrip().replace("()","")
         func_names.append(name)
-        dep_dict[name] = []
+        if "functionRate" not in name:
+            dep_dict[name] = []
     # make dependency graph between funcs only
     func_dict = {}
     new_funcs = []
+    # import ipdb
+    # ipdb.set_trace()
     # Let's replace and build dependency map
+    frates = []
     for func in functions:
         splt = func.split("=")
         # TODO: turn this into warning
         assert len(splt) == 2, "More than one '=' in function {}".format(func)
         n,f = splt
-        fs = sympy.sympify(f, locals=parser.all_syms)
         fname = n.rstrip().replace("()","")
+        try:
+            fs = sympy.sympify(f, locals=parser.all_syms)
+        except:
+            # Can't parse this func
+            func_dict[fname] = f 
+            continue
         # replace here since it affects dependency
         for item in parser.only_assignment_dict.items():
             oname, nname = item
@@ -407,10 +416,14 @@ def reorder_and_replace_arules(functions, parser):
         func_dict[fname] = fs
         # need to build a dependency graph to figure out what to 
         # write first
-        list_of_deps = list(map(str, fs.atoms(sympy.Symbol)))
-        for dep in list_of_deps:
-            if dep in func_names:
-                dep_dict[fname].append(dep)
+        # We can skip this if it's a functionRate
+        if "functionRate" not in n:
+            list_of_deps = list(map(str, fs.atoms(sympy.Symbol)))
+            for dep in list_of_deps:
+                if dep in func_names:
+                    dep_dict[fname].append(dep)
+        else:
+            frates.append((n.strip(),fs))
     # Now reorder accordingly
     # FIXME: This is not exactly correct and doesn't fully 
     # resolve dependencies. Come up with a legitimate algorithm
@@ -420,9 +433,18 @@ def reorder_and_replace_arules(functions, parser):
     for fname in ordered_funcs:
         fs = func_dict[fname]
         # clean up some whitespace here
+        try:
+            func_str = prnter.doprint(fs)
+            func_str = func_str.replace("**","^")
+            new_funcs.append(fname + "() = " + func_str)
+        except:
+            new_funcs.append(fname + "() = " + fs)
+    # now write the functionRates
+    for fitem in frates:
+        n, fs = fitem
         func_str = prnter.doprint(fs)
         func_str = func_str.replace("**","^")
-        new_funcs.append(fname + "() = " + func_str)
+        new_funcs.append(n + " = " + func_str)
     return new_funcs
 
 def reorderFunctions(functions):
@@ -773,21 +795,43 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     else:
         tags = ""
 
-    molecules.extend([x.split(' ')[0] for x in removeParams])
-
-    if len(molecules) == 0:
-        compartments = []
-    observables.extend('Species {0} {0}'.format(x.split(' ')[0]) for x in removeParams)
-    for x in removeParams:
-        initialConditions.append(x.split(' ')[0] + tags + ' ' + ' '.join(x.split(' ')[1:]))
+    # Here we are adding removed parameters back as 
+    # molecules, species and observables? How do we know 
+    # we need these? If we do, WHY ARE THEY CALLED REMOVE 
+    # PARAMETERS FFS
+    #import ipdb
+    #ipdb.set_trace()
+    for remPar in removeParams:
+        par_nam = remPar.split()[0]
+        write = True
+        # Check assignment rules first
+        for key in artificialObservables:
+            if (par_nam == key) or (par_nam + "_ar" == key):
+                # We have an assignment rule for this parameter
+                # and we don't want to have molecules and stuff
+                write = False
+                break
+        if write:
+            if par_nam not in molecules:
+                molecules.append(par_nam)
+            obs_str = "Species {0} {0}".format(par_nam)
+            if obs_str not in molecules:
+                observables.append(obs_str)
+            init_cond = par_nam + tags + " " + " ".join(remPar.split()[1:])
+            if init_cond not in initialConditions:
+                initialConditions.append(init_cond)
+    #molecules.extend([x.split(' ')[0] for x in removeParams])
+    #if len(molecules) == 0:
+    #    compartments = []
+    #observables.extend('Species {0} {0}'.format(x.split(' ')[0]) for x in removeParams)
+    #for x in removeParams:
+    #    initialConditions.append(x.split(' ')[0] + tags + ' ' + ' '.join(x.split(' ')[1:]))
 
     ## Comment out those parameters that are defined with assignment rules
     ## TODO: I think this is correct, but it may need to be checked
     tmpParams = []
-
     for idx, parameter in enumerate(param):
         for key in artificialObservables:
-
             if re.search('^{0}\s'.format(key), parameter)!= None:
                 assigmentRuleDefinedParameters.append(idx)
     tmpParams.extend(artificialObservables)
@@ -797,6 +841,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     for element in assigmentRuleDefinedParameters:
         param[element] = '#' + param[element]
+
 
     deleteMolecules = []
     deleteMoleculesFlag = True

@@ -1217,6 +1217,11 @@ class SBML2BNGL:
         return l,r 
 
     def __getRawAssignmentRules(self, arule):
+        '''
+        Function to pull out rate constants (if going to be encoded
+        as a reaction) and properties of an assignment rule to be
+        parsed downstream.
+        '''
         variable = arule.getVariable()
         var = sympy.symbols(variable)
         if variable not in self.all_syms.keys():
@@ -1224,8 +1229,8 @@ class SBML2BNGL:
         # Sympy stuff 
         form, replace_dict = self.find_all_symbols(arule.getMath())
         sym = sympy.sympify(form, locals=self.all_syms)
-        # FIXME: Epsilon dealing
-        # FIXME: Gotta figure out how to pull out mass action as usual
+        # if it's an assignment, it's going to be 
+        # encoded as a unidirectional rxn
         if not arule.isAssignment():
             # expand and take the terms out as left and right
             exp = sympy.expand(sym)
@@ -1234,8 +1239,11 @@ class SBML2BNGL:
             # This shows if we can get X - Y 
             if exp.is_Add:
                 react_expr,prod_expr = self.gather_terms(exp)
+                if react_expr is None:
+                    # TODO: LogMess this
+                    print("no forward reaction rate?")
                 # Let's also ensure that we have a + and - term
-                if prod_expr is not None:
+                elif prod_expr is not None:
                     # Remove mass action
                     prod_expr = prod_expr/var
                     # Check for epsilon
@@ -1249,9 +1257,6 @@ class SBML2BNGL:
                     re_proc = react_expr.nsimplify().evalf().simplify()
                     pe_proc = prod_expr.nsimplify().evalf().simplify()
                     # Adding epsilon if we have to
-                    # TODO: Figure out a way to pool everything 
-                    # that can go to 0 and check for those instead of 
-                    # just the reactants and products! 
                     rateL = str(re_proc)
                     if add_eps_prod:
                         n,d = pe_proc.as_numer_denom()
@@ -1274,7 +1279,6 @@ class SBML2BNGL:
         if not self.useID:
             rateL = self.convertToName(rateL)
             rateR = self.convertToName(rateR)
-        # IPython.embed()
         return variable,[rateL, rateR], arule.isAssignment(), arule.isRate()
 
     def adjustInitialConditions(self, parameters, initialConditions, artificialObservables, observables, functions):
@@ -1338,26 +1342,32 @@ class SBML2BNGL:
         sympy_forms = {}
         for item in formulaToAdjustWith.items():
             name, form = item
-            sympy_forms[name] = sympy.sympify(form, locals=self.all_syms)
+            try:
+                sympy_forms[name] = sympy.sympify(form, locals=self.all_syms)
+            except: 
+                sympy_forms[name] = None
         sympy_subs = {}
         # We need to replace the values in sympy formulas
         for item in sympy_forms.items():
             name, form = item
-            # Looping over parameters and replacing
-            for par_item in param_dict.items():
-                pn, pv = par_item
-                ps, pvs = sympy.symbols(pn), sympy.Number(pv)
-                form = form.subs(ps,pvs)
-            # Replacing species from initial conditions
-            for spec_item in initValMap.items():
-                sn, sv = spec_item
-                ss, svs = sympy.symbols(sn), sympy.Number(sv)
-                form = form.subs(ss,svs)
-            # And now converting the rest to zeros so we have a value
-            # that we can fully evaluate
-            for atm in form.atoms(sympy.Symbol):
-                form = form.subs(atm, 0)
-            sympy_subs[name] = form.evalf()
+            if form is not None:
+                # Looping over parameters and replacing
+                for par_item in param_dict.items():
+                    pn, pv = par_item
+                    ps, pvs = sympy.symbols(pn), sympy.Number(pv)
+                    form = form.subs(ps,pvs)
+                # Replacing species from initial conditions
+                for spec_item in initValMap.items():
+                    sn, sv = spec_item
+                    ss, svs = sympy.symbols(sn), sympy.Number(sv)
+                    form = form.subs(ss,svs)
+                # And now converting the rest to zeros so we have a value
+                # that we can fully evaluate
+                for atm in form.atoms(sympy.Symbol):
+                    form = form.subs(atm, 0)
+                sympy_subs[name] = form.evalf()
+            else:
+                sympy_subs[name] = 0
         # Evaluate them using Sympy
         adjustedInitialValues = []
         for item in sympy_subs.items():
@@ -1387,7 +1397,11 @@ class SBML2BNGL:
         require special handling since rules are often both defined as rules 
         and parameters initialized as 0, so they need to be removed from the parameters list
         '''
-        # FIXME: This function removes compartment info and this leads to mis-replacement of variables downstream. e.g. Calc@ER and Calc@MIT both gets written as Calc and downstream the replacement is wrong. This is why you don't immediately process shit into strings, Jose. 
+        # FIXME: This function removes compartment info and this leads to mis-replacement of variables downstream. e.g. Calc@ER and Calc@MIT both gets written as Calc and downstream the replacement is wrong. This is why you don't process shit into strings until the very end, Jose. 
+
+        # Going to use this to match names and remove params 
+        # if need be
+        param_map = dict([(x.split()[0],x) for x in parameters])
 
         #import ipdb
         #ipdb.set_trace()
@@ -1510,6 +1524,7 @@ class SBML2BNGL:
                         continue
                 else:
                     #check if it is defined as an observable
+                    # FIXME: This doesn't check for parameter namespace
                     # TODO: What is going on here? 
                     candidates =  [idx for idx,x in enumerate(observablesDict) if rawArule[0] == x]
                     assigObsFlag = False
@@ -1526,6 +1541,10 @@ class SBML2BNGL:
                 #name = molecules[rawArule[0]]['returnID']
                 #self.only_assignment_dict[name] = name+"_ar"
                 #artificialObservables[name+'_ar'] = writer.bnglFunction(rawArule[1][0],name+'()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                # This doesn't actually check for clashes with 
+                # parameter namespace
+                if rawArule[0] in param_map.keys():
+                    removeParameters.append(param_map[rawArule[0]])
                 artificialObservables[rawArule[0]+'_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
             else:
                 '''
@@ -1546,10 +1565,6 @@ class SBML2BNGL:
                     if re.search('^{0}\s'.format(rawArule[0]),parameter):
                         print '////',rawArule[0]
             '''
-            #arules.append('%s = %s' %(rawArule[0],newRule))
-        #TODO: Sympy evaluation of artificial observables/reactions
-            # IPython.embed()
-
         return aParameters, arules, zRules, artificialReactions, removeParameters, artificialObservables
 
     def convertToStandardUnits(self, parameterValue, unitDefinition):
