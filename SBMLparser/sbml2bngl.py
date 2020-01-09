@@ -1676,7 +1676,7 @@ class SBML2BNGL:
                 # we have 1 compartment and it's volume is 1
                 # just don't use compartments.
                 self.noCompartment = True
-        elif len(allUsedCompartment) > 1:
+        elif len(allUsedCompartments) > 1:
             logMess("WARNING:COMP001", "Multiple compartments are used, please note that Atomizer does not automatically try to infer your compartment topology which is important for how rules fire in cBNGL. Make sure your comparment topology is set correctly after translation")
         self.speciesMemory = []
 

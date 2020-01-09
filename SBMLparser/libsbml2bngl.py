@@ -1015,7 +1015,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # therefore we can check the rules, if a species do not 
     # appear anywhere in a rule, we can remove it
     # this will clean up a lot of translations
-    # TODO
+    # TODO: used_molecules doesn't include artificial 
+    # rules, gotta update those (just fixed them too)
+    #import ipdb
+    #ipdb.set_trace()
     molec_to_rem = []
     for molec in molecules:
         # name
@@ -1029,6 +1032,8 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     init_to_rem = []
     for iss, sspec in enumerate(initialConditions):
         sname = sspec.split()[0]
+        if len(sname.split(":")) > 1:
+            sname = sname.split(":")[1]
         if sname.startswith("$"):
             sname = sname[1:]
         sname = sname[:sname.find("(")]
@@ -1040,6 +1045,8 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     obs_to_rem = []
     for iobs, obs_str in enumerate(observables):
         oname = obs_str.split()[2]
+        if len(oname.split(":")) > 1:
+            oname = oname.split(":")[1]
         oname = oname[:oname.find("(")]
         if oname not in used_molecules:
             obs_to_rem.append(obs_str)
