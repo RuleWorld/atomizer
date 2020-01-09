@@ -501,7 +501,8 @@ class SBML2BNGL:
             numFactors = max(1, numFactors)
         return numFactors
 
-    def find_all_symbols(self, math):
+    def find_all_symbols(self, math, reactionID):
+        time_warn = False
         curr_keys = list(self.all_syms.keys())
         l = math.getListOfNodes()
         replace_dict = {}
@@ -517,6 +518,17 @@ class SBML2BNGL:
                 self.all_syms["lambda"] = sympy.symbols("__LAMBDA__")
                 replace_dict["lambda"] = "__LAMBDA__"
                 continue
+            if name == "time":
+                # Need to raise warning but do it 
+                # once per reaction
+                if time_warn:
+                    pass
+                else:
+                    time_warn = True
+                    if reactionID is not None:
+                        logMess('WARNING:RATE004', 'Kinetic law of reaction {} is using the time function. The time functionality in BNG might not work as expected and throw off the translation.'.format(reactionID))
+                    else:
+                        logMess('WARNING:RATE004', 'At least one reactions kinetic law is using the time function. The time functionality in BNG might not work as expected and throw off the translation.')
             if name is not None:
                 if name not in curr_keys:
                     self.all_syms[name] = sympy.symbols(name)
@@ -558,7 +570,7 @@ class SBML2BNGL:
 
         # Let's pull everything in the formula as symbols to use 
         # with sympify 
-        form, replace_dict = self.find_all_symbols(math)
+        form, replace_dict = self.find_all_symbols(math, reactionID)
         # let's pull all names
         all_names = [i[0] for i in react] + [i[0] for i in prod]
         # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
@@ -1227,7 +1239,7 @@ class SBML2BNGL:
         if variable not in self.all_syms.keys():
             self.all_syms[variable] = var
         # Sympy stuff 
-        form, replace_dict = self.find_all_symbols(arule.getMath())
+        form, replace_dict = self.find_all_symbols(arule.getMath(), None)
         sym = sympy.sympify(form, locals=self.all_syms)
         # if it's an assignment, it's going to be 
         # encoded as a unidirectional rxn
