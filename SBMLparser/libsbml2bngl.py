@@ -765,7 +765,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     functions = []
     assigmentRuleDefinedParameters = []
 
-    reactionParameters, rules, rateFunctions = parser.getReactions(translator, len(compartments) > 1,
+    reactionParameters, rules, rateFunctions, used_molecules = parser.getReactions(translator, len(compartments) > 1,
                                                                    atomize=atomize, parameterFunctions=artificialObservables, database=database)
 
     functions.extend(rateFunctions)
@@ -793,8 +793,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     else:
         tags = ""
 
-    #import ipdb
-    #ipdb.set_trace()
     # Here we are adding removed parameters back as 
     # molecules, species and observables? How do we know 
     # we need these? If we do, WHY ARE THEY CALLED REMOVE 
@@ -1000,19 +998,54 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # which is incorrect, at least in some cases e.g. BioMod 207
     if useArtificialRules or len(rules) == 0:
         rules =['#{0}'.format(x) for x in rules]
-        evaluate =  evaluation(len(observables), translator)
-
         artificialRules.extend(rules)
         rules = artificialRules
     if len(artificialRules) > 0:
         logMess("WARNING:ARTR001", "The model contains rate rules which are modeled as rules in the BNGL translation.")
-        evaluate = evaluation(len(observables), translator)
         rules.extend(artificialRules)
+    evaluate = evaluation(len(observables), translator)
     # else:
     #    artificialRules =['#{0}'.format(x) for x in artificialRules]
     #    evaluate =  evaluation(len(observables), translator)
     #    rules.extend(artificialRules)
     commentDictionary = {}
+    
+    # ASS: removing species that are not used
+    # in BNGL species do not get adjusted by functions
+    # therefore we can check the rules, if a species do not 
+    # appear anywhere in a rule, we can remove it
+    # this will clean up a lot of translations
+    # TODO
+    molec_to_rem = []
+    for molec in molecules:
+        # name
+        mname = molec[:molec.find("(")]
+        # used or not?
+        if mname not in used_molecules:
+            molec_to_rem.append(molec)
+    for i in molec_to_rem:
+        molecules.remove(i)
+    # also remove from seed species 
+    init_to_rem = []
+    for iss, sspec in enumerate(initialConditions):
+        sname = sspec.split()[0]
+        if sname.startswith("$"):
+            sname = sname[1:]
+        sname = sname[:sname.find("(")]
+        if sname not in used_molecules:
+            init_to_rem.append(sspec)
+    for i in init_to_rem:
+        initialConditions.remove(i)
+    # and observables
+    obs_to_rem = []
+    for iobs, obs_str in enumerate(observables):
+        oname = obs_str.split()[2]
+        oname = oname[:oname.find("(")]
+        if oname not in used_molecules:
+            obs_to_rem.append(obs_str)
+    for i in obs_to_rem:
+        observables.remove(i)
+    # done removing useless species/seed species/obs
 
     if atomize:
         commentDictionary['notes'] = "'This is an atomized translation of an SBML model created on {0}.".format(time.strftime("%d/%m/%Y"))

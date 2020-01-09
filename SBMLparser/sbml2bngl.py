@@ -1094,10 +1094,13 @@ class SBML2BNGL:
         reactionStructure = []
         parameters = []
         functions = []
+        # We want to keep track of the molecules/species we 
+        # actually used in the reactions
+        used_molecules = [] 
         functionTitle = 'functionRate'
-
         self.unitDefinitions = self.getUnitDefinitions()
         database.rawreactions = []
+
         if len(self.model.getListOfReactions()) == 0:
             logMess('WARNING:SIM104', 'Model contains no natural reactions, all reactions are produced by SBML rules')
         # At the end of this loop, we want to go in and adjust any cases
@@ -1118,6 +1121,14 @@ class SBML2BNGL:
                     continue
                 else:
                     raise TranslationException(e.value + " during reaction processing")
+
+            # Let's add our molecules
+            for r in rawRules['reactants']:
+                if r[0] not in used_molecules:
+                    used_molecules.append(r[0])
+            for p in rawRules['products']:
+                if p[0] not in used_molecules:
+                    used_molecules.append(p[0])
 
             if len(rawRules['parameters']) > 0:
                 for parameter in rawRules['parameters']:
@@ -1196,7 +1207,7 @@ class SBML2BNGL:
 
         if atomize:
             self.getReactions.__func__.functionFlag = True
-        return parameters, reactions, functions
+        return parameters, reactions, functions, used_molecules
 
     def gather_terms(self, exp): 
         pos, neg = [], []
@@ -1225,7 +1236,6 @@ class SBML2BNGL:
         if len(neg) > 0:
             for e in neg:
                 r += -1*e
-        # IPython.embed()
         return l,r 
 
     def __getRawAssignmentRules(self, arule):
@@ -1427,8 +1437,6 @@ class SBML2BNGL:
         artificialReactions = []
         artificialObservables = {}
         nonamecounter = 0
-        #import ipdb 
-        #ipdb.set_trace()
         for arule in self.model.getListOfRules():
             rawArule = self.__getRawAssignmentRules(arule)
 
@@ -1839,7 +1847,6 @@ class SBML2BNGL:
 
         self.speciesMemory = []
 
-        # IPython.embed()
         return list(set(moleculesText)),speciesText,observablesText,speciesTranslationDict, observablesDict, annotationInfo
 
     def getInitialAssignments(self, translator, param, zparam, molecules, initialConditions):
