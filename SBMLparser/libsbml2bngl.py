@@ -392,8 +392,6 @@ def reorder_and_replace_arules(functions, parser):
     # make dependency graph between funcs only
     func_dict = {}
     new_funcs = []
-    # import ipdb
-    # ipdb.set_trace()
     # Let's replace and build dependency map
     frates = []
     for func in functions:
@@ -795,12 +793,12 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     else:
         tags = ""
 
+    #import ipdb
+    #ipdb.set_trace()
     # Here we are adding removed parameters back as 
     # molecules, species and observables? How do we know 
     # we need these? If we do, WHY ARE THEY CALLED REMOVE 
     # PARAMETERS FFS
-    #import ipdb
-    #ipdb.set_trace()
     for remPar in removeParams:
         par_nam = remPar.split()[0]
         write = True
@@ -997,17 +995,23 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     if len(artificialRules) + len(rules) == 0:
         logMess('ERROR:SIM203', 'The file contains no reactions')
+    # ASS: This "useArtificialRules" flag can never be true
+    # but artificial rules are being made and left unused
+    # which is incorrect, at least in some cases e.g. BioMod 207
     if useArtificialRules or len(rules) == 0:
         rules =['#{0}'.format(x) for x in rules]
         evaluate =  evaluation(len(observables), translator)
 
         artificialRules.extend(rules)
         rules = artificialRules
-    else:
-        artificialRules =['#{0}'.format(x) for x in artificialRules]
-        evaluate =  evaluation(len(observables), translator)
-
+    if len(artificialRules) > 0:
+        logMess("WARNING:ARTR001", "The model contains rate rules which are modeled as rules in the BNGL translation.")
+        evaluate = evaluation(len(observables), translator)
         rules.extend(artificialRules)
+    # else:
+    #    artificialRules =['#{0}'.format(x) for x in artificialRules]
+    #    evaluate =  evaluation(len(observables), translator)
+    #    rules.extend(artificialRules)
     commentDictionary = {}
 
     if atomize:

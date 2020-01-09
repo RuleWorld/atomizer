@@ -1415,8 +1415,6 @@ class SBML2BNGL:
         # if need be
         param_map = dict([(x.split()[0],x) for x in parameters])
 
-        #import ipdb
-        #ipdb.set_trace()
         # ASS - trying to remove cell as a default compartment
         compartmentList = []
         # compartmentList = [['cell',1]]
@@ -1429,6 +1427,8 @@ class SBML2BNGL:
         artificialReactions = []
         artificialObservables = {}
         nonamecounter = 0
+        #import ipdb 
+        #ipdb.set_trace()
         for arule in self.model.getListOfRules():
             rawArule = self.__getRawAssignmentRules(arule)
 
