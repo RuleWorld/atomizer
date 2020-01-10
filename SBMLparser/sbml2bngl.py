@@ -17,6 +17,7 @@ import libsbml
 import sympy, IPython
 from sympy.abc import _clash
 from sympy.printing.str import StrPrinter
+from sympy.core.sympify import SympifyError
 
 def factorial(x):
     temp = x
@@ -575,7 +576,11 @@ class SBML2BNGL:
         # let's pull all names
         all_names = [i[0] for i in react] + [i[0] for i in prod]
         # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
-        sym = sympy.sympify(form, locals=self.all_syms)
+        try:
+            sym = sympy.sympify(form, locals=self.all_syms)
+        except SympifyError as e:
+            logMess("ERROR:SYMP001","Sympy couldn't parse a function, sorry but we can't handle this function definition.")
+            raise # TranslationException(reactionID)
         # Remove compartments if we use them. 
         #if not self.noCompartment:
         compartments_to_remove = [sympy.symbols(comp) for comp in compartmentList]
@@ -636,9 +641,6 @@ class SBML2BNGL:
                     react_expr = react_expr/(bol ** stoi)
                     removedL += [str(bol) for i in range(stoi)]
                 
-                if react_expr is None:
-                    import IPython
-                    IPython.embed()
                 # Check if we can get 0 in the denominator
                 add_eps_react = False
                 n,d = react_expr.as_numer_denom()
@@ -1263,7 +1265,11 @@ class SBML2BNGL:
             self.all_syms[variable] = var
         # Sympy stuff 
         form, replace_dict = self.find_all_symbols(arule.getMath(), None)
-        sym = sympy.sympify(form, locals=self.all_syms)
+        try:
+            sym = sympy.sympify(form, locals=self.all_syms)
+        except SympifyError as e:
+            logMess("ERROR:SYMP001","Sympy couldn't parse a function, sorry but we can't handle this function definition.")
+            raise TranslationException(arule.getId())
         # if it's an assignment, it's going to be 
         # encoded as a unidirectional rxn
         if not arule.isAssignment():

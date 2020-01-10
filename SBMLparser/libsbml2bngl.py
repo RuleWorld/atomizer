@@ -32,6 +32,7 @@ from collections import defaultdict
 
 import sympy
 from sympy.printing.str import StrPrinter
+from sympy.core.sympify import SympifyError
 # returntype for the sbml analyzer translator and helper functions
 AnalysisResults = namedtuple('AnalysisResults', ['rlength', 'slength', 'reval', 'reval2', 'clength', 'rdf', 'finalString', 'speciesDict', 'database', 'annotation'])
 
@@ -382,9 +383,8 @@ def reorder_and_replace_arules(functions, parser):
     dep_dict = {}
     for func in functions:
         splt = func.split("=")
-        # TODO: turn this into warning
-        assert len(splt) == 2, "More than one '=' in function {}".format(func)
-        n,f = splt
+        n = splt[0]
+        f = "=".join(splt[1:])
         name = n.rstrip().replace("()","")
         func_names.append(name)
         if "functionRate" not in name:
@@ -397,8 +397,8 @@ def reorder_and_replace_arules(functions, parser):
     for func in functions:
         splt = func.split("=")
         # TODO: turn this into warning
-        assert len(splt) == 2, "More than one '=' in function {}".format(func)
-        n,f = splt
+        n = splt[0]
+        f = "=".join(splt[1:])
         fname = n.rstrip().replace("()","")
         try:
             fs = sympy.sympify(f, locals=parser.all_syms)
@@ -793,6 +793,25 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     else:
         tags = ""
 
+    # import IPython, ipdb
+    # ipdb.set_trace()
+    # We need to replace stuff that we have a definition for
+    # if they are used in assignment rules
+    art_names = dict([(key[:-3],key) for key in artificialObservables])
+    for key in artificialObservables:
+        changed = False
+        f = artificialObservables[key]
+
+        fsplt = f.split("=")
+        fn = fsplt[0] 
+        fd = "=".join(fsplt[1:])
+        for an in art_names:
+            # We need an exact match
+            if re.search('\b{}\b'.format(an),fd) is not None:
+                fd = re.sub('\b{}\b'.format(an),art_names[an],fd)
+                changed = True
+        if changed:
+            artificialObservables[key] = fn.split()[0]+" = "+fd
     # Here we are adding removed parameters back as 
     # molecules, species and observables? How do we know 
     # we need these? If we do, WHY ARE THEY CALLED REMOVE 
@@ -841,6 +860,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     deleteMolecules = []
     deleteMoleculesFlag = True
+
 
     for key in artificialObservables:
         flag = -1
@@ -925,10 +945,14 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         new_funcs = []
         for func in functions:
             splt = func.split("=")
-            # TODO: turn this into a normal warning
-            assert len(splt) == 2, "More than one '=' in function {}".format(func)
+            n = splt[0] 
+            f = "=".join(splt[1:])
             n,f = splt
-            fs = sympy.sympify(f, locals=parser.all_syms)
+            try:
+                fs = sympy.sympify(f, locals=parser.all_syms)
+            except SympifyError:
+                logMess("ERROR:SYMP002","Sympy can't parse a function during post-processing")
+                raise TranslationException(f)
             smpl = fs.nsimplify().evalf().simplify()
             # Epsilon checking
             n,d = smpl.as_numer_denom()
@@ -971,7 +995,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         pass
     
     functions = reorder_and_replace_arules(functions, parser)
-    
     # ASS2019 - we need to adjust initial conditions of assignment rules
     # so that they start with the correct values. While this doesn't
     # impact model translation quality, it does make it difficult to 
@@ -989,6 +1012,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         for aObsKey in artificialObservables.keys():
             if obsKey == aObsKey:
                 idenObsFuncDict[obsKey] = obsKey + "_func"
+
     functions = changeDefs(functions, idenObsFuncDict)
 
     if len(artificialRules) + len(rules) == 0:
@@ -1019,9 +1043,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # obs can be a whole lot more complicated, ensure what 
     # I'm doing actually works
 
-    # import IPython, ipdb
-    # IPython.embed()
-    # ipdb.set_trace()
     # also remove from seed species 
     init_to_rem = []
     turn_to_param = []
@@ -1029,6 +1050,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         comp = None
         splt = sspec.split()
         sname = splt[0]
+        if splt[-1].startswith("#"):
+            val = " ".join(splt[1:-2])
+        else:
+            val = " ".join(splt[1:])
         # let's see if we have a compartment
         if "@" in sname:
             plt = sname.split(":")
@@ -1050,11 +1075,12 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             # this is a "fixed molecule" that doesn't get used 
             # in reactions. Let's check compartment and turn 
             # into parameter instead
+            # TODO: Sometimes the _comp version is used, sometimes 
+            # not, make it consistent 
             if comp is not None:
                 # we have a compartment
-                turn_to_param.append(sname + "_{} ".format(comp) + splt[1])
-            else:
-                turn_to_param.append(sname + " " + splt[1])
+                turn_to_param.append(sname + "_{} ".format(comp) + val)
+            turn_to_param.append(sname + " " + val)
         if sname not in used_molecules:
             init_to_rem.append(sspec)
     for i in init_to_rem:
@@ -1101,8 +1127,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         commentDictionary['notes'] = "'This is a plain translation of an SBML model created on {0}.".format(time.strftime("%d/%m/%Y"))
     commentDictionary['notes'] += " The original model has {0} molecules and {1} reactions. The translated model has {2} molecules and {3} rules'".format(parser.model.getNumSpecies(), parser.model.getNumReactions(), len(molecules), len(set(rules)))
     meta = parser.getMetaInformation(commentDictionary)
-
-
 
     finalString = writer.finalText(meta, param + reactionParameters, molecules, initialConditions,
                                    list(OrderedDict.fromkeys(observables)), list(OrderedDict.fromkeys(rules)), functions, compartments,
