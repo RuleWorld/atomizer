@@ -948,7 +948,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                     new_f = prnter.doprint(smpl)
                 else:
                     n,d = smpl.as_numer_denom()
-                    logMess('WARNING:RATE001', 'Post-parameter replacement for reaction {}, the denominator can be 0, adding an epsilon to avoid discontinuities')
+                    logMess('WARNING:RATE001', 'Post-parameter replacement, the denominator can be 0, adding an epsilon to avoid discontinuities')
                     new_f = "(" + prnter.doprint(n) + ")/(" + prnter.doprint(d) + "+ __epsilon__)"
             else:
                 new_f = prnter.doprint(smpl)

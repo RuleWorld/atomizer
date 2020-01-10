@@ -611,6 +611,16 @@ class SBML2BNGL:
             #    else:
             #        fwd_expr = l
             #        back_expr = r
+            if react_expr is None: 
+                # this means we only have negative 
+                # values in the kinetic laws. I guess
+                # this is possible if one of the parameters 
+                # turns it into + overall rate. We'll turn this into 
+                # unidirectional after multiplying by -, also will 
+                # raise a warning 
+                logMess("WARNING:RATE005", "All terms in reaction {} are negative. It's possible that one of the parameters make the overall rate positive but ensure that this is what you expect".format(reactionID))
+                react_expr = -1 * prod_expr 
+                prod_expr = None
             if prod_expr is not None:
                 # Also get and parse the symbols
                 react_bols = [x[0] for x in react]
@@ -625,7 +635,10 @@ class SBML2BNGL:
                     # Now we can remove it
                     react_expr = react_expr/(bol ** stoi)
                     removedL += [str(bol) for i in range(stoi)]
-
+                
+                if react_expr is None:
+                    import IPython
+                    IPython.embed()
                 # Check if we can get 0 in the denominator
                 add_eps_react = False
                 n,d = react_expr.as_numer_denom()
@@ -1284,9 +1297,13 @@ class SBML2BNGL:
                         n,d = pe_proc.as_numer_denom()
                         rateR = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
                     else:
-                        rateR = str(re_proc)
+                        rateR = str(pe_proc)
                     rateL = rateL.replace("**","^")
                     rateR = rateR.replace("**","^")
+                    # slap back in the replacement stuff
+                    for it in replace_dict.items():
+                        rateL = rateL.replace(it[1],it[0])
+                        rateR = rateR.replace(it[1],it[0])
             if rateL is None:
                 # if not simply reversible, rely on the SBML spec
                 react_expr = exp
@@ -1295,9 +1312,15 @@ class SBML2BNGL:
                 rateL = rateL.replace("**","^")
                 # Make unidirectional
                 rateR = "0"
+                # slap back in the replacement stuff
+                for it in replace_dict.items():
+                    rateL = rateL.replace(it[1],it[0])
         else:
             rateL = str(sym)
             rateR = '0'
+            # slap back in the replacement stuff
+            for it in replace_dict.items():
+                rateL = rateL.replace(it[1],it[0])
         if not self.useID:
             rateL = self.convertToName(rateL)
             rateR = self.convertToName(rateR)
