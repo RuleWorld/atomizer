@@ -1471,8 +1471,10 @@ class SBML2BNGL:
                         self.tags[rawArule[0]] = "@" + compartmentList[0][0]
                 # ASS - If self.useID is set, use the ID value, not the name
                 if self.useID:
+                    self.used_molecules.append(rawArule[0])
                     artificialReactions.append(writer.bnglReaction([], [[rawArule[0],1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw'))
                 else:
+                    self.used_molecules.append(self.convertToName(rawArule[0]).strip())
                     artificialReactions.append(writer.bnglReaction([], [[self.convertToName(rawArule[0]).strip(),1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw'))
                 #arules.append(writer.bnglFunction('({0}) - ({1})'.format(rawArule[1][0],rawArule[1][1]), '{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
                 if rawArule[0] in zparams:

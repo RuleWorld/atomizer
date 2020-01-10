@@ -1015,36 +1015,46 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # therefore we can check the rules, if a species do not 
     # appear anywhere in a rule, we can remove it
     # this will clean up a lot of translations
-    # TODO: used_molecules doesn't include artificial 
-    # rules, gotta update those (just fixed them too)
     # TODO: My approach to observables is too simplistic
     # obs can be a whole lot more complicated, ensure what 
     # I'm doing actually works
-    # import ipdb
+
+    # import IPython, ipdb
+    # IPython.embed()
     # ipdb.set_trace()
     # also remove from seed species 
     init_to_rem = []
     turn_to_param = []
     for iss, sspec in enumerate(initialConditions):
+        comp = None
         splt = sspec.split()
         sname = splt[0]
-        if len(sname.split(":")) > 1:
-            sname = sname.split(":")[1]
+        # let's see if we have a compartment
+        if "@" in sname:
+            plt = sname.split(":")
+            if len(plt) > 1:
+                # using @comp:spec notation
+                sname = plt[1]
+                comp = plt[0][1:]
+            else:
+                # using spec@comp notation
+                sname, comp = sname.split("@")
+        # remove $ if it's a fixed species
         if sname.startswith("$"):
             sname = sname[1:]
-            if sname[:sname.find("(")] not in used_molecules:
-                # this is a "fixed molecule" that doesn't get used 
-                # in reactions. Let's check compartment and turn 
-                # into parameter instead
-                pname = sname[:sname.find("(")]
-                if len(splt[0].split(":")) > 1:
-                    # we have a compartment
-                    comp = splt[0].split(":")[0]
-                    comp = comp[1:]
-                    turn_to_param.append(pname + "_{} ".format(comp) + splt[1])
-                else:
-                    turn_to_param.append(sname[:sname.find("(")] + " " + splt[1])
-        sname = sname[:sname.find("(")]
+        # We want only the name 
+        if "(" in sname:
+            sname = sname[:sname.find("(")]
+        # let's see if it's actually used in rules
+        if sname not in used_molecules:
+            # this is a "fixed molecule" that doesn't get used 
+            # in reactions. Let's check compartment and turn 
+            # into parameter instead
+            if comp is not None:
+                # we have a compartment
+                turn_to_param.append(sname + "_{} ".format(comp) + splt[1])
+            else:
+                turn_to_param.append(sname + " " + splt[1])
         if sname not in used_molecules:
             init_to_rem.append(sspec)
     for i in init_to_rem:
@@ -1056,7 +1066,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     molec_to_rem = []
     for molec in molecules:
         # name
-        mname = molec[:molec.find("(")]
+        if "(" in molec:
+            mname = molec[:molec.find("(")]
+        else:
+            mname = molec
         # used or not?
         if mname not in used_molecules:
             molec_to_rem.append(molec)
@@ -1066,9 +1079,16 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     obs_to_rem = []
     for iobs, obs_str in enumerate(observables):
         oname = obs_str.split()[2]
-        if len(oname.split(":")) > 1:
-            oname = oname.split(":")[1]
-        oname = oname[:oname.find("(")]
+        comp = None
+        if "@" in oname:
+            if len(oname.split(":")) > 1:
+                # using @comp:spec
+                oname = oname.split(":")[1]
+            else:
+                # using spec@comp
+                oname, comp = oname.split("@")
+        if "(" in oname:
+            oname = oname[:oname.find("(")]
         if oname not in used_molecules:
             obs_to_rem.append(obs_str)
     for i in obs_to_rem:
