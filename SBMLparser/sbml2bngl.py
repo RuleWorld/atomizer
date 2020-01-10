@@ -102,6 +102,7 @@ class SBML2BNGL:
         # We are trying to replace things that we know 
         # are only in assignment rules in functions
         self.only_assignment_dict = {}
+        self.used_molecules = [] 
         
     def setConversion(self,conversion):
         self.isConversion = conversion
@@ -1096,7 +1097,6 @@ class SBML2BNGL:
         functions = []
         # We want to keep track of the molecules/species we 
         # actually used in the reactions
-        used_molecules = [] 
         functionTitle = 'functionRate'
         self.unitDefinitions = self.getUnitDefinitions()
         database.rawreactions = []
@@ -1124,11 +1124,11 @@ class SBML2BNGL:
 
             # Let's add our molecules
             for r in rawRules['reactants']:
-                if r[0] not in used_molecules:
-                    used_molecules.append(r[0])
+                if r[0] not in self.used_molecules:
+                    self.used_molecules.append(r[0])
             for p in rawRules['products']:
-                if p[0] not in used_molecules:
-                    used_molecules.append(p[0])
+                if p[0] not in self.used_molecules:
+                    self.used_molecules.append(p[0])
 
             if len(rawRules['parameters']) > 0:
                 for parameter in rawRules['parameters']:
@@ -1207,7 +1207,7 @@ class SBML2BNGL:
 
         if atomize:
             self.getReactions.__func__.functionFlag = True
-        return parameters, reactions, functions, used_molecules
+        return parameters, reactions, functions, self.used_molecules
 
     def gather_terms(self, exp): 
         pos, neg = [], []

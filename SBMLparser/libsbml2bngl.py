@@ -1017,8 +1017,42 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # this will clean up a lot of translations
     # TODO: used_molecules doesn't include artificial 
     # rules, gotta update those (just fixed them too)
-    #import ipdb
-    #ipdb.set_trace()
+    # TODO: My approach to observables is too simplistic
+    # obs can be a whole lot more complicated, ensure what 
+    # I'm doing actually works
+    # import ipdb
+    # ipdb.set_trace()
+    # also remove from seed species 
+    init_to_rem = []
+    turn_to_param = []
+    for iss, sspec in enumerate(initialConditions):
+        splt = sspec.split()
+        sname = splt[0]
+        if len(sname.split(":")) > 1:
+            sname = sname.split(":")[1]
+        if sname.startswith("$"):
+            sname = sname[1:]
+            if sname[:sname.find("(")] not in used_molecules:
+                # this is a "fixed molecule" that doesn't get used 
+                # in reactions. Let's check compartment and turn 
+                # into parameter instead
+                pname = sname[:sname.find("(")]
+                if len(splt[0].split(":")) > 1:
+                    # we have a compartment
+                    comp = splt[0].split(":")[0]
+                    comp = comp[1:]
+                    turn_to_param.append(pname + "_{} ".format(comp) + splt[1])
+                else:
+                    turn_to_param.append(sname[:sname.find("(")] + " " + splt[1])
+        sname = sname[:sname.find("(")]
+        if sname not in used_molecules:
+            init_to_rem.append(sspec)
+    for i in init_to_rem:
+        initialConditions.remove(i)
+    # Turn any "fixed molecules" that are not used in rules 
+    # into parameters
+    param.extend(turn_to_param)
+    # remove from molecules
     molec_to_rem = []
     for molec in molecules:
         # name
@@ -1028,19 +1062,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             molec_to_rem.append(molec)
     for i in molec_to_rem:
         molecules.remove(i)
-    # also remove from seed species 
-    init_to_rem = []
-    for iss, sspec in enumerate(initialConditions):
-        sname = sspec.split()[0]
-        if len(sname.split(":")) > 1:
-            sname = sname.split(":")[1]
-        if sname.startswith("$"):
-            sname = sname[1:]
-        sname = sname[:sname.find("(")]
-        if sname not in used_molecules:
-            init_to_rem.append(sspec)
-    for i in init_to_rem:
-        initialConditions.remove(i)
     # and observables
     obs_to_rem = []
     for iobs, obs_str in enumerate(observables):
