@@ -1448,7 +1448,8 @@ class SBML2BNGL:
         require special handling since rules are often both defined as rules 
         and parameters initialized as 0, so they need to be removed from the parameters list
         '''
-        # FIXME: This function removes compartment info and this leads to mis-replacement of variables downstream. e.g. Calc@ER and Calc@MIT both gets written as Calc and downstream the replacement is wrong. This is why you don't process shit into strings until the very end, Jose. 
+        # FIXME: This function removes compartment info and this leads to mis-replacement of variables downstream. e.g. Calc@ER and Calc@MIT both gets written as Calc and downstream the replacement is wrong. 
+        # FIXME: This function gets a list of observables which sometimes are turned into assignment rules but then are not updated in hte observablesDict. E.g. X_comp1 gets in, X_ar is created and you can't have BOTH X_comp1 in a reaction AND X_ar adjusting X itself. You MUST pick one, if both are happening raise and error and exit out. For now I'll say if we have _ar then we replace the X_comp1 with X_ar and test.
 
         # Going to use this to match names and remove params 
         # if need be
@@ -1529,6 +1530,8 @@ class SBML2BNGL:
                 #    del observablesDict[rawArule[0]]
 
                 # it was originially defined as a zero parameter, so delete it from the parameter list definition                
+                # import ipdb
+                # ipdb.set_trace()
                 if rawArule[0] in zRules:
                     # dont show assignment rules as parameters
                     zRules.remove(rawArule[0])
@@ -1569,9 +1572,12 @@ class SBML2BNGL:
                         # both situations via renaming. 
                         # FIXME: This is very likely broken but 
                         # I'm not 100% sure how it breaks things. 
+                        # TODO: Check, if we have this in observables we need to adjust the observablesDict because we are writing an assignment rule for this instead
                         name = molecules[rawArule[0]]['returnID']
                         artificialObservables[name+'_ar'] = writer.bnglFunction(rawArule[1][0],name+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
                         self.only_assignment_dict[name] = name+"_ar"
+                        if name in observablesDict:
+                            observablesDict[name] = name+"_ar"
                         continue
                 else:
                     #check if it is defined as an observable
