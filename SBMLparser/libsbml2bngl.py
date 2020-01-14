@@ -688,12 +688,22 @@ def changeRates(reactions, dictionary):
     tmpArray = []
     tmp = None
     for reaction in reactions:
+        cmt = None
         tmp = reaction.strip().split(' ')
+        for ielem, elem in enumerate(tmp):
+            if elem.startswith("#"):
+                cmt = tmp[ielem:]
+                tmp = tmp[:ielem]
+                break
         for key in [x for x in dictionary if x in tmp[-1]]:
             tmp[-1] = re.sub(r'(\W|^){0}(\W|$)'.format(key), r'\1{0}\2'.format(dictionary[key]), tmp[-1])
+        if cmt is not None:
+            tmp += cmt
         tmpArray.append(' '.join(tmp))
-    if tmp:
-        tmpArray.append(' '.join(tmp))
+    # if tmp:
+    #     if cmt is not None:
+    #         tmp += cmt
+    #     tmpArray.append(' '.join(tmp))
     return tmpArray
 
 
@@ -793,8 +803,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     else:
         tags = ""
 
-    # import IPython, ipdb
-    # ipdb.set_trace()
     # We need to replace stuff that we have a definition for
     # if they are used in assignment rules
     art_names = dict([(key[:-3],key) for key in artificialObservables])
@@ -931,6 +939,14 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     functions = unrollFunctions(functions)
     rules = changeRates(rules, aParameters)
 
+    # Switch up AR stuff that's used as rate constants
+    ar_names = {}
+    for item in observablesDict.items():
+        k, t = item
+        if t.endswith("_ar"):
+            ar_names[k] = t
+    rules = changeRates(rules, ar_names)
+
     # Parameter replacement leaves a lot of unevaluated
     # math behing and it looks really ugly. I'm going 
     # to parse this and try to evaluate it all
@@ -1042,6 +1058,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # TODO: My approach to observables is too simplistic
     # obs can be a whole lot more complicated, ensure what 
     # I'm doing actually works
+    # TODO: Some species are not used in rules and are not fixed
+    # BUT are then used in some functions. The original modeller
+    # should have turned these into parameters but didn't. Let's 
+    # turn them into parameters? or leave them be? 
 
     # also remove from seed species 
     init_to_rem = []

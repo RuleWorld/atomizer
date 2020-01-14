@@ -1530,11 +1530,10 @@ class SBML2BNGL:
                 #    del observablesDict[rawArule[0]]
 
                 # it was originially defined as a zero parameter, so delete it from the parameter list definition                
-                # import ipdb
-                # ipdb.set_trace()
                 if rawArule[0] in zRules:
                     # dont show assignment rules as parameters
                     zRules.remove(rawArule[0])
+
                     #zRules.append([rawArule[0] + '_assignment', rawArule[1], rawArule[2], rawArule[3]])
 
                     #aParameters[rawArule[0]] = 'arj' + rawArule[0]
@@ -1546,14 +1545,20 @@ class SBML2BNGL:
                     if matches:
                         if matches[0]['isBoundary']:
                             artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                            if rawArule[0] in observablesDict:
+                                observablesDict[rawArule[0]] = rawArule[0] + "_ar"
                             continue
                         else:
                             logMess('ERROR:SIM201', 'Variables that are both changed by an assignment rule and reactions are not \
                             supported in BioNetGen simulator. The variable will be split into two'.format(rawArule[0]))
                             artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                            if rawArule[0] in observablesDict:
+                                observablesDict[rawArule[0]] = rawArule[0] + "_ar"
                             continue
                     elif rawArule[0] in [observablesDict[x] for x in observablesDict]:
                         artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                        if rawArule[0] in observablesDict:
+                            observablesDict[rawArule[0]] = rawArule[0] + "_ar"
                         continue
 
                 elif rawArule[0] in molecules:
