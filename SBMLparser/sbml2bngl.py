@@ -497,8 +497,7 @@ class SBML2BNGL:
 
         numFactors = max(libsbml.parseFormula(expr).getNumChildren(), len(ifStack))
         if pymath.isinf(highStoichoiMetryFactor):
-            rateR = '{0} * 1e20'.format(rateR)
-            logMess('ERROR:SIM204','Found usage of "inf" inside function {0}'.format(rateR))
+            logMess('ERROR:SIM204','Found usage of "inf" inside function. This might be due to non-integer stoichiometry as well.')
         elif highStoichoiMetryFactor != 1 and bothSides:
             numFactors = max(1, numFactors)
         return numFactors
