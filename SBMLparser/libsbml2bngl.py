@@ -404,7 +404,10 @@ def reorder_and_replace_arules(functions, parser):
             fs = sympy.sympify(f, locals=parser.all_syms)
         except:
             # Can't parse this func
-            func_dict[fname] = f 
+            if "functionRate" in fname:
+                frates.append((fname.strip(),f))
+            else:
+                func_dict[fname] = f 
             continue
         # replace here since it affects dependency
         for item in parser.only_assignment_dict.items():
