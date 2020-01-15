@@ -1404,11 +1404,13 @@ class SBML2BNGL:
                 # Looping over parameters and replacing
                 for par_item in param_dict.items():
                     pn, pv = par_item
+                    pv = pv.replace("(","").replace(")","")
                     ps, pvs = sympy.symbols(pn), sympy.Number(pv)
                     form = form.subs(ps,pvs)
                 # Replacing species from initial conditions
                 for spec_item in initValMap.items():
                     sn, sv = spec_item
+                    sv = sv.replace("(","").replace(")","")
                     ss, svs = sympy.symbols(sn), sympy.Number(sv)
                     form = form.subs(ss,svs)
                 # And now converting the rest to zeros so we have a value
