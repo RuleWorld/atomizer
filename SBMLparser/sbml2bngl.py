@@ -100,6 +100,10 @@ class SBML2BNGL:
         self.all_syms.update(_clash)
         self.all_syms.update({"pow":pow})
         self.all_syms["__epsilon__"] = sympy.symbols("__epsilon__")
+        # Do we want this? we'll have to handle it downstream
+        self.all_syms["piecewise"] = sympy.Function("piecewise")
+        self.all_syms["and"] = sympy.Function("and")
+        self.all_syms["or"] = sympy.Function("or")
         # We are trying to replace things that we know 
         # are only in assignment rules in functions
         self.only_assignment_dict = {}
@@ -1264,6 +1268,9 @@ class SBML2BNGL:
             self.all_syms[variable] = var
         # Sympy stuff 
         form, replace_dict = self.find_all_symbols(arule.getMath(), None)
+        # We might need this for debugging complicated
+        # piecewise function forms. 
+        # IPython.embed()
         try:
             sym = sympy.sympify(form, locals=self.all_syms)
         except SympifyError as e:

@@ -426,10 +426,22 @@ def reorder_and_replace_arules(functions, parser):
         else:
             frates.append((n.strip(),fs))
     # Now reorder accordingly
-    # FIXME: This is not exactly correct and doesn't fully 
-    # resolve dependencies. Come up with a legitimate algorithm
-    # to figure out function ordering
-    ordered_funcs = sorted(dep_dict.keys(), key=lambda x: len(dep_dict[x]))
+    ordered_funcs = []
+    # this ensures we write the independendent functions first
+    stck = sorted(dep_dict.keys(), key=lambda x: len(dep_dict[x]))
+    # FIXME: This algorithm works but likely inefficient
+    while len(stck) > 0:
+        k = stck.pop()
+        deps = dep_dict[k]
+        if len(deps) == 0:
+            if k not in ordered_funcs:
+                ordered_funcs.append(k)
+        else:
+            stck.append(k)
+            for dep in deps:
+                if dep not in ordered_funcs:
+                    stck.append(dep)
+                dep_dict[k].remove(dep)
     # print ordered functions and return
     for fname in ordered_funcs:
         fs = func_dict[fname]
