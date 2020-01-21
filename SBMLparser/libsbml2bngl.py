@@ -1005,6 +1005,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                     n,d = smpl.as_numer_denom()
                     logMess('WARNING:RATE001', 'Post-parameter replacement, the denominator can be 0, adding an epsilon to avoid discontinuities')
                     new_f = "(" + prnter.doprint(n) + ")/(" + prnter.doprint(d) + "+ __epsilon__)"
+                    parser.write_epsilon = True
             else:
                 new_f = prnter.doprint(smpl)
             new_f = new_f.replace("**", "^")
@@ -1155,6 +1156,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     for i in obs_to_rem:
         observables.remove(i)
     # done removing useless species/seed species/obs
+
+    # If we must, add __epsilon__ to parameter list
+    if parser.write_epsilon:
+        param = ['__epsilon__ 1e-100'] + param
 
     if atomize:
         commentDictionary['notes'] = "'This is an atomized translation of an SBML model created on {0}.".format(time.strftime("%d/%m/%Y"))

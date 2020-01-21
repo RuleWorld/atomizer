@@ -108,6 +108,8 @@ class SBML2BNGL:
         # are only in assignment rules in functions
         self.only_assignment_dict = {}
         self.used_molecules = [] 
+        # Only write epsilon if we must
+        self.write_epsilon = False
         
     def setConversion(self,conversion):
         self.isConversion = conversion
@@ -419,9 +421,11 @@ class SBML2BNGL:
             if ifStack[element] > 1:
                 # ASS - removing if statement from functional rate definitions
                 rateR = '{1}/({0}^{2} + __epsilon__)'.format(element, rateR, ifStack[element])
+                self.write_epsilon = True
             else:
                 # ASS - removing if statement from functional rate definitions
                 rateR = '{1}/({0} + __epsilon__)'.format(element, rateR)
+                self.write_epsilon = True
 
         # what the hell is even this thing? math.getNumChild is at
         # most 2 and only gives you if the operator is unary or binary
@@ -688,11 +692,13 @@ class SBML2BNGL:
                 if add_eps_react:
                     n,d = re_proc.as_numer_denom()
                     rateL = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
+                    self.write_epsilon = True
                 else:
                     rateL = str(re_proc)
                 if add_eps_prod:
                     n,d = pe_proc.as_numer_denom()
                     rateR = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
+                    self.write_epsilon = True
                 else:
                     rateR = str(pe_proc)
                 nl = self.calculate_factor(react, prod, rateL, removedL)
@@ -731,6 +737,7 @@ class SBML2BNGL:
             if add_eps_react:
                 n,d = re_proc.as_numer_denom()
                 rateL = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
+                self.write_epsilon = True
             else:
                 rateL = str(re_proc)
             nl = self.calculate_factor(react, prod, rateL, removedL)
@@ -1308,6 +1315,7 @@ class SBML2BNGL:
                     if add_eps_prod:
                         n,d = pe_proc.as_numer_denom()
                         rateR = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
+                        self.write_epsilon = True
                     else:
                         rateR = str(pe_proc)
                     rateL = rateL.replace("**","^")
@@ -1695,11 +1703,6 @@ class SBML2BNGL:
                     parameters.append('{0} {1}'.format(parameterSpecs[0], parameterSpecs[1]))
 
         #return ['%s %f' %(parameter.getId(),parameter.getValue()) for parameter in self.model.getListOfParameters() if parameter.getValue() != 0], [x.getId() for x in self.model.getListOfParameters() if x.getValue() == 0]
-
-        # ASS
-        # TODO: This should only be done if __epsilon__ would be used
-        parameters.append("__epsilon__ 1e-100")
-
         return parameters, zparam
 
 
