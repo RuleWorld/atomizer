@@ -946,4 +946,9 @@ def transformMolecules(parser, database, configurationFile, namingConventions,
     '''
     #database.assumptions = deepcopy(assumptions)
     #assumptions.clear()
+    # ASS: Adding atomized new molecules to the molecule list
+    for molecule in database.translator.keys():
+        if molecule not in database.parser.used_molecules:
+            database.parser.used_molecules.append(molecule)
+
     return database.translator, onlySynDec

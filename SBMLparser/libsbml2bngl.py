@@ -594,6 +594,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     # call the atomizer (or not). structured molecules are contained in translator
     # onlysyndec is a boolean saying if a model is just synthesis of decay reactions
     # ASS2019 - With this try/except the translator was not being initialized and led to an undefined error in certain models
+
     translator = {}
     try:
         if atomize:
@@ -749,6 +750,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     '''
     useArtificialRules = False
     parser = SBML2BNGL(document.getModel(), useID, replaceLocParams=replaceLocParams)
+    # ASS: Port over other parsers? used_molecules list
+    # WHY ARE THERE TWO SEPARATE PARSERS?
+    if hasattr(database, "parser"):
+        parser.used_molecules.extend(database.parser.used_molecules)
     parser.setConversion(database.isConversion)
     #database = structures.Databases()
     #database.assumptions = defaultdict(set)
@@ -790,7 +795,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     functions = []
     assigmentRuleDefinedParameters = []
 
-    reactionParameters, rules, rateFunctions, used_molecules = parser.getReactions(translator, len(compartments) > 1,
+    reactionParameters, rules, rateFunctions = parser.getReactions(translator, len(compartments) > 1,
                                                                    atomize=atomize, parameterFunctions=artificialObservables, database=database)
 
     functions.extend(rateFunctions)
@@ -1107,7 +1112,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         if "(" in sname:
             sname = sname[:sname.find("(")]
         # let's see if it's actually used in rules
-        if sname not in used_molecules:
+        if sname not in parser.used_molecules:
             # this is a "fixed molecule" that doesn't get used 
             # in reactions. Let's check compartment and turn 
             # into parameter instead
@@ -1117,7 +1122,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                 # we have a compartment
                 turn_to_param.append(sname + "_{} ".format(comp) + val)
             turn_to_param.append(sname + " " + val)
-        if sname not in used_molecules:
+        if sname not in parser.used_molecules:
             init_to_rem.append(sspec)
     for i in init_to_rem:
         initialConditions.remove(i)
@@ -1133,7 +1138,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         else:
             mname = molec
         # used or not?
-        if mname not in used_molecules:
+        if mname not in parser.used_molecules:
             molec_to_rem.append(molec)
     for i in molec_to_rem:
         molecules.remove(i)
@@ -1151,7 +1156,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                 oname, comp = oname.split("@")
         if "(" in oname:
             oname = oname[:oname.find("(")]
-        if oname not in used_molecules:
+        if oname not in parser.used_molecules:
             obs_to_rem.append(obs_str)
     for i in obs_to_rem:
         observables.remove(i)

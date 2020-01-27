@@ -107,7 +107,8 @@ class SBML2BNGL:
         # We are trying to replace things that we know 
         # are only in assignment rules in functions
         self.only_assignment_dict = {}
-        self.used_molecules = [] 
+        if not hasattr(self, "used_molecules"):
+            self.used_molecules = [] 
         # Only write epsilon if we must
         self.write_epsilon = False
         
@@ -1232,7 +1233,7 @@ class SBML2BNGL:
 
         if atomize:
             self.getReactions.__func__.functionFlag = True
-        return parameters, reactions, functions, self.used_molecules
+        return parameters, reactions, functions
 
     def gather_terms(self, exp): 
         pos, neg = [], []
