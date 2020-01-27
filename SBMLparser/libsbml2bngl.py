@@ -558,7 +558,7 @@ def postAnalyzeString(outputFile, bngLocation, database):
     return returnArray
 
 def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, outputFile,
-                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False, noConversion=False, memoizedResolver=True, replaceLocParams=True, quietMode=False):
+                speciesEquivalence=None, atomize=False, bioGrid=False, pathwaycommons=False, ignore=False, noConversion=False, memoizedResolver=True, replaceLocParams=True, quietMode=False, logLevel="DEBUG"):
     '''
     one of the library's main entry methods. Process data from a file
     '''
@@ -567,7 +567,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     pr = cProfile.Profile()
     pr.enable()
     '''
-    setupLog(outputFile + '.log', logging.DEBUG, quietMode=quietMode)
+    setupLog(outputFile + '.log', getattr(logging, logLevel.upper()), quietMode=quietMode)
 
     logMess.log = []
     logMess.counter = -1
@@ -795,6 +795,11 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     functions = []
     assigmentRuleDefinedParameters = []
 
+    # FIXME: We should determine if an assignment rule 
+    # if being used along with a reaction and ignore the
+    # reaction if it is being modified by both. This will
+    # likely require us to feed something from the assingment
+    # rule result into the following function
     reactionParameters, rules, rateFunctions = parser.getReactions(translator, len(compartments) > 1,
                                                                    atomize=atomize, parameterFunctions=artificialObservables, database=database)
 
@@ -989,6 +994,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             except SympifyError:
                 logMess("ERROR:SYMP002","Sympy can't parse a function during post-processing")
                 raise TranslationException(f)
+            # Test if we get a complex i from simplification
             smpl = fs.nsimplify().evalf().simplify()
             # Epsilon checking
             n,d = smpl.as_numer_denom()
