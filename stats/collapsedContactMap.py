@@ -322,14 +322,14 @@ def fillContextGraphInformation(graphDictionary, extendedInformation, speciesNam
                             graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
                                                                     'targetArrow': "crows_foot_one_mandatory"}, weight=0.1)
                     elif relationship in ['partialIndependence-']:
-                        print '---',node2,node1
+                        print('---',node2,node1)
                         graphDictionary[relationship].add_edge(node2, node1, graphics={'fill': color[relationship],
                                                                 'targetArrow': "diamond"}, weight=0.1)
                     elif relationship in ['partialIndependence+']:
-                        print '+++',node1,node2
+                        print('+++',node1,node2)
                         graphDictionary[relationship].add_edge(node1, node2, graphics={'fill': color[relationship],
                                                                 'targetArrow': "diamond"}, weight=0.1)
-                        print graphDictionary[relationship].edges()
+                        print(graphDictionary[relationship].edges())
 
                     #elif relationship not in ['fullIndependence']:
                     else:

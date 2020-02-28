@@ -97,7 +97,7 @@ def main():
     np.save('statsFinal.npy',np.array(dictionary))
     for element in dictionary:
         if len(dictionary[element]) > 1:
-            print element,dictionary[element]
+            print(element,dictionary[element])
             
 def bagOfWords():
     with open('sortedC.dump','rb') as f:
@@ -129,7 +129,7 @@ def bagOfWords():
                 if 'Decay' in element:
                     problem['pheno'] += element['Decay']
     
-    print problem
+    print(problem)
     for idx,element in enumerate(annotations):
         if idx < len(bins):
             if len(element) > 0:
@@ -140,7 +140,7 @@ def bagOfWords():
                         annotationDict[bins[idx]][word] += 1.0
     for element in annotationDict:
         annotationDict[element] = {x:annotationDict[element][x] for x in annotationDict[element] if annotationDict[element][x] > 3 and len(x) > 2}
-    print annotationDict
+    print(annotationDict)
     
     for element in annotationDict:
         stringA = ''
@@ -256,7 +256,7 @@ def resolveAnnotation(annotation):
     
 def main2(directory):
     #go database
-    print '---'    
+    print('---')
     annotationArray = defaultdict(list)
     with open('{0}/annotationDictionary.dump'.format(directory),'rb') as f:
         ar = pickle.load(f)
@@ -269,7 +269,7 @@ def main2(directory):
         for annarray in ar[element]:
             for annotation in ar[element][annarray]:
                     annotationSet.add(annotation)
-    print len(annotationSet)
+    print(len(annotationSet))
     
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         for annotation in annotationSet:
@@ -347,9 +347,9 @@ def compressionDistroAnalysis(directory):
                 else:
                     modelName = modelName[0]
             modelAnnotationArray.append([element,compression,modelName])
-            print modelAnnotationArray[-1]
+            print(modelAnnotationArray[-1])
         except:
-            print parsedInfo
+            print(parsedInfo)
             break
     with open('compressionAnnotation.dump','wb') as f:
         pickle.dump(modelAnnotationArray,f)
@@ -369,8 +369,8 @@ def compressionDistroAnalysisCont():
     
     for binIndex,annotation in zip(binIndexArray,annotations):
         annotationBinDict[binIndex][annotation] +=1
-    print annotationBinDict
-    print hist,bin_edges
+    print(annotationBinDict)
+    print(hist,bin_edges)
 
 
 def getColourTemp(maxVal, minVal, actual):
@@ -412,13 +412,13 @@ def histogram(inputDirectory, configFile):
     ratio20 = []
     ration20 = []
 
-    print 'there are {0} elements with compression 0'.format(zeroCounter)
+    print('there are {0} elements with compression 0'.format(zeroCounter))
     #with open('ratomization.dump','rb') as f:
     #    ratomizationDict = pickle.load(f) 
     
     
     problemModels = []
-    print 'syndec',len([x for x in rulesLength if x == -1])
+    print('syndec',len([x for x in rulesLength if x == -1]))
     for x,x2,y,z,w in zip(rulesLength,speciesLength,evaluation,number,evaluation2):
         if x>=10:
             if 1-w <= 0.2:
@@ -439,10 +439,10 @@ def histogram(inputDirectory, configFile):
             
     weights,trueEvaluation = zip(*trueEvaluation)
     #print '0 atom large models',problemModels
-    print 'largeModels',len(evaluation20),np.median(evaluation20),np.median(ratio20)
-    print 'models <10 reactions',np.average(evaluationn20), '+/-', np.std(evaluationn20), 'no of models',len(evaluationn20)
-    print 'models >=10 reactions',np.average(evaluation20), '+/-', np.std(evaluation20), 'no of models',len(evaluation20)
-    print 'total models',np.average(trueEvaluation), '+/-', np.std(trueEvaluation), 'no of models',len(trueEvaluation)
+    print('largeModels',len(evaluation20),np.median(evaluation20),np.median(ratio20))
+    print('models <10 reactions',np.average(evaluationn20), '+/-', np.std(evaluationn20), 'no of models',len(evaluationn20))
+    print('models >=10 reactions',np.average(evaluation20), '+/-', np.std(evaluation20), 'no of models',len(evaluation20))
+    print('total models',np.average(trueEvaluation), '+/-', np.std(trueEvaluation), 'no of models',len(trueEvaluation))
     plt.clf()
     hist,bins = np.histogram(rulesLength,bins=10,density=True)
     plt.hist(rulesLength,bins=20 ** np.linspace(np.log10(1), np.log10(1000), 20))
@@ -570,8 +570,8 @@ def histogram(inputDirectory, configFile):
     
 
     plt.clf()
-    print plt.hist(evaluation20, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
-                                0.8, 0.9, 1.0])
+    print(plt.hist(evaluation20, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
+                                0.8, 0.9, 1.0]))
     plt.xlabel('Atomization Degree '.format(len(evaluation20)), fontsize=18)
     plt.ylabel('Number of models',fontsize=18)
     plt.savefig('{0}/atomizationDistroHist10ormore.png'.format(directory))
@@ -671,12 +671,12 @@ def rankingAnalysis():
     sortedAnnotations = sorted(totalAnnotations.iteritems(), key=operator.itemgetter(1),reverse=True)
     sortedAppereances = sorted(totalAppereances.iteritems(), key=operator.itemgetter(1),reverse=True)
     sortedWeightedAppereances = sorted(weightedTotalAppereances.iteritems(), key=operator.itemgetter(1),reverse=True)
-    print '--- top proteins weighted by the number of times they appear and how atomizable their model is'
-    print sortedAnnotations[0:10]
-    print '--- top protein by number of appereances in a model'
-    print sortedAppereances[0:10]
-    print '--- top proteins by number of weighted appeareances in a model'
-    print sortedWeightedAppereances[0:10]
+    print('--- top proteins weighted by the number of times they appear and how atomizable their model is')
+    print(sortedAnnotations[0:10])
+    print('--- top protein by number of appereances in a model')
+    print(sortedAppereances[0:10])
+    print('--- top proteins by number of weighted appeareances in a model')
+    print(sortedWeightedAppereances[0:10])
     #print sortedAnnotations
     
 def inverseAnnotationClassification():
@@ -798,7 +798,7 @@ def getLinkArray(relationshipMatrix):
     for idx,element in enumerate(relationshipMatrix):
         tmp = set([idx+1])
         s = np.nonzero(element)[0]+1
-        print s
+        print(s)
         for element in s:
             tmp.add(element)
         linkArray.append(tmp)
@@ -865,7 +865,7 @@ def biomodelsInteractomeAnalysis(directory):
     linkArray = sorted(linkArray, key =lambda x:len(x),reverse=True)
     
     degrees =  [len(x) for x in linkArray]
-    print np.average(degrees),np.std(degrees),np.median(degrees)
+    print(np.average(degrees),np.std(degrees),np.median(degrees))
 
     with open('{0}/xmlAnnotations.txt'.format(directory),'w') as f:
         pprint.pprint([('biomodels {0}'.format(idx+1),x) for idx,x in enumerate(annotations)],f)
@@ -873,7 +873,7 @@ def biomodelsInteractomeAnalysis(directory):
         
     with open('{0}/linkArray.dump'.format(directory),'wb') as f:
         pickle.dump(linkArray,f)
-    print [len(x) for x in linkArray]
+    print([len(x) for x in linkArray])
      
 def annotationSharingFinder():
     with open('xmlAnnotations.dump','rb') as f:
@@ -895,7 +895,7 @@ def annotationSharingFinder():
                 if sc1*sc2 > 0 and (1-sc1)*(1-sc2) > 0:
                     relationshipTracker.append([idx+1,idx2+1,float((0.5*relationshipMatrix[idx][idx2])+ negativeRelationshipMatrix[idx][idx2])*(1-sc1)*(1-sc2)])
     relationshipTracker =  sorted(relationshipTracker,key=itemgetter(2),reverse=True)
-    print relationshipTracker
+    print(relationshipTracker)
     #print relationshipTracker
     
 
@@ -949,7 +949,7 @@ def compareConventions(name1,name2):
     counter = 0
     for element in [x for x in dic1 if x in dic2]:
         counter += 1
-        print '---',element,dic1[element],dic2[element]
+        print('---',element,dic1[element],dic2[element])
         if standardizeName(dic2[element][0][1]) !=standardizeName(dic1[element][0][1]):
             while re.search(r'(\W|^)({0})(\W|$)'.format(standardizeName(dic2[element][0][1])),bnglContent): 
                 bnglContent = re.sub(r'(\W|^)({0})(\W|$)'.format(standardizeName(dic2[element][0][1])),r'\g<1>{0}\g<3>'.format(standardizeName(dic1[element][0][1])),bnglContent)

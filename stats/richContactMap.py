@@ -408,7 +408,7 @@ import numpy as np
 
 
 import matplotlib.pyplot as plt
-import cPickle as pickle
+import pickle
 
 
 def plotresults(results, yvals, fileName, legend=''):
@@ -512,7 +512,7 @@ def getReactionTypeProperties(reactions):
             elif action.action in ['ChangeCompartment']:
                 actionCounter.append('ChangeCompartment')
             else:
-                print action
+                print(action)
                 raise Exception
         #actionCounter.extend([x.action for x in reaction[0].actions])
     actionCounter = Counter(actionCounter)
@@ -590,16 +590,16 @@ def modelCompositionCDF(directory):
                 generalCounter['Z10'][label].append(
                     model[label] * 1.0 / totalActions)
         if modelSpace == 1:
-            print iindex, atom,
-            print generalCounter['Z10']['Add'][-1]
-    print counter
+            print(iindex, atom,)
+            print(generalCounter['Z10']['Add'][-1])
+    print(counter)
     data['Mean process ratio'] = []
     for counter in generalCounter:
         data['Mean process ratio'].append(
             [np.mean(generalCounter[counter][x]) for x in generalCounter[counter]])
     data['labels'] = [x for x in generalCounter['l4']]
     spoke_labels = data.pop('labels')
-    print spoke_labels
+    print(spoke_labels)
     N = len(spoke_labels)
     theta = radarChart.radar_factory(N, frame='polygon')
 
@@ -683,7 +683,7 @@ def spaceCoveredCDF(directory):
         spaceCoveredArray = pickle.load(f)
     index, atomization, observables, space, actionCounter = zip(
         *spaceCoveredArray)
-    print 'models to analyze', len(spaceCoveredArray)
+    print('models to analyze', len(spaceCoveredArray))
     # print spaceCoveredArray[0:10]
     addAction = []
     modifyAction = []
@@ -840,24 +840,24 @@ def spaceCoveredCDF(directory):
     tmp = np.asarray([nobservables, addAction, atomization, space])
     tmp = np.transpose(tmp)
     p_corr = partial_corr(tmp)
-    print p_corr
-    print 'observable-space correlation', scipy.stats.pearsonr(nobservables, space)
-    print 'atomization-space correlation', scipy.stats.pearsonr(atomization, space)
-    print 'addBond-space correlation', scipy.stats.pearsonr(addAction, space)
-    print '--- only those with addbonds'
+    print(p_corr)
+    print('observable-space correlation', scipy.stats.pearsonr(nobservables, space))
+    print('atomization-space correlation', scipy.stats.pearsonr(atomization, space))
+    print('addBond-space correlation', scipy.stats.pearsonr(addAction, space))
+    print('--- only those with addbonds')
 
     tobservables, tatom, taddAction, tspacep = zip(
         *[(w, z, x, y) for w, z, x, y in zip(nobservables, atomization, addAction, space) if x > 0])
-    print len(tobservables)
-    print 'observable-space correlation', scipy.stats.pearsonr(tobservables, tspacep)
-    print 'atomization-space correlation', scipy.stats.pearsonr(tatom, tspacep)
-    print 'addBond-space correlation', scipy.stats.pearsonr(taddAction, tspacep)
-    print 'space stats, mean,std', np.mean(tspacep), np.std(tspacep)
+    print(len(tobservables))
+    print('observable-space correlation', scipy.stats.pearsonr(tobservables, tspacep))
+    print('atomization-space correlation', scipy.stats.pearsonr(tatom, tspacep))
+    print('addBond-space correlation', scipy.stats.pearsonr(taddAction, tspacep))
+    print('space stats, mean,std', np.mean(tspacep), np.std(tspacep))
     tmp = np.asarray([tobservables, taddAction, tatom, tspacep])
     tmp = np.transpose(tmp)
     p_corr = partial_corr(tmp)
-    print 'partial correlation'
-    print p_corr
+    print('partial correlation')
+    print(p_corr)
 
     plt.clf()
     plt.hist(tspacep)
@@ -930,7 +930,7 @@ def getValidFiles(directory, extension):
     for root, dirnames, filenames in os.walk(directory):
         for filename in fnmatch.filter(filenames, '*.{0}'.format(extension)):
             matches.append(os.path.join(root, filename))
-    for i in xrange(len(matches)):
+    for i in range(len(matches)):
         matches[i] = (matches[i], os.path.getsize(matches[i]))
     matches.sort(key=lambda filename: filename[1], reverse=False)
     matches = [x[0] for x in matches]
@@ -954,19 +954,19 @@ def reactionBasedAtomizationFile(xml):
         ratomizationDict['atomizedProcesses'] = atomizedProcesses
         ratomizationDict['totalProcesses'] = weight
     except IOError:
-        print 'io'
+        print('io')
     return ratomizationDict
 
 
 
 def generateBNGXML(directory,format='BNGXML'):
     bnglFiles = getValidFiles(directory, 'bngl')
-    print 'converting {0} bnglfiles'.format(len(bnglFiles))
+    print('converting {0} bnglfiles'.format(len(bnglFiles)))
     progress = progressbar.ProgressBar()
 
     for i in progress(range(len(bnglFiles))):
         xmlName = '.'.join(bnglFiles[i].split('.')[:-1]) + '.xml'
-        print bnglFiles[i]
+        print(bnglFiles[i])
 
         #if os.path.exists(xmlName):
         #    continue
@@ -977,7 +977,7 @@ def generateBNGXML(directory,format='BNGXML'):
         else:
             raise Exception
 
-    print 'moving xml files'
+    print('moving xml files')
     files = glob.iglob(os.path.join('.', "*.xml"))
     for xmlfile in files:
         if os.path.isfile(xmlfile):
@@ -1022,10 +1022,10 @@ def reactionBasedAtomizationDistro(directory, outputDir):
     # generate bng-xml
     # generateBNGXML(directory)
 
-    print 'reading bng-xml files'
+    print('reading bng-xml files')
     xmlFiles = getValidFiles(directory, 'xml')
 
-    print 'analyzing {0} bng-xml files'.format(len(xmlFiles))
+    print('analyzing {0} bng-xml files'.format(len(xmlFiles)))
     progress = progressbar.ProgressBar()
     ruleslen0 = 0
     testSet = []
@@ -1039,7 +1039,7 @@ def reactionBasedAtomizationDistro(directory, outputDir):
 
                 molecules, rules, _ = readBNGXML.parseXML(xml)
             except IOError:
-                print xml
+                print(xml)
                 continue
             atomizedProcesses, weight = reactionBasedAtomization(rules)
             ato, nonato = stoichiometryAnalysis(rules)
@@ -1081,22 +1081,22 @@ def reactionBasedAtomizationDistro(directory, outputDir):
         #    print 'iz'
         #    continue
         except IOError:
-            print 'io'
+            print('io')
             continue
     with open('{0}/ratomizationp2m.dump'.format(outputDir), 'wb') as f:
         pickle.dump(ratomizationDict, f)
 
-    print '{0} models with 0 rules'.format(ruleslen0)
-    print 'generating figures for {0} models'.format(len(ratomizationList))
-    print '-----'
-    print 'atomized', Counter(atomizedDistro)
-    print 'nonatomized', Counter(nonAtomizedDistro)
-    print 'models with 2->1 non atomized reactions', interesting
+    print('{0} models with 0 rules'.format(ruleslen0))
+    print('generating figures for {0} models'.format(len(ratomizationList)))
+    print('-----')
+    print('atomized', Counter(atomizedDistro))
+    print('nonatomized', Counter(nonAtomizedDistro))
+    print('models with 2->1 non atomized reactions', interesting)
     with open('{0}/nonatomizedreactions.dump'.format(outputDir), 'wb') as f:
         pickle.dump(generalSignature, f)
     ratomization, weights, length, yieldArray = zip(*ratomizationList)
-    print '=========='
-    print testSet
+    print('==========')
+    print(testSet)
     #ratomizationm10, weightsm10, lengthm10 = zip(*ratomizationListm10)
     #ratomizationl10, weightsl10, lengthl10 = zip(*ratomizationListl10)
 
@@ -1124,8 +1124,8 @@ def reactionBasedAtomizationDistro(directory, outputDir):
     #constructHistogram(ratomizationWP10,'ratomizationWP10','Reaction atomization level',np.ones(len(ratomizationWP10)),normed=False)
     #constructHistogram(ratomizationWP11,'ratomizationWP11','Reaction atomization level',np.ones(len(ratomizationWP11)),normed=False)
 
-    print 'process={0}, rprocess={1}, reactions = {2},syndel={3},valid={4}'.format(totalProcesses,
-                                                                                   totalRatomizedProcesses, totalReactions, syndel, validFiles)
+    print('process={0}, rprocess={1}, reactions = {2},syndel={3},valid={4}'.format(totalProcesses,
+                                                                                   totalRatomizedProcesses, totalReactions, syndel, validFiles))
 
     tmp2 = zip(ratomization, tmp)
     tmp2.sort(key=lambda x: x[0])
@@ -1134,7 +1134,7 @@ def reactionBasedAtomizationDistro(directory, outputDir):
     heatmap, xedges, yedges = np.histogram2d(ratomization, tmp, bins=12)
     #heatmap = np.log2(heatmap)
 
-    print 'correlation syndel-atomization', scipy.stats.pearsonr(tmp, ratomization)
+    print('correlation syndel-atomization', scipy.stats.pearsonr(tmp, ratomization))
     extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
     heatmap[heatmap < 0] = 0
     plt.clf()
@@ -1180,7 +1180,7 @@ def reactionBasedAtomizationDistro(directory, outputDir):
 
     #light_jet = cmap_map(lambda x: np.log2(x), plt.cm.get_cmap('YlGnBu'))
     heatmap = np.log2(heatmap)
-    print 'correlation ratomization-yieldArray', scipy.stats.pearsonr(ratomization, yieldArray)
+    print('correlation ratomization-yieldArray', scipy.stats.pearsonr(ratomization, yieldArray))
     extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
     heatmap[heatmap < 0] = 0
     plt.clf()
@@ -1201,7 +1201,7 @@ def reactionBasedAtomizationDistro(directory, outputDir):
     heatmap, xedges, yedges = np.histogram2d(tmp, yieldArray, bins=12)
     heatmap = np.log2(heatmap)
 
-    print 'correlation syndel-atomization', scipy.stats.pearsonr(tmp, ratomization)
+    print('correlation syndel-atomization', scipy.stats.pearsonr(tmp, ratomization))
     extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
     heatmap[heatmap < 0] = 0
     plt.clf()
@@ -1317,8 +1317,8 @@ def reactionBasedAtomizationDistro(directory, outputDir):
     #yvals = np.arange(len(ratomizationl10)) / float(len(ratomizationl10))
     #plotresults(ratomizationl10, yvals, 'ratomization_l10w',
     #            'Reaction atomization level <=10 reactions({0} models)'.format(len(ratomizationListl10)))
-    print 'syndel', syndel
-    print '>10 with 0', largeUseless
+    print('syndel', syndel)
+    print('>10 with 0', largeUseless)
 
 
 def createGroupingCDF():
@@ -1380,7 +1380,7 @@ def createGroupingCDF():
 
     processList = [[float(y) / sum(x[1:4]) for y in x[1:4]]
                    for x in processList]
-    print processList
+    print(processList)
     x = np.arange(len(processList))
 
     processList = sorted(
@@ -1388,7 +1388,7 @@ def createGroupingCDF():
     processList = np.column_stack(processList)
     processList = [map(float, y) for y in processList]
 
-    print processList
+    print(processList)
     # plt.clf()
     # plt.scatter(groupedProcess,atomizationList)
     # plt.show()
@@ -1447,13 +1447,13 @@ def analyzeGroupingCDF():
                     modelName = ' '.join(modelName[1:])
                 else:
                     modelName = modelName[0]
-            print element, binIndex
+            print(element, binIndex)
             modelAnnotationBin[binIndex].append((element, modelName))
         except:
-            print parsedInfo
+            print(parsedInfo)
             break
-    print modelAnnotationBin
-    print hist, bin_edges
+    print(modelAnnotationBin)
+    print(hist, bin_edges)
 
 
 def createSpaceDistribution():
@@ -1513,12 +1513,12 @@ def analyzeSpaceDistribution(analyzedModels):
                     modelName = ' '.join(modelName[1:])
                 else:
                     modelName = modelName[0]
-            print element, binIndex
+            print(element, binIndex)
             modelAnnotationBin[binIndex].append(modelName)
         except:
-            print parsedInfo
+            print(parsedInfo)
             break
-    print modelAnnotationBin
+    print(modelAnnotationBin)
 
 import pprint
 

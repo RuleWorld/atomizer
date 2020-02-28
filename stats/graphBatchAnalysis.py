@@ -93,7 +93,7 @@ def analyzeDataSet(folder):
     finalFrames = pandas.read_hdf('full_reg_comp.h5','entropy')
     substract = finalFrames['atomized_wiener']/finalFrames['raw_wiener']
     substract2 = np.array([x for x in substract.values if x >=-10])
-    print np.mean(substract),np.std(substract)
+    print(np.mean(substract),np.std(substract))
     colors= sns.color_palette("Set1", 3)
     f, (ax1) = plt.subplots(3, 1, sharex=True, figsize=(8, 6))
     #print (finalFrames['raw']-finalFrames['atomized'])['BIOMD0000000005.xml_regulatory.gml']
@@ -101,7 +101,7 @@ def analyzeDataSet(folder):
     sns.kdeplot(np.array([x for x in finalFrames['atomized_wiener'].values if x>=0]), shade=True,color=colors[1],label='Atomized translation',ax=ax1[1],bw=0.5)
     sns.kdeplot(substract2, shade=True,color=colors[2],label='Atomized translation',ax=ax1[2],clip=(-0.0001, 1.0001),bw=0.5)
     plt.xlabel('Entropy difference between raw translation and atomized model')
-    print finalFrames.columns
+    print(finalFrames.columns)
 
     #print len(substract)
     #ax1[0].set_xlim([0,1])

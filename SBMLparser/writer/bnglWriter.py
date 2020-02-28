@@ -30,21 +30,26 @@ def bnglReaction(reactant, product, rate, tags, translator=[], isCompartments=Fa
         tag = ''
         if reactant[index][2] in tags and isCompartments:
             tag = tags[reactant[index][2]]
-        finalString += printTranslate(reactant[index],tag,translator)
+        translated = printTranslate(reactant[index],tag,translator)
+        finalString += translated
         if index < len(reactant) -1:
             finalString += ' + '
+
     if reversible:
         finalString += ' <-> '
     else:
         finalString += ' -> '
     if len(product) == 0:
         finalString += '0 '
+    
     for index in range(0,len(product)):
         tag = ''
         if isCompartments:
             if len(product[index]) > 2 and product[index][2] in tags:
                 tag = tags[product[index][2]]
-        finalString +=  printTranslate(product[index],tag,translator) 
+        translated = printTranslate(product[index],tag,translator) 
+
+        finalString += translated
         if index < len(product) -1:
             finalString += ' + '
     finalString += ' ' + rate + ' ' + comment
@@ -66,7 +71,7 @@ def printTranslate(chemical,tags,translator={}):
         for item in range(0,int(chemical[1])):
             tmp.append(app)
     else:
-        idx = logMess("ERROR:Simulation","Cannot deal with non integer stoicheometries: {0}* {1}".format(chemical[1],chemical[0]))
+        idx = logMess("ERROR:SIM205","Cannot deal with non integer stoicheometries: {0}* {1}".format(chemical[1],chemical[0]))
         tmp.append(app)
     return ' + '.join(tmp)
 
@@ -238,7 +243,7 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
             for x in functionList:
                 rule  = re.sub('({0})\(([^,]+),([^)]+)\)'.format(x),function,rule)
             if rule == oldrule:
-                logMess('ERROR:Translation','Malformed pow or root function %s' % rule)
+                logMess('ERROR:TRS001','Malformed pow or root function %s' % rule)
                 print('meep')
         return rule
 
@@ -409,7 +414,7 @@ def extendFunction(function, subfunctionName,subfunction):
     try:
         body = subfunction.split(' = ')[1]
     except IndexError as e:
-        print("A function doesn't have a definition: {}".format(subfunction))
+        logMess("ERROR:TRS002","This function doesn't have a definition, note that atomizer doesn't allow for function linking: {}".format(subfunction))
         raise e
     while re.search(r'(\W|^){0}\([^)]*\)(\W|$)'.format(subfunctionName),function) != None:
         contentRule = pyparsing.Word(pyparsing.alphanums + '_.') |  ',' | '+' | '-' | '*' | '/' | '^' | '&' | '>' | '<' | '=' | '|'  

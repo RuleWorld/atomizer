@@ -41,6 +41,8 @@ class SCTSolver:
             adhocLabelDictionary, lexicalDependencyGraph, userEquivalenceTranslator = self.database.sbmlAnalyzer.classifyReactions(
                 rules, molecules, {})
         self.database.reactionProperties = self.database.sbmlAnalyzer.getReactionProperties()
+
+        syndecs = [1 if i == "Generation" or i == "Decay" else 0 for i in self.database.classifications]
         # user defined and lexical analysis naming conventions are stored here
         self.database.reactionProperties.update(adhocLabelDictionary)
 

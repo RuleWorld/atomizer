@@ -206,7 +206,7 @@ def loadFilesFromYAML(yamlFile):
     with open(yamlFile,'r') as f:
         yamlsettings = yaml.load(f)
 
-    print yamlsettings
+    print(yamlsettings)
     return yamlsettings
 
 def getEntropyMeasures(graphnames):

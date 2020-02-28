@@ -608,7 +608,7 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
                 for element in logMess.log:
                     f.write(element + '\n')
         return
-
+    
     # process other sections of the sbml file (functions reactions etc.)
     '''
     pr.disable()

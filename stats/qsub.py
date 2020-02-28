@@ -50,7 +50,7 @@ def start_queue(fileNameSet,outputdirectory,queue,batchSize,outputtype,nodes=1):
     queue -- The queue we will send the job to. It has to make reference to an entry in queue_list
     batchsize -- The total number of jobs per batch job. (in other words, the number of nodes we will be using is <fileNameSet>/<batchSize>. Typically you want this to be a multiple of the number of cores per node.)
     """
-    print len(fileNameSet)
+    print(len(fileNameSet))
     progress = progressbar.ProgressBar()
     settings = 'settings.yaml'
     for idx in progress(range(0,len(fileNameSet),batchSize)):

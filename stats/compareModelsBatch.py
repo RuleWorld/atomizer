@@ -90,7 +90,7 @@ def main():
     progress = progressbar.ProgressBar()
     workers = 3
     #with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
-    print combinationArray
+    print(combinationArray)
     for combinationIdx in progress(range(0, len(combinationArray))):
         combination = combinationArray[combinationIdx]
         context1 = getContext(combination[0], namespace.aux)
@@ -101,7 +101,7 @@ def main():
         #futures.append(executor.submit(getContextComparison, combination[0],combination[1],context1,context2))
 
         score = getContextComparison(combination[0], combination[1], context1, context2)
-        print score[0:-1]
+        print(score[0:-1])
         if len(score[-1]) > 0:
             modelPairs[score[0:2]] = score[-1]
 
@@ -149,18 +149,18 @@ def analyzePairs():
 
     comparisonPairs = eval(comparisonPairs)
     for pair in comparisonPairs:
-            print pair[0]
+            print(pair[0])
 
             graph, _ = getGraph(pair[0])
-            print pair[1]
+            print(pair[1])
             graph2, _ = getGraph(pair[1])
             jointGraph = nx.DiGraph()
-            print comparisonPairs[pair].keys()
+            print(comparisonPairs[pair].keys())
             filterGraph(jointGraph, graph, pair[0].split('/')[-1].split('.')[0], comparisonPairs[pair],"#FFCCFF")
             filterGraph(jointGraph, graph2, pair[1].split('/')[-1].split('.')[0], comparisonPairs[pair],"#CCFFFF")
             fileName = 'differences/{0}_{1}.gml'.format(pair[0].split('.')[0].split('/')[-1],pair[1].split('.')[0].split('/')[-1])
             nx.write_gml(jointGraph, fileName)
-            print '---'
+            print('---')
 
 
 

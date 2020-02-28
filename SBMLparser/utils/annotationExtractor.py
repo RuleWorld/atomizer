@@ -249,5 +249,5 @@ if __name__ == "__main__":
     modelAnnotations = annotationExtractor.getModelAnnotations()
     #elementalMolecules = [x for x in annotationExtractor.sct if annotationExtractor.sct[x] == []]
     complexMolecules = [x for x in annotationExtractor.sct if annotationExtractor.sct[x] != []]
-    print {x:annotationExtractor.getAnnotationSystem()[x] for x in complexMolecules}
+    print({x:annotationExtractor.getAnnotationSystem()[x] for x in complexMolecules})
 

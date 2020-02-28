@@ -1227,9 +1227,11 @@ class SBML2BNGL:
             reactants = [x for x in rawRules['reactants']]
             products = [x for x in rawRules['products']]
             modifierComment = '#Modifiers({0})'.format(', '.join(rawRules['modifiers'])) if rawRules['modifiers'] else ''
-            reactions.append(writer.bnglReaction(reactants, products, functionName, self.tags, translator,
+
+            rxn_str = writer.bnglReaction(reactants, products, functionName, self.tags, translator,
                              (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),
-                             rawRules['reversible'], reactionName=rawRules['reactionID'], comment=modifierComment))
+                             rawRules['reversible'], reactionName=rawRules['reactionID'], comment=modifierComment)
+            reactions.append(rxn_str)
 
         if atomize:
             self.getReactions.__func__.functionFlag = True
@@ -1519,10 +1521,12 @@ class SBML2BNGL:
                 # ASS - If self.useID is set, use the ID value, not the name
                 if self.useID:
                     self.used_molecules.append(rawArule[0])
-                    artificialReactions.append(writer.bnglReaction([], [[rawArule[0],1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw'))
+                    rxn_str = writer.bnglReaction([], [[rawArule[0],1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw')
+                    artificialReactions.append(rxn_str)
                 else:
                     self.used_molecules.append(self.convertToName(rawArule[0]).strip())
-                    artificialReactions.append(writer.bnglReaction([], [[self.convertToName(rawArule[0]).strip(),1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw'))
+                    rxn_str = writer.bnglReaction([], [[self.convertToName(rawArule[0]).strip(),1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw')
+                    artificialReactions.append(rxn_str)
                 #arules.append(writer.bnglFunction('({0}) - ({1})'.format(rawArule[1][0],rawArule[1][1]), '{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
                 if rawArule[0] in zparams:
                     removeParameters.append('{0} 0'.format(rawArule[0]))

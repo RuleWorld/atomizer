@@ -122,7 +122,7 @@ def extractMoleculeTypes(folderName, annotationsFolder, includeAnnotations=True)
                     annotations = annotationsArray[os.path.join(annotationsFolder, fileName[:-4].split('/')[1])]
                     resolvedAnnotations = resolveAnnotation(annotations)
                 except KeyError:
-                    print os.path.join([annotationsFolder, fileName[:-4].split('/')[1]])
+                    print(os.path.join([annotationsFolder, fileName[:-4].split('/')[1]]))
                     continue
                     
 

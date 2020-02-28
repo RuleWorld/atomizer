@@ -102,10 +102,10 @@ def reactionBasedAtomizationDistro(directory):
     # generate bng-xml
     # generateBNGXML(directory)
 
-    print 'reading bng-xml files'
+    print('reading bng-xml files')
     xmlFiles = getValidFiles(directory, 'xml')
 
-    print 'analyzing {0} bng-xml files'.format(len(xmlFiles))
+    print('analyzing {0} bng-xml files'.format(len(xmlFiles)))
     progress = progressbar.ProgressBar()
     validFiles = 0
     for i in progress(range(len(xmlFiles))):
@@ -121,7 +121,7 @@ def reactionBasedAtomizationDistro(directory):
                 observables = structures['observables']
                 molecules = structures['molecules']
             except IOError:
-                print xml
+                print(xml)
                 continue
             atomizedProcesses, weight = reactionBasedAtomization(rules)
             ato, nonato = stoichiometryAnalysis(rules)
@@ -151,9 +151,9 @@ def reactionBasedAtomizationDistro(directory):
             atomizationDB.set_value(xml, 'numspecies', len(observables))
             validFiles += 1
         except IOError:
-            print 'io'
+            print('io')
             continue
-    print 'found {0} models i could extract info from'.format(validFiles)
+    print('found {0} models i could extract info from'.format(validFiles))
 
     return atomizationDB
 
@@ -169,7 +169,7 @@ def extractAnnotationsFromModelSet(modelList):
         speciesAnnotations = set([z for x in speciesAnnotations for y in speciesAnnotations[x] for z in speciesAnnotations[x][y]])
         modelAnnotationsCounter.update(speciesAnnotations)
 
-    print modelAnnotationsCounter.most_common(20)
+    print(modelAnnotationsCounter.most_common(20))
 
 
 

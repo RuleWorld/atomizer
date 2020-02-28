@@ -132,7 +132,7 @@ def generateBNGXML(bnglFiles,output,format='BNGXML'):
     """
 
     """
-    print 'converting {0} bnglfiles'.format(len(bnglFiles))
+    print('converting {0} bnglfiles'.format(len(bnglFiles)))
     parallelHandling(bnglFiles,convertXML,output)
 
 
@@ -144,7 +144,7 @@ def parallelHandling(files,function,outputDir,options = [],postExecutionFunction
     workers = mp.cpu_count()-1
     progress = progressbar.ProgressBar(maxval= len(files)).start()
     i = 0
-    print 'running in {0} cores'.format(workers)
+    print('running in {0} cores'.format(workers))
     with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
         for fileidx in progress(range(len(files))):
             futures.append(executor.submit(function, files[fileidx],outputDir,options))
@@ -160,12 +160,12 @@ def generateGraphs(bnglFiles,output,options=[]):
     Calls visualize.pl to generate GML graphs from a BNG representation
     of a model
     """
-    print 'converting {0} bnglfiles to GML'.format(len(bnglFiles))
+    print('converting {0} bnglfiles to GML'.format(len(bnglFiles)))
     parallelHandling(bnglFiles,generateGraph,output,options)
 
 
 def translate(filenameset,outputdirectory):
-    print 'translating {0} bnglfiles to BNGL'.format(len(filenameset))
+    print('translating {0} bnglfiles to BNGL'.format(len(filenameset)))
     parallelHandling(filenameset,callSBMLTranslator,outputdirectory)
 
 
@@ -173,7 +173,7 @@ def loadFilesFromYAML(yamlFile):
     with open(yamlFile,'r') as f:
         yamlsettings = yaml.load(f)
 
-    print yamlsettings
+    print(yamlsettings)
     return yamlsettings
 
 
@@ -224,7 +224,7 @@ def reactionBasedAtomizationFile(xmlFile,outputDataFrame,options):
         #ratomizationDict['weight'] = weight
         #ratomizationDict['length'] = len(rules)
     except IOError:
-        print 'io',xmlFile
+        print('io',xmlFile)
 
 
 def createCollapsedContact(xmlfile,outputdirectory,options=[]):
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     elif ttype == 'entropy':
         call(['python',graphAnalysis,'-s',namespace.settings,'-o',outputdirectory])
     elif ttype == 'atomizationScore':
-        print 'calculating score for {0} bng-xml files'.format(len(filenameset))
+        print('calculating score for {0} bng-xml files'.format(len(filenameset)))
         atomizationScore = pandas.DataFrame()
         parallelHandling(filenameset,reactionBasedAtomizationFile,atomizationScore,postExecutionFunction=saveToDataframe)
         atomizationScore.to_hdf('atomizationResults.h5','atomization')

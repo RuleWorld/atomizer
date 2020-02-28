@@ -267,8 +267,8 @@ def extractStatistics():
     tmp = [[tuple(set(x)), len(centerDict[x])] for x in centerDict]
     #reactionCenterGraph(species, tmp)
     #tmp.sort(key=lambda x:x[1], reverse=True)
-    print 'number of reaction centers', len(centerDict.keys())
-    print 'number of rules', len(rules)
+    print('number of reaction centers', len(centerDict.keys()))
+    print('number of rules', len(rules))
 
     #print 'unique', [x for x in centerDict[element] if len(centerDict[element]) == 1]
     redundantDict = groupByReactionCenterAndRateAndActions(rules, centerDict)
