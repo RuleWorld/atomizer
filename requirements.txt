@@ -12,4 +12,4 @@ ptyprocess==0.5.2
 PyInstaller==3.4
 pylru==1.0.9
 pyparsing==2.2.0
-PyYAML==3.12
+PyYAML==5.1
