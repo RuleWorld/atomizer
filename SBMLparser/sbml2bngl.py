@@ -15,9 +15,28 @@ from utils.util import logMess, TranslationException
 import libsbml
 
 import sympy, IPython
+from sympy import Function, Symbol
+from sympy.logic.boolalg import And, Or, Not
 from sympy.abc import _clash
 from sympy.printing.str import StrPrinter
 from sympy.core.sympify import SympifyError
+
+# Define 2 and 3 argument functions 
+# for sympy parsing
+class sympyPiece(Function):
+    nargs=(3,4,5)
+class sympyIF(Function):
+    nargs=(3)
+class sympyGT(Function):
+    nargs=(2)
+class sympyLT(Function):
+    nargs=(2)
+class sympyAnd(Function):
+    nargs=(2)
+class sympyOr(Function):
+    nargs=(2)
+class sympyNot(Function):
+    nargs=(1)
 
 def factorial(x):
     temp = x
@@ -101,14 +120,25 @@ class SBML2BNGL:
         self.all_syms.update({"pow":pow})
         self.all_syms["__epsilon__"] = sympy.symbols("__epsilon__")
         # Do we want this? we'll have to handle it downstream
-        self.all_syms["piecewise"] = sympy.Function("piecewise")
-        self.all_syms["and"] = sympy.Function("and")
-        self.all_syms["or"] = sympy.Function("or")
+        # handling a lot of functions via a dummy function
+        # that can take 1,2,3 variables
+        self.all_syms["Piecewise"] = sympyPiece
+        self.all_syms["piecewise"] = sympyPiece 
+        self.all_syms["gt"] = sympyGT 
+        self.all_syms["lt"] = sympyLT 
+        self.all_syms["if"] = sympyIF
+        self.all_syms["sympyAnd"] = sympyAnd
+        self.all_syms["sympyOr"] = sympyOr 
+        self.all_syms["sympyNot"] = sympyNot
         # We are trying to replace things that we know 
         # are only in assignment rules in functions
         self.only_assignment_dict = {}
         if not hasattr(self, "used_molecules"):
             self.used_molecules = [] 
+        if not hasattr(self, "used_symbols"):
+            self.used_symbols = [] 
+        if not hasattr(self, "arule_map"):
+            self.arule_map = {}
         # Only write epsilon if we must
         self.write_epsilon = False
         
@@ -547,6 +577,29 @@ class SBML2BNGL:
         # If we need to replace anything
         for it in replace_dict.items():
             form = form.replace(it[0],it[1])
+        # Let's also pool this in used_symbols
+        for sym in self.all_syms.keys():
+            if sym not in self.used_symbols:
+                self.used_symbols.append(sym)
+        # Sympy doesn't allow and/not/or to be used 
+        # outside what it deems to be acceptable
+        if "piecewise(" in form:
+            replace_dict["piecewise"] = "sympyPiece"
+        if "gt(" in form:
+            replace_dict["gt"] = "sympyGT"
+        if "lt(" in form:
+            replace_dict["lt"] = "sympyLT"
+        if "if(" in form:
+            replace_dict["if"] = "sympyIF"
+        if "and(" in form:
+            form = form.replace("and(","sympyAnd(")
+            replace_dict["and"] = "sympyAnd"
+        if "or(" in form:
+            form = form.replace("or(","sympyOr(")
+            replace_dict["or"] = "sympyOr"
+        if "not(" in form:
+            form = form.replace("not(","sympyNot(")
+            replace_dict["not"] = "sympyNot"
         return form, replace_dict
 
     def analyzeReactionRate(self, math, compartmentList, reversible, rReactant, rProduct, reactionID, parameterFunctions, rModifier=[], sbmlFunctions={}):
@@ -584,6 +637,7 @@ class SBML2BNGL:
         # let's pull all names
         all_names = [i[0] for i in react] + [i[0] for i in prod]
         # SymPy is wonderful, _clash1 avoids built-ins like E, I etc
+        # FIXME:can we adjust the assignment rule stuff here?
         try:
             sym = sympy.sympify(form, locals=self.all_syms)
         except SympifyError as e:
@@ -1123,7 +1177,7 @@ class SBML2BNGL:
         functions = []
         # We want to keep track of the molecules/species we 
         # actually used in the reactions
-        functionTitle = 'functionRate'
+        functionTitle = '_fR'
         self.unitDefinitions = self.getUnitDefinitions()
         database.rawreactions = []
 
@@ -1280,7 +1334,6 @@ class SBML2BNGL:
         form, replace_dict = self.find_all_symbols(arule.getMath(), None)
         # We might need this for debugging complicated
         # piecewise function forms. 
-        # IPython.embed()
         try:
             sym = sympy.sympify(form, locals=self.all_syms)
         except SympifyError as e:
@@ -1566,6 +1619,7 @@ class SBML2BNGL:
                     if matches:
                         if matches[0]['isBoundary']:
                             artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                            self.arule_map[arule[0]] = rawArule[0]+"_ar"
                             if rawArule[0] in observablesDict:
                                 observablesDict[rawArule[0]] = rawArule[0] + "_ar"
                             continue
@@ -1573,11 +1627,13 @@ class SBML2BNGL:
                             logMess('ERROR:SIM201', 'Variables that are both changed by an assignment rule and reactions are not \
                             supported in BioNetGen simulator. The variable will be split into two'.format(rawArule[0]))
                             artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                            self.arule_map[arule[0]] = rawArule[0]+"_ar"
                             if rawArule[0] in observablesDict:
                                 observablesDict[rawArule[0]] = rawArule[0] + "_ar"
                             continue
                     elif rawArule[0] in [observablesDict[x] for x in observablesDict]:
                         artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                        self.arule_map[arule[0]] = rawArule[0]+"_ar"
                         if rawArule[0] in observablesDict:
                             observablesDict[rawArule[0]] = rawArule[0] + "_ar"
                         continue
@@ -1587,6 +1643,7 @@ class SBML2BNGL:
                         # We should probably re-write this with the name since that's what's used other places
                         name = molecules[rawArule[0]]['returnID']
                         artificialObservables[name+'_ar'] = writer.bnglFunction(rawArule[1][0],name+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                        self.arule_map[rawArule[0]] = name+"_ar"
                         # TODO: Let's store what we know are assignment rules. We can maybe assume that, if something has an assignment rule, it can't in turn be in a reaction? If this is wrong, we can't model this anyway, so we should probably just make an assumption and let people know.
                         self.only_assignment_dict[name] = name+"_ar"
                         continue
@@ -1601,6 +1658,7 @@ class SBML2BNGL:
                         # TODO: Check, if we have this in observables we need to adjust the observablesDict because we are writing an assignment rule for this instead
                         name = molecules[rawArule[0]]['returnID']
                         artificialObservables[name+'_ar'] = writer.bnglFunction(rawArule[1][0],name+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                        self.arule_map[rawArule[0]] = name+"_ar"
                         self.only_assignment_dict[name] = name+"_ar"
                         if name in observablesDict:
                             observablesDict[name] = name+"_ar"
@@ -1614,6 +1672,7 @@ class SBML2BNGL:
                     for idx in candidates:
                         #if re.search('\s{0}\s'.format(rawArule[0]),observables[idx]):
                         artificialObservables[rawArule[0]+ '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                        self.arule_map[rawArule[0]] = rawArule[0]+"_ar"
                         assigObsFlag = True
                         break
                     if assigObsFlag:
@@ -1629,6 +1688,7 @@ class SBML2BNGL:
                 if rawArule[0] in param_map.keys():
                     removeParameters.append(param_map[rawArule[0]])
                 artificialObservables[rawArule[0]+'_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
+                self.arule_map[rawArule[0]] = rawArule[0]+"_ar"
             else:
                 '''
                 if for whatever reason you have a rule that is not assigment

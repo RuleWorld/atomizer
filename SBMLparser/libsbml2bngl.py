@@ -193,7 +193,6 @@ def processFunctions(functions, sbmlfunctions, artificialObservables, tfunc):
     this method goes through the list of functions and removes all
     sbml elements that are extraneous to bngl
     '''
-
     # reformat time function
     for idx in range(0, len(functions)):
         '''
@@ -220,7 +219,6 @@ def processFunctions(functions, sbmlfunctions, artificialObservables, tfunc):
         #remove true and false
         functions[idx] = re.sub(r'(\W|^)(true)(\W|$)', r'\1 1\3', functions[idx])
         functions[idx] = re.sub(r'(\W|^)(false)(\W|$)', r'\1 0\3', functions[idx])
-
     #functions.extend(sbmlfunctions)
     dependencies2 = {}
     for idx in range(0, len(functions)):
@@ -245,6 +243,7 @@ def processFunctions(functions, sbmlfunctions, artificialObservables, tfunc):
             if len(dependencies2[element]) > counter:
                 dependencies2[element].extend(dependencies2[dependencies2[element][counter]])
     '''
+
     fd = []
     for function in functions:
         # print(function, '---', dependencies2[function.split(' = ' )[0].split('(')[0]], '---', function.split(' = ' )[0].split('(')[0], 0)
@@ -404,7 +403,7 @@ def reorder_and_replace_arules(functions, parser):
             fs = sympy.sympify(f, locals=parser.all_syms)
         except:
             # Can't parse this func
-            if "functionRate" in fname:
+            if fname.startswith("_fR"):
                 frates.append((fname.strip(),f))
             else:
                 func_dict[fname] = f 
@@ -964,6 +963,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     functions = unrollFunctions(functions)
     rules = changeRates(rules, aParameters)
 
+    
     # Switch up AR stuff that's used as rate constants
     ar_names = {}
     for item in observablesDict.items():
@@ -1089,7 +1089,8 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # BUT are then used in some functions. The original modeller
     # should have turned these into parameters but didn't. Let's 
     # turn them into parameters? or leave them be? 
-
+    # import IPython
+    # IPython.embed()
     # also remove from seed species 
     init_to_rem = []
     turn_to_param = []
