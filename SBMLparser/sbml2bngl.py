@@ -1566,8 +1566,7 @@ class SBML2BNGL:
                 #it is a rate rule
 
                 if rawArule[0] in self.boundaryConditionVariables:
-                    logMess('WARNING:SIM105','rate rules ({0}) \
-                    are not properly supported in BioNetGen simulator'.format(rawArule[0]))
+                    logMess('WARNING:SIM105','rate rules ({0}) are not properly supported in BioNetGen simulator'.format(rawArule[0]))
 
                 rateLaw1 = rawArule[1][0]
                 rateLaw2 = rawArule[1][1]
