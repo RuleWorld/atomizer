@@ -1630,7 +1630,7 @@ class SBML2BNGL:
                     if matches:
                         if matches[0]['isBoundary']:
                             artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
-                            self.arule_map[arule[0]] = rawArule[0]+"_ar"
+                            self.arule_map[rawArule[0]] = rawArule[0]+"_ar"
                             if rawArule[0] in observablesDict:
                                 observablesDict[rawArule[0]] = rawArule[0] + "_ar"
                             continue
@@ -1638,13 +1638,13 @@ class SBML2BNGL:
                             logMess('ERROR:SIM201', 'Variables that are both changed by an assignment rule and reactions are not \
                             supported in BioNetGen simulator. The variable will be split into two'.format(rawArule[0]))
                             artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
-                            self.arule_map[arule[0]] = rawArule[0]+"_ar"
+                            self.arule_map[rawArule[0]] = rawArule[0]+"_ar"
                             if rawArule[0] in observablesDict:
                                 observablesDict[rawArule[0]] = rawArule[0] + "_ar"
                             continue
                     elif rawArule[0] in [observablesDict[x] for x in observablesDict]:
                         artificialObservables[rawArule[0] + '_ar'] = writer.bnglFunction(rawArule[1][0],rawArule[0]+'_ar()',[],compartments=compartmentList,reactionDict=self.reactionDictionary)
-                        self.arule_map[arule[0]] = rawArule[0]+"_ar"
+                        self.arule_map[rawArule[0]] = rawArule[0]+"_ar"
                         if rawArule[0] in observablesDict:
                             observablesDict[rawArule[0]] = rawArule[0] + "_ar"
                         continue
