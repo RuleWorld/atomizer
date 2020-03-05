@@ -558,6 +558,10 @@ class SBML2BNGL:
                 self.all_syms["lambda"] = sympy.symbols("__LAMBDA__")
                 replace_dict["lambda"] = "__LAMBDA__"
                 continue
+            if name == "as":
+                self.all_syms["as"] = sympy.symbols("__AS__")
+                replace_dict["as"] = "__AS__"
+                continue
             if name == "time":
                 # Need to raise warning but do it 
                 # once per reaction
@@ -642,7 +646,7 @@ class SBML2BNGL:
             sym = sympy.sympify(form, locals=self.all_syms)
         except SympifyError as e:
             logMess("ERROR:SYMP001","Sympy couldn't parse a function, sorry but we can't handle this function definition.")
-            raise # TranslationException(reactionID)
+            raise e # TranslationException(reactionID)
         # Remove compartments if we use them. 
         #if not self.noCompartment:
         compartments_to_remove = [sympy.symbols(comp) for comp in compartmentList]

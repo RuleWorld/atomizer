@@ -386,7 +386,7 @@ def reorder_and_replace_arules(functions, parser):
         f = "=".join(splt[1:])
         name = n.rstrip().replace("()","")
         func_names.append(name)
-        if "functionRate" not in name:
+        if "_fR" not in name:
             dep_dict[name] = []
     # make dependency graph between funcs only
     func_dict = {}
@@ -417,7 +417,7 @@ def reorder_and_replace_arules(functions, parser):
         # need to build a dependency graph to figure out what to 
         # write first
         # We can skip this if it's a functionRate
-        if "functionRate" not in n:
+        if "_fR" not in n:
             list_of_deps = list(map(str, fs.atoms(sympy.Symbol)))
             for dep in list_of_deps:
                 if dep in func_names:
