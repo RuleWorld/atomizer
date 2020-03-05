@@ -1476,13 +1476,21 @@ class SBML2BNGL:
                 for par_item in param_dict.items():
                     pn, pv = par_item
                     pv = pv.replace("(","").replace(")","")
-                    ps, pvs = sympy.symbols(pn), sympy.Number(pv)
+                    try:
+                        ps, pvs = sympy.symbols(pn), sympy.Number(pv)
+                    except:
+                        logMess("ERROR:SYMP003","Sympy couldn't parse an initial condition: {} and {}, this might cause issues for the initial state of your model".format(pn,pv))
+                        continue
                     form = form.subs(ps,pvs)
                 # Replacing species from initial conditions
                 for spec_item in initValMap.items():
                     sn, sv = spec_item
                     sv = sv.replace("(","").replace(")","")
-                    ss, svs = sympy.symbols(sn), sympy.Number(sv)
+                    try:
+                        ss, svs = sympy.symbols(sn), sympy.Number(sv)
+                    except:
+                        logMess("ERROR:SYMP003","Sympy couldn't parse an initial condition: {} and {}, this might cause issues for the initial state of your model".format(sn,sv))
+                        continue
                     form = form.subs(ss,svs)
                 # And now converting the rest to zeros so we have a value
                 # that we can fully evaluate
