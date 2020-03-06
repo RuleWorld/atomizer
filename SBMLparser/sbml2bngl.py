@@ -1181,7 +1181,7 @@ class SBML2BNGL:
         functions = []
         # We want to keep track of the molecules/species we 
         # actually used in the reactions
-        functionTitle = '_fR'
+        functionTitle = 'fRate'
         self.unitDefinitions = self.getUnitDefinitions()
         database.rawreactions = []
 
