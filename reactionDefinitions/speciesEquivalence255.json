@@ -3,6 +3,7 @@
         ["ErbB1","ErbB1_h","hMod"]
     ],
     "complexDefinition" : [
+        ["Gab1",[["Gab1","_P",[],"m",[]]]]
     ],
     "modificationDefinition": {
         "Ras": [],
@@ -38,6 +39,8 @@
         "__HRG_ErbB4___ErbB2_ATP":["ATP1_2e9", "ErbB2", "ErbB4", "HRG"],
         "s2__EGF_ErbB1___P_GAP_Grb2_Gab1_P_PI3K_PIP2":["EGF", "EGF", "ErbB1_P", "ErbB1_P", "GAP", "Gab1_P", "Grb2", "PI3K", "PIP2"],
         "Gab1_P":["Gab1"],
+        "Gab1_PP":["Gab1_P"],
+        "Gab1_Psh":["Gab1_P"],
         "Gab1_Pm":["Gab1_P"],
         "s2__ErbB2__2_Gab1_Psh":["s2__ErbB2__","Gab1_Pm"],
         "s2__EGF_ErbB1___Gab1_Psh":["EGF","EGF","ErbB1","ErbB1","Gab1_Pm"],

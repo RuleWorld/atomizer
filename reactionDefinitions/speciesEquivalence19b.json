@@ -3,8 +3,8 @@
 
     ],
     "complexDefinition" : [
-    ["Prot",[["Prot", "grb2",[]]]],
-    ["Grb2",[["Grb2","prot",[]]]]
+    ["Prot",[["Prot", "egfr",[]]]],
+    ["EGFR",[["EGFR","prot",[]]]]
     ],
     "modificationDefinition": {
         "Ras":[],

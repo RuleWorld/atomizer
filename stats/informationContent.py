@@ -13,7 +13,7 @@ from utils import consoleCommands as console
 
 def calculateSpeciesInformationContent(speciesList):
     for species in speciesList:
-        print str(species)
+        print(str(species))
 
 def getInformationContent(fileName):
     console.bngl2xml(fileName,timeout=30)

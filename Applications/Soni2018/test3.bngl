@@ -1,0 +1,269 @@
+###
+#@notes:'This is a plain translation of an SBML model created on 31/05/2019. The original model has 42 molecules and 38 reactions. The translated model has 34 molecules and 38 rules'
+###
+begin model
+begin parameters
+	r1_mw0930c7cf_99a6_4a20_a33d_02fd90e424bb 0.240000
+	r2_mw5b78650d_d92f_4602_bbe9_66d900ff312e 0.220000
+	r3_mwec4950e3_ecf8_4077_9cd1_b70818e911b9 0.190000
+	r4_mw9c4a9937_faff_4853_8a76_d17a084948d9 0.160000
+	r5_mwb8d480f9_5783_4feb_aaf1_2f861b09e009 0.140000
+	r6_mw58dfe861_b815_48b4_89e9_6f71cccb561e 0.095000
+	r7_mwdf0efe39_4f88_4fc1_930b_55865b8d52f0 0.080000
+	r8_mw4594ab28_d538_4a72_875a_d878e907020d 0.000000
+	r9_mw7b7a1d20_f258_4e3d_9234_62db60126326 0.000060
+	r10_mw5ea6c681_bf85_4ac5_9aac_536087a97950 1.000000
+	r10_mw65a608c7_1026_4108_bb3d_f3358430aaf2 1.000000
+	r11_mw106608bc_52fb_40e5_babb_cbb58aaaeed4 0.240000
+	r12_mwe0f7b31e_2efc_481e_90d0_e86c3b8d0be4 0.125000
+	r13_mw1981fa4d_c122_41a6_8c85_55a49d408c00 400.000000
+	r13_mw340bc412_34ab_498a_bd42_47dd6cf025bd 1.000000
+	r13_mw6cf7ac60_5bab_4b73_bb47_dc064486f000 2000.000000
+	r14_mw87e9394c_7eef_4271_85bc_d1b0a96db1f2 0.000000
+	r15_mwd84cf612_edaf_4dd9_9abd_003cc0569864 0.000000
+	r16_mw051e0a03_1d45_448b_be4a_9d489e1b3ff9 0.000000
+	r16_mw322ca6ab_81cf_4f6c_835e_48bb5f8b11de 0.000000
+	r16_mwf9b630f8_c8a5_4fd0_bef1_92819b1257d2 0.000000
+	r17_mwe479dc91_2774_4239_8212_60a330a84a76 0.860000
+	r18_mwf5ba0e23_9a0b_4bf6_b0ea_9fbc91843b5c 0.100000
+	r19_mw3bf6abba_fc8d_4254_bc9c_037ec64d3e12 1000.000000
+	r19_mw4c1174b0_1cba_4d7c_bedb_c29d9f65c10c 1.000000
+	r19_mw85474b5d_1b19_4388_bcee_098fbb23f2e0 700.000000
+	r20_mwd01d5494_fdcd_494e_8652_87201fa5b291 0.002000
+	r21_mw7ff2e94a_ac19_47ed_9127_14d385a1e544 1.000000
+	r21_mwf8062aeb_69d6_416b_b877_9687ef6fbc80 1.000000
+	r22_mw5805aaa6_5a0a_495b_a21b_16e6ba6f39bc 0.300000
+	r23_mw658feef9_67a1_431f_95fa_7358c6b294d2 0.000000
+	r23_mw8d03d46b_3832_4fe6_8a6b_467ef38af206 10.000000
+	r23_mwf50b6519_aaf9_4cb0_a651_d5a3159d7390 10.000000
+	r24_mw5b67154e_1851_4ba0_9491_7a14b2064c42 0.060000
+	r25_mw202bb744_d70a_4cf2_b2db_0d9d360bdfb5 0.100000
+	r26_mw3288f227_0208_435a_a41c_b1778f50008c 0.090000
+	r27_mwe250484c_acc9_4453_9eb6_49cda54b2f1e 0.300000
+	r28_mw2ba0a425_a224_4fa1_affc_bcc206027a3e 1.000000
+	r28_mw8f586bdf_8d42_49c1_807a_670a1c49cbd9 1.000000
+	r29_mwe808b2da_9ed2_421e_a8d9_3c3534d42ee0 0.200000
+	r30_mw7246cef3_7a78_43b0_acb7_21533c394daa 0.001000
+	r31_mw2081c907_9d37_48a0_8581_8b8f3d5f7148 0.100000
+	r32_mw91a51f27_e4be_41a6_a967_b6a63c909652 1.000000
+	r32_mwd7b0f9fb_1180_47bb_b8c0_be2f89aa1c59 1.000000
+	r33_mw2a60d98a_bc06_4e05_b965_c920da8987dc 10.000000
+	r33_mw3c07a768_8e7a_49bb_8a1d_fdc92192f92b 0.000000
+	r33_mw9704b67a_2c16_4ac7_a311_2096ab426758 10.000000
+	r34_mw9ca6d980_6fbd_4207_9f2c_c05e2b5b0502 0.000000
+	r34_mwcffa9e49_67c6_4908_9314_6c16030c8989 0.000000
+	r34_mwf32cef57_32ba_4c0f_bbaf_bbc90af4a8aa 0.000000
+	r35_mw287bd1ba_fbc1_43a0_94ab_38a6336bbebb 10.000000
+	r35_mw2db26dbd_dda3_4770_b923_d2725a80ccba 1.000000
+	r35_mwb86b112e_674a_4e98_8ca4_3d0273a134d4 10.000000
+	r36_mw1aca690a_9ee1_460f_bc28_780fb04c1a32 1.000000
+	r36_mwf604d18f_ae32_4d08_bfef_f778aae8f24b 1.000000
+	r37_mwf80a94ba_03ba_44f0_b793_4f60c20fd074 0.000000
+	r38_mwce7a28b5_2f60_4228_a88f_ccd3a6213c3e 0.230000
+end parameters
+begin compartments
+	#volume units: L
+	mw664a2e7f_0c35_423c_ac5d_34090e629a69 3 1.0 #membrane
+	mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 3 1.0 #CYTOSOL
+	mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 3 1.0 #NUCLEUS
+	cell 3 1.0
+end compartments
+begin molecule types
+	IL6_IL6R()
+	SOCS3()
+	TLR2()
+	IL6_IL6R_GP130()
+	IRAK1_IRAK4()
+	IKKbeta()
+	LPG()
+	TLP2()
+	JAK1_2()
+	STAT1_P()
+	s2_STAT3()
+	JAK2_1()
+	TAK1_TAB1_2()
+	STAT3_P()
+	MyD88()
+	SOCS1()
+	iNOS()
+	TLR2_6_LPG()
+	AIF()
+	JAK2()
+	STAT1()
+	STAT3()
+	IL6R()
+	IFNg_IFNgR()
+	ERK1_ERK2()
+	gp130()
+	NFkB()
+	s2_STAT1()
+	TLR6_1()
+	IFN_gR()
+	TRAF6()
+	IL6()
+	MKK1_2()
+	IFN_g()
+end molecule types
+begin seed species
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:$TLR2() 1000.0 #TLR2 #mwfaacd7f7_6aa9_4e6c_a7d8_281f2022ba2f
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:$TLR6_1() 1000.0 #TLR6_1 #mwa244ea2a_3e41_473b_9ae7_d0db512fc366
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:$IL6_IL6R() 1000.0 #IL6_IL6R #mwb167e768_b778_4072_8798_3cf19e96d1d7
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:$IL6R() 100000.0 #IL6R #mw9b410665_6c5e_4f37_a7f2_0cb0963b98b1
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:$IL6() 1000.0 #IL6 #mw56c26af9_9f4a_4f13_936a_94ae6364342b
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:$LPG() 1000.0 #LPG #mw763cffc8_c121_4004_afdb_97e9de9f0081
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:IL6_IL6R_GP130() 1000.0 #IL6_IL6R_GP130 #mwf219928e_abba_4c09_9597_5d6910f7e4d9
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:$IFN_g() 200.0 #IFN_g #mw85ae78ed_34f7_460c_b906_1f512a83810c
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:$IFN_gR() 150.0 #IFN_gR #mw49322d55_ad63_4e7c_b1eb_42835c9b577a
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:IFNg_IFNgR() 800.0 #IFNg_IFNgR #mwd7270399_0429_4c85_920a_de2e0ae74440
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:$gp130() 1000.0 #gp130 #mw5b252d78_9ab9_438c_8b81_2189b1f76357
+	@mw664a2e7f_0c35_423c_ac5d_34090e629a69:TLR2_6_LPG() 900.0 #TLR2_6_LPG #mw6339814d_af4c_4eee_9455_7e20795f6aeb
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:MyD88() 800.0 #MyD88 #mwc42127ea_2b78_4381_b230_30e95cd5a9d6
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:IRAK1_IRAK4() 700.0 #IRAK1_IRAK4 #mw4fd8b902_e2a2_4910_899c_2a7d3425e0e0
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:TRAF6() 600.0 #TRAF6 #mwf06c0537_577b_4f13_a9a3_521f9d2217fb
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:TAK1_TAB1_2() 500.0 #TAK1_TAB1_2 #mwbba20281_3d8b_48c3_8e13_dee78e87dfb8
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:IKKbeta() 400.0 #IKKbeta #mw78198c86_4b16_4117_8592_6a95c3953126
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:NFkB() 300.0 #NFkB #mw7938fab7_d0c6_497b_8fb6_75922fcc19d5
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:IL6() 100.0 #IL6 #mw8675a533_92fb_4fbf_b747_7bca05c5841c
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:STAT3_P() 90000.0 #STAT3_P #mw869055b5_5d27_4f4a_a390_b3fa48d6780e
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:$JAK1_2() 2000.0 #JAK1_2 #mwce6e4efd_3187_4379_ad47_104c95e0eb3b
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:s2_STAT3() 80000.0 #s2_STAT3 #mwc84af692_e3fc_4ede_99b6_b0cce3729bf7
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:$JAK2_1() 2000.0 #JAK2_1 #mw57b4236e_c789_4799_a4f9_a03437a5593a
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:SOCS1() 10000.0 #SOCS1 #mwacd53f34_4935_4b6a_8267_024f0d966c8c
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:TLP2() 200.0 #TLP2 #mwf26f605f_29e9_4454_834c_7b3edab4bbc2
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:MKK1_2() 250.0 #MKK1_2 #mw10b15557_55f5_4525_b19d_161b056f5791
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:$ERK1_ERK2() 100.0 #ERK1_ERK2 #mw6f8ce639_1c28_444f_b6e6_30ff06ab0d6e
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:$JAK2() 15000.0 #JAK2 #mw7f261959_39d2_4e8b_92b6_4466c2504544
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:STAT1() 100.0 #STAT1 #mwb9a40fab_a7c9_4984_805f_045fefc4ff32
+	@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:STAT3() 20000.0 #STAT3 #mw58370246_a992_4253_8029_12fbb07a417d
+	@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:NFkB() 200.0 #NFkB #mwba110304_bd9a_4fd0_9b4c_b8bfc975e30b
+	@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:IL6() 250.0 #IL6 #mw5607cee0_ee75_4065_9368_d07c3abbe18b
+	@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:s2_STAT3() 9000.0 #s2_STAT3 #mw55b6f083_2b28_4a1a_ab90_82a751525d72
+	@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:STAT1() 100.0 #STAT1 #mw364ca1a4_fc56_4138_8031_16341ac865de
+	@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:STAT3() 100.0 #STAT3 #mw4fc13b75_10cc_41fb_b9f8_1ce95fccae73
+	@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:SOCS1() 50000.0 #SOCS1 #mw3d58864c_79c7_4ff2_98fe_1a85b2ccc43d
+end seed species
+begin observables
+	Species TLR2_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:TLR2() #TLR2
+	Species TLR6_1_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:TLR6_1() #TLR6/1
+	Species IL6_IL6R_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:IL6_IL6R() #IL6-IL6R
+	Species IL6R_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:IL6R() #IL6R
+	Species IL6_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:IL6() #IL6
+	Species LPG_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:LPG() #LPG
+	Species IL6_IL6R_GP130_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:IL6_IL6R_GP130() #IL6-IL6R-GP130
+	Species IFN_g_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:IFN_g() #IFN-g
+	Species IFN_gR_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:IFN_gR() #IFN-gR
+	Species IFNg_IFNgR_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:IFNg_IFNgR() #IFNg-IFNgR
+	Species gp130_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:gp130() #gp130
+	Species TLR2_6_LPG_mw664a2e7f_0c35_423c_ac5d_34090e629a69 @mw664a2e7f_0c35_423c_ac5d_34090e629a69:TLR2_6_LPG() #TLR2/6-LPG
+	Species MyD88_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:MyD88() #MyD88
+	Species IRAK1_IRAK4_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:IRAK1_IRAK4() #IRAK1-IRAK4
+	Species TRAF6_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:TRAF6() #TRAF6
+	Species TAK1_TAB1_2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:TAK1_TAB1_2() #TAK1-TAB1/2
+	Species IKKbeta_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:IKKbeta() #IKKbeta
+	Species NFkB_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:NFkB() #NFkB
+	Species IL6_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:IL6() #IL6
+	Species STAT3_P_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:STAT3_P() #STAT3.P
+	Species STAT1_P_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:STAT1_P() #STAT1.P
+	Species JAK1_2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:JAK1_2() #JAK1/2
+	Species s2_STAT1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:s2_STAT1() #2.STAT1
+	Species s2_STAT3_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:s2_STAT3() #2.STAT3
+	Species JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:JAK2_1() #JAK2/1
+	Species SOCS1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:SOCS1() #SOCS1
+	Species TLP2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:TLP2() #TLP2
+	Species MKK1_2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:MKK1_2() #MKK1/2
+	Species ERK1_ERK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:ERK1_ERK2() #ERK1/ERK2
+	Species JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:JAK2() #JAK2
+	Species STAT1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:STAT1() #STAT1
+	Species STAT3_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 @mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22:STAT3() #STAT3
+	Species NFkB_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:NFkB() #NFkB
+	Species IL6_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:IL6() #IL6
+	Species s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:s2_STAT1() #2.STAT1
+	Species s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:s2_STAT3() #2.STAT3
+	Species SOCS3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:SOCS3() #SOCS3
+	Species STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:STAT1() #STAT1
+	Species STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:STAT3() #STAT3
+	Species SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:SOCS1() #SOCS1
+	Species iNOS_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:iNOS() #iNOS
+	Species AIF_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 @mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9:AIF() #AIF
+end observables
+begin functions
+	functionRate0() = 0.24 *  1.0  /  1.0 
+	functionRate1() = 0.22 *  1.0  /  1.0 
+	functionRate2() = 0.19 *  1.0  /  1.0 
+	functionRate3() = 0.16 *  1.0  /  1.0 
+	functionRate4() = 0.14 *  1.0  /  1.0 
+	functionRate5() = 0.095 *  1.0 
+	functionRate6() = 0.08 *  1.0 
+	functionRate7() = (1e-15 *  1.0  *  1.0  /  1.0 ) / 6.022e23
+	functionRate8() = (6e-05 *  1.0  *  1.0  /  1.0 ) / 6.022e23
+	functionRate9() = (if(STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, if(JAK1_2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0, 1.0 * STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0  / (1.0 + STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 ) /  1.0 /JAK1_2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22,0)/STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)) / 6.022e23
+	functionRate10() = 0.24 *  1.0 
+	functionRate11() = 0.125 *  1.0 
+	functionRate12() = if(NFkB_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, 400.0 * (NFkB_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 )^1.0 / (2000.0 + (NFkB_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 )^1.0) /  1.0 /NFkB_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)
+	functionRate13() = 0.0 *  1.0  /  1.0 
+	functionRate14() = 0.0 *  1.0 
+	functionRate15() = if(s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, 0.0 * (s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 )^0.0 / (0.0 + (s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 )^0.0) /  1.0 /s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)
+	functionRate16() = 0.86 *  1.0  /  1.0 
+	functionRate17() = 0.1 *  1.0 
+	functionRate18() = if(s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, 1000.0 * (s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 )^1.0 / (700.0 + (s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 )^1.0) /  1.0 /s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)
+	functionRate19() = 0.002 *  1.0 
+	functionRate20() = (if(STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, if(JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0, 1.0 * STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0  / (1.0 + STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 ) /  1.0 /JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22,0)/STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)) / 6.022e23
+	functionRate21() = 0.3 *  1.0 
+	functionRate22() = (if(JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0, if(SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, 1e-15 * JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 *  1.0  / (10.0 * (1 + SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0  / 10.0) + JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 *  1.0 ) /  1.0 /SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)/JAK2_1_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22,0)) / 6.022e23
+	functionRate23() = 0.06 *  1.0 
+	functionRate24() = 0.1 *  1.0  /  1.0 
+	functionRate25() = 0.09 *  1.0  /  1.0 
+	functionRate26() = 0.3 *  1.0  /  1.0 
+	functionRate27() = (if(STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, if(ERK1_ERK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0, 1.0 * STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0  / (1.0 + STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 ) /  1.0 /ERK1_ERK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22,0)/STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)) / 6.022e23
+	functionRate28() = 0.2 *  1.0 
+	functionRate29() = (0.001 *  1.0  *  1.0  /  1.0 ) / 6.022e23
+	functionRate30() = 0.1 *  1.0 
+	functionRate31() = if(JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0, 1.0 * JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 *  1.0  / (1.0 + JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 *  1.0 ) /  1.0 /JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22,0)
+	functionRate32() = (if(JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0, if(SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, 1e-15 * JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 *  1.0  / (10.0 * (1 + SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0  / 10.0) + JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 *  1.0 ) /  1.0 /SOCS1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)/JAK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22,0)) / 6.022e23
+	functionRate33() = if(s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, 0.0 * (s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 )^0.0 / (0.0 + (s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 )^0.0) /  1.0 /s2_STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)
+	functionRate34() = if(s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, 10.0 * (s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 )^1.0 / (10.0 + (s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 )^1.0) /  1.0 /s2_STAT3_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)
+	functionRate35() = (if(STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9>0, if(ERK1_ERK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22>0, 1.0 * STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0  / (1.0 + STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 *  1.0 ) /  1.0 /ERK1_ERK2_mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22,0)/STAT1_mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9,0)) / 6.022e23
+	functionRate36() = 8e-09 *  1.0  *  1.0  *  1.0  /  1.0 
+	functionRate37() = 0.23 *  1.0 
+end functions
+begin reaction rules
+	mw3e247db2_b375_4e41_9e33_bb760833ee16: MyD88()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> IRAK1_IRAK4()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate0()
+	mwe089edae_0b7c_485a_814d_227b9a9ad5fd: IRAK1_IRAK4()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> TRAF6()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate1()
+	mw355d0180_1300_4b22_afd0_dca38ce33afe: TRAF6()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> TAK1_TAB1_2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate2()
+	mw68476f54_ab4a_403c_af35_355d74054f82: TAK1_TAB1_2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> IKKbeta()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate3()
+	mw8248f0e8_00d0_44dc_ae79_b61f77b4c52c: IKKbeta()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> NFkB()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate4()
+	mw301aee85_afee_49b3_ad89_b1cc5c8567b1: IL6()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 -> IL6()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate5()
+	mw59a4b107_a52b_43b5_8415_3668e494102e: IL6()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> IL6()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 functionRate6()
+	mw2fe228f0_8489_473b_b52d_da641e63e7cb: IL6_IL6R()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 + gp130()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 -> IL6_IL6R_GP130()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 functionRate7()
+	mwc6831066_978e_4f05_b58a_7b138e3ba727: IL6R()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 + IL6()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 -> IL6_IL6R()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 functionRate8()
+	mw3ea84261_760d_4fc7_b420_c728b0f6d90d: JAK1_2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 + STAT3()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> STAT3_P()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate9()
+	mw4a4f5084_a8ec_4fd2_a74f_6db84a627a29: IL6_IL6R_GP130()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 -> JAK1_2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate10()
+	mw1eec4037_93c1_4fe1_93d3_7e85a42216f7: NFkB()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> NFkB()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 functionRate11()
+	mwe737aa62_097e_474c_87d5_7b7eeaadd087: NFkB()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 -> IL6()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 + STAT1()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 + STAT3()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 functionRate12()
+	mw5dd08c34_8422_4e63_a58d_a497237b3d46: STAT1_P()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> s2_STAT1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate13()
+	mw019a6415_bb9a_40a9_b627_5aa5fccedbc8: s2_STAT1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> s2_STAT1()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 functionRate14()
+	mwc2dc1496_a57b_4ea5_ba81_838f3344915c: s2_STAT1()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 -> SOCS1()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 functionRate15()
+	mw35c5dd2a_d94c_4b60_a72d_561cb55f84f0: STAT3_P()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> s2_STAT3()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate16()
+	mwd4d17665_ea8f_45cd_aeae_c8a3ea8d4115: s2_STAT3()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> s2_STAT3()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 functionRate17()
+	mw4764870e_b030_4ffe_861a_1660a6d08340: s2_STAT3()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 -> AIF()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 functionRate18()
+	mwddce3a0d_4301_48aa_ae63_37a44f2f2088: IL6_IL6R_GP130()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 -> JAK2_1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate19()
+	mwa93a841c_769e_407d_8c81_f1831ca594dd: JAK2_1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 + STAT1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> STAT1_P()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate20()
+	mwbc1856f9_a538_4023_bce5_09484e8e71cf: SOCS1()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 -> SOCS1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate21()
+	mw1f853efb_fa0c_47b5_8151_210a68961204: SOCS1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 + JAK2_1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> JAK2_1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 + SOCS1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate22()
+	mwfdc768f1_5ae9_47dc_9506_b957dd352582: STAT1()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 -> STAT1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate23()
+	mw35593d33_6426_452d_ad36_21f20cb38436: IKKbeta()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> TLP2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate24()
+	mwb77c1134_efd5_47d0_8d36_02c3c68687c6: TLP2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> MKK1_2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate25()
+	mw9fb7e873_2840_486e_ac59_2329e9e9e45b: MKK1_2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> ERK1_ERK2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate26()
+	mwb582e1ea_d2f2_4bcb_a843_661ce2e430e5: ERK1_ERK2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 + STAT3()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> STAT3_P()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate27()
+	mwfe6ed8b6_844a_4bfd_bb0a_195c6fb5579e: STAT3()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 -> STAT3()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate28()
+	mw666be0bc_42c7_48cd_89b7_87e131f1e724: IFN_g()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 + IFN_gR()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 -> IFNg_IFNgR()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 functionRate29()
+	mw1d5d6ab3_4d84_4f27_a13a_c47c38be09de: IFNg_IFNgR()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 -> JAK2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate30()
+	mw69e4cb2d_f85e_4107_b5cd_a9bafe0827ee: JAK2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> STAT1_P()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate31()
+	mw29ed8c78_d683_42b9_90fb_69e2dca364ee: SOCS1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 + JAK2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> JAK2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 + SOCS1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate32()
+	mwbda33f89_b1c8_45c9_ad37_ec7130e4ba12: s2_STAT1()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 -> iNOS()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 functionRate33()
+	mw0de495aa_28d6_4ae7_8c1a_247b3546ed40: s2_STAT3()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 -> SOCS3()@mwdfcbcdb1_3058_4a8b_9166_5b5e144c52c9 functionRate34()
+	mw152eb150_14a4_40a8_bc56_0d6e3281a206: ERK1_ERK2()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 + STAT1()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 -> STAT1_P()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate35()
+	mwdd6b7201_bde8_4631_8e90_e53b986d539d: TLR2()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 + TLR6_1()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 + LPG()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 -> TLR2_6_LPG()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 functionRate36()
+	mw00a624d9_79b2_424c_9362_50e77c3a3d6f: TLR2_6_LPG()@mw664a2e7f_0c35_423c_ac5d_34090e629a69 -> MyD88()@mwfef402b9_4b7e_4fbd_bba2_ff8998ab0b22 functionRate37()
+end reaction rules
+end model

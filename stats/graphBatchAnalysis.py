@@ -21,9 +21,6 @@ def getFiles(directory,extension):
             filepath = os.path.abspath(os.path.join(root, filename))
             matches.append([filepath,os.path.getsize(os.path.join(root, filename))])
 
-    #sort by size
-    #matches.sort(key=lambda filename: filename[1], reverse=False)
-    
     matches = [x[0] for x in matches]
 
     return matches
@@ -50,18 +47,25 @@ def loadDataFrames(directory,subdirectories):
     finalFrames = pandas.concat(frames,axis=1)
     return finalFrames
 
-def create2DdensityPlot(dataframe,columns,outputfilename):
+def create2DdensityPlot(dataframe,columns,outputfilename, plotType = sns.kdeplot):
     """
     creates a 2d density plot given a dataframe and two columns.
     saves the image in <outputfilename>
     """
     plt.clf()
-    f, (ax1) = plt.subplots(1, 1, sharex=True, figsize=(8, 6))
+    f, _ = plt.subplots(1, 1, sharex=True, figsize=(8, 6))
     #with sns.axes_style("white"):
     #sns.jointplot("compression", "wiener index",atomizationInfo, kind="kde");
     g = sns.JointGrid(columns[0],columns[1],dataframe)
     g.plot_marginals(sns.distplot)
-    g.plot_joint(sns.kdeplot, shade=True, cmap="PuBu");
+    #g.plot_joint(plotType, shade=True, cmap="PuBu");
+    g.plot_joint(plotType, cmap="PuBu");
+    
+    ax = g.ax_joint
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    g.ax_marg_x.set_xscale('log')
+    g.ax_marg_y.set_yscale('log')
     g.annotate(stats.pearsonr)
     #sns.kdeplot(atomizationInfo.compression, shade=True,ax=ax1);
     plt.savefig(outputfilename)
@@ -89,7 +93,7 @@ def analyzeDataSet(folder):
     finalFrames = pandas.read_hdf('full_reg_comp.h5','entropy')
     substract = finalFrames['atomized_wiener']/finalFrames['raw_wiener']
     substract2 = np.array([x for x in substract.values if x >=-10])
-    print np.mean(substract),np.std(substract)
+    print(np.mean(substract),np.std(substract))
     colors= sns.color_palette("Set1", 3)
     f, (ax1) = plt.subplots(3, 1, sharex=True, figsize=(8, 6))
     #print (finalFrames['raw']-finalFrames['atomized'])['BIOMD0000000005.xml_regulatory.gml']
@@ -97,7 +101,7 @@ def analyzeDataSet(folder):
     sns.kdeplot(np.array([x for x in finalFrames['atomized_wiener'].values if x>=0]), shade=True,color=colors[1],label='Atomized translation',ax=ax1[1],bw=0.5)
     sns.kdeplot(substract2, shade=True,color=colors[2],label='Atomized translation',ax=ax1[2],clip=(-0.0001, 1.0001),bw=0.5)
     plt.xlabel('Entropy difference between raw translation and atomized model')
-    print finalFrames.columns
+    print(finalFrames.columns)
 
     #print len(substract)
     #ax1[0].set_xlim([0,1])

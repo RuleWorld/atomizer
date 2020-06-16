@@ -19,8 +19,8 @@ sys.path.insert(0, os.path.join('.','SBMLparser'))
 home = expanduser("~")
 sbmlTranslator = join(home, 'workspace', 'atomizer', 'SBMLparser', 'sbmlTranslator.py')
 
-bngExecutable = join(home,'workspace','bionetgen','bng2','BNG2.pl')
-visualizeExecutable = join(home,'workspace','bionetgen','bng2','Perl2','Visualization','visualize.pl')
+bngExecutable = join(home,'workspace','RuleWorld','bionetgen','bng2','BNG2.pl')
+visualizeExecutable = join(home,'workspace','RuleWorld','bionetgen','bng2','Perl2','Visualization','visualize.pl')
 graphAnalysis = join(home,'workspace','atomizer','stats','graphAnalysis.py')
 collapsedContact = join(home,'workspace','atomizer','stats','collapsedContactMap.py')
 compareModels = join(home, 'workspace', 'atomizer', 'SBMLparser', 'rulifier', 'compareModels.py')    
@@ -60,7 +60,7 @@ def callSBMLTranslator(fileName,outputdirectory,options=[]):
                        '-o', os.path.join(outputdirectory, str(fileName.split('/')[-1])) + '.bngl',
                        '-c', '{0}/config/reactionDefinitions.json'.format(sbmlparserhome),
                        '-n', '{0}/config/namingConventions.json'.format(sbmlparserhome),
-                       '-b', '/net/antonin/home/mscbio/jjtapia/workspace/bionetgen/bng2/BNG2.pl'
+                       '-b', bngExecutable
         ],stdout=f)
     return result
 
@@ -104,11 +104,35 @@ def generateGraph(bnglfile,outputdirectory,options):
     return graphname
 
 
+def createContact(bnglfile,outputdirectory,options):
+    """
+    Obtain a contact map of a given BNGL file
+    
+    ----
+    Keyword arguments:
+    bnglfile -- The BNGL  file to be translated
+    outputdirectory -- The directory where the resulting bngl will be placed
+
+    """
+
+    command = [visualizeExecutable,'--bngl',bnglfile,'--type','contactmap']
+    command.extend(options)
+    with open(os.devnull,"w") as f:
+        retval = os.getcwd()
+        os.chdir(outputdirectory)
+        result = call(command,stdout=f)
+        os.chdir(retval)
+
+    graphname = '.'.join(bnglfile.split('.')[:-1]) + '_contactmap.gml'
+    graphname = graphname.split('/')[-1]
+    return graphname
+
+
 def generateBNGXML(bnglFiles,output,format='BNGXML'):
     """
 
     """
-    print 'converting {0} bnglfiles'.format(len(bnglFiles))
+    print('converting {0} bnglfiles'.format(len(bnglFiles)))
     parallelHandling(bnglFiles,convertXML,output)
 
 
@@ -120,7 +144,7 @@ def parallelHandling(files,function,outputDir,options = [],postExecutionFunction
     workers = mp.cpu_count()-1
     progress = progressbar.ProgressBar(maxval= len(files)).start()
     i = 0
-    print 'running in {0} cores'.format(workers)
+    print('running in {0} cores'.format(workers))
     with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
         for fileidx in progress(range(len(files))):
             futures.append(executor.submit(function, files[fileidx],outputDir,options))
@@ -136,12 +160,12 @@ def generateGraphs(bnglFiles,output,options=[]):
     Calls visualize.pl to generate GML graphs from a BNG representation
     of a model
     """
-    print 'converting {0} bnglfiles to GML'.format(len(bnglFiles))
+    print('converting {0} bnglfiles to GML'.format(len(bnglFiles)))
     parallelHandling(bnglFiles,generateGraph,output,options)
 
 
 def translate(filenameset,outputdirectory):
-    print 'translating {0} bnglfiles to BNGL'.format(len(filenameset))
+    print('translating {0} bnglfiles to BNGL'.format(len(filenameset)))
     parallelHandling(filenameset,callSBMLTranslator,outputdirectory)
 
 
@@ -149,7 +173,7 @@ def loadFilesFromYAML(yamlFile):
     with open(yamlFile,'r') as f:
         yamlsettings = yaml.load(f)
 
-    print yamlsettings
+    print(yamlsettings)
     return yamlsettings
 
 
@@ -194,12 +218,13 @@ def reactionBasedAtomizationFile(xmlFile,outputDataFrame,options):
 
         #outputDataFrame = outputDataFrame.set_value(xmlFile,'score',score)
         #outputDataFrame = outputDataFrame.set_value(xmlFile,'lenght',len(rules))
-        return xmlFile,score,len(reactions),len(molecules)*1.0/readBNGXML.getNumObservablesXML(xmlFile)
+        ccompression = len(molecules)*1.0/readBNGXML.getNumObservablesXML(xmlFile) if readBNGXML.getNumObservablesXML(xmlFile) > 0 else 1
+        return xmlFile,score,len(reactions),ccompression
         #ratomizationDict['score'] = score
         #ratomizationDict['weight'] = weight
         #ratomizationDict['length'] = len(rules)
     except IOError:
-        print 'io',xmlFile
+        print('io',xmlFile)
 
 
 def createCollapsedContact(xmlfile,outputdirectory,options=[]):
@@ -262,10 +287,12 @@ if __name__ == "__main__":
         generateBNGXML(filenameset,output= outputdirectory)
     elif ttype == 'graph':
         generateGraphs(filenameset,output=outputdirectory,options = options)
+    elif ttype == 'contact':
+        parallelHandling(filenameset, createContact, outputdirectory)
     elif ttype == 'entropy':
         call(['python',graphAnalysis,'-s',namespace.settings,'-o',outputdirectory])
     elif ttype == 'atomizationScore':
-        print 'calculating score for {0} bng-xml files'.format(len(filenameset))
+        print('calculating score for {0} bng-xml files'.format(len(filenameset)))
         atomizationScore = pandas.DataFrame()
         parallelHandling(filenameset,reactionBasedAtomizationFile,atomizationScore,postExecutionFunction=saveToDataframe)
         atomizationScore.to_hdf('atomizationResults.h5','atomization')

@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import sys
-reload(sys)
-sys.setdefaultencoding("ISO-8859-1")
+# import sys
+# from importlib import reload
+# reload(sys)
+# sys.setdefaultencoding("ISO-8859-1")
 
 import re
 from copy import deepcopy
@@ -11,7 +12,8 @@ import string
 from pyparsing import commaSeparatedList as csl
 import pyparsing
 from itertools import dropwhile
-import StringIO
+# import StringIO
+from io import StringIO
 import pyparsing as pyp
 
 def evaluatePiecewiseFunction(function):
@@ -28,21 +30,26 @@ def bnglReaction(reactant, product, rate, tags, translator=[], isCompartments=Fa
         tag = ''
         if reactant[index][2] in tags and isCompartments:
             tag = tags[reactant[index][2]]
-        finalString += printTranslate(reactant[index],tag,translator)
+        translated = printTranslate(reactant[index],tag,translator)
+        finalString += translated
         if index < len(reactant) -1:
             finalString += ' + '
+
     if reversible:
         finalString += ' <-> '
     else:
         finalString += ' -> '
     if len(product) == 0:
         finalString += '0 '
+    
     for index in range(0,len(product)):
         tag = ''
         if isCompartments:
             if len(product[index]) > 2 and product[index][2] in tags:
                 tag = tags[product[index][2]]
-        finalString +=  printTranslate(product[index],tag,translator) 
+        translated = printTranslate(product[index],tag,translator) 
+
+        finalString += translated
         if index < len(product) -1:
             finalString += ' + '
     finalString += ' ' + rate + ' ' + comment
@@ -64,7 +71,7 @@ def printTranslate(chemical,tags,translator={}):
         for item in range(0,int(chemical[1])):
             tmp.append(app)
     else:
-        idx = logMess("ERROR:Simulation","Cannot deal with non integer stoicheometries: {0}* {1}".format(chemical[1],chemical[0]))
+        idx = logMess("ERROR:SIM205","Cannot deal with non integer stoicheometries: {0}* {1}".format(chemical[1],chemical[0]))
         tmp.append(app)
     return ' + '.join(tmp)
 
@@ -96,9 +103,9 @@ def rindex(lst, item):
     returns the last ocurrence of an element in alist
     '''
     try:
-        return dropwhile(lambda x: lst[x] != item, reversed(xrange(len(lst)))).next()
+        return next(dropwhile(lambda x: lst[x] != item, reversed(range(len(lst)))))
     except StopIteration:
-        raise ValueError, "rindex(lst, item): item not in list"
+        raise ValueError("rindex(lst, item): item not in list")
         
         
     
@@ -113,7 +120,7 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
         return '({0}){1}({2})'.format(match.group(2),operator,exponent)
     def compParse(match):
 
-        translator = {'gt':'>','lt':'<','and':'&&','or':'||','geq':'>=','leq':'<=','eq':'=='}
+        translator = {'gt':'>','lt':'<','and':'&&','or':'||','geq':'>=','leq':'<=','eq':'==','neq':'!='}
         exponent = match.group(3)
         operator = translator[match.group(1)]
         return '{0} {1} {2}'.format(match.group(2),operator,exponent)
@@ -195,7 +202,17 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
                 elif argList[idx] == 'lambda':
                     
                     tmp = '('
-                    upperLimit = rindex(argList[idx+1],',')
+                    # ASS2019 - I'm not sure if this is an actual solution or 
+                    # this should just never happen. argList[idx+1] sometimes 
+                    # returns _only_ ['0'] and thus the following call fails with 
+                    # ValueError. Not sure if the list is built wrong or this 
+                    # result is not handled correctly. Either way, this, for now, 
+                    # skirts the issue. 
+                    try:
+                        upperLimit = rindex(argList[idx+1],',')
+                    except ValueError:
+                        idx += 1
+                        continue
                     parsedParams = []
                     for x in argList[idx+1][0:upperLimit]:
                         if x == ',':
@@ -226,8 +243,8 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
             for x in functionList:
                 rule  = re.sub('({0})\(([^,]+),([^)]+)\)'.format(x),function,rule)
             if rule == oldrule:
-                logMess('ERROR:Translation','Malformed pow or root function %s' % rule)
-                print 'meep'
+                logMess('ERROR:TRS001','Malformed pow or root function %s' % rule)
+                print('meep')
         return rule
 
     #rule = changeToBNGL(['pow','root'],rule,powParse)
@@ -265,7 +282,7 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
         if compartment[0] in tmp:
             tmp =re.sub(r'(\W|^)({0})(\W|$)'.format(compartment[0]),r'\1 {0} \3'.format(str(compartment[1])),tmp)
             #tmp = re.sub(r'(\W)({0})(\W)'.format(compartment[0]),r'\1%s\3' % str(compartment[1]),tmp)
-            logMess('INFO:Translation','Exchanging reference to compartment %s for its dimensions' % compartment[0])
+            #logMess('INFO:MSC005','Exchanging reference to compartment %s for its dimensions' % compartment[0])
     
     #change references to time for time()    
     #tmp =re.sub(r'(\W|^)(time)(\W|$)',r'\1time()\3',tmp)
@@ -291,7 +308,7 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
     #finalString = re.sub(r'(\W|^)(t)(\W|$)',r'\1time()\3',finalString)
     #pi
     finalString = re.sub(r'(\W|^)(pi)(\W|$)',r'\g<1>3.1415926535\g<3>',finalString)
-    #print reactants,finalString
+    #print(reactants,finalString)
     #log for log 10
     finalString = re.sub(r'(\W|^)log\(',r'\1 ln(',finalString)
     #reserved keyword: e
@@ -303,11 +320,11 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
     
     tmp = finalString
     
-    #print finalString,reactants
+    #print(finalString,reactants)
     #for reactant in reactants:
     #    finalString = re.sub(r'(\W|^)({0}\s+\*)'.format(reactant[0]),r'\1',finalString)
     #    finalString = re.sub(r'(\W|^)(\*\s+{0}(\s|$))'.format(reactant[0]),r'\1',finalString)
-    #print finalString
+    #print(finalString)
     
     #if finalString != tmp:
     #    logMess('WARNING','Removed mass action elements from )
@@ -324,16 +341,17 @@ def curateParameters(param):
         param[element] = tmp
     return param
     
-def finalText(comments,param,molecules,species,observables,rules,functions,compartments,fileName):
+def finalText(comments,param,molecules,species,observables,rules,functions,compartments,annotations,fileName):
     #output = open(fileName,'w')
-    output = StringIO.StringIO()
-    output.write(comments.decode('ascii','ignore'))
+    output = StringIO()
+    # output.write(comments.decode('ascii','ignore'))
+    output.write(comments)
     output.write('begin model\n')
     param = curateParameters(param)
     output.write(sectionTemplate('parameters',param))
     if len(compartments) > 0:
         output.write(sectionTemplate('compartments',compartments))          
-    output.write(sectionTemplate('molecule types',molecules))
+    output.write(sectionTemplate('molecule types',molecules, annotations['moleculeTypes']))
     output.write(sectionTemplate('seed species',species))
     output.write(sectionTemplate('observables',observables))
     if len(functions) > 0:
@@ -348,9 +366,15 @@ def finalText(comments,param,molecules,species,observables,rules,functions,compa
     #output.close()
     
     return output.getvalue()
-def sectionTemplate(name,content):
+def sectionTemplate(name,content,annotations={}):
     section = 'begin %s\n' % name
-    temp = ['\t%s\n' % line for line in content]
+    temp  = []
+    for line in content:
+        if line in annotations:
+            for ann in annotations[line]:
+                temp.append('\t%s\n' % ann)
+        temp.append('\t%s\n' % line)
+    #temp = ['\t%s\n' % line for line in content]
     section += ''.join(temp)
     section += 'end %s\n' % name
     return section
@@ -385,7 +409,13 @@ def extendFunction(function, subfunctionName,subfunction):
             idx += 1
         return parsedString
     param = subfunction.split(' = ')[0][len(subfunctionName)+1:-1]
-    body = subfunction.split(' = ')[1]
+    # ASS2019: There are cases where the fuction doesn't have a definition and the 
+    # following line errors out with IndexError, let's handle it.
+    try:
+        body = subfunction.split(' = ')[1]
+    except IndexError as e:
+        logMess("ERROR:TRS002","This function doesn't have a definition, note that atomizer doesn't allow for function linking: {}".format(subfunction))
+        raise e
     while re.search(r'(\W|^){0}\([^)]*\)(\W|$)'.format(subfunctionName),function) != None:
         contentRule = pyparsing.Word(pyparsing.alphanums + '_.') |  ',' | '+' | '-' | '*' | '/' | '^' | '&' | '>' | '<' | '=' | '|'  
         parens     = pyparsing.nestedExpr( '(', ')', content=contentRule)

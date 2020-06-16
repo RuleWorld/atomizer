@@ -10,7 +10,7 @@ import os
 import sys
 # Restrict to a particular path.
 from twisted.web import xmlrpc, server
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 import threading
 import SBMLparser.utils.consoleCommands as consoleCommands
 
@@ -21,6 +21,7 @@ from subprocess import call
 import yaml
 from stats.gml2cyjson import gml2cyjson
 import json
+import StringIO
 
 sys.path.insert(0, 'SBMLparser')
 import SBMLparser.libsbml2bngl as libsbml2bngl
@@ -28,7 +29,7 @@ import SBMLparser.utils.readBNGXML as readBNGXML
 import SBMLparser.utils.annotationExtender as annotationExtender
 import SBMLparser.utils.nameNormalizer as normalizer
 import SBMLparser.utils.modelComparison as modelComparison
-
+import SBMLparser.rulifier.stdgraph as stdgraph
 bngDistro = '/home/ubuntu/wokspace/bionetgen/bng2/BNG2.pl'
 iid = 1
 iid_lock = threading.Lock()
@@ -46,6 +47,10 @@ def next_id():
 processDict = {}
 
 
+
+def freeQueue(ticket):
+    processDict.pop(ticket)
+
 class AtomizerServer(xmlrpc.XMLRPC):
 
     def addToDict(self, ticket, result):
@@ -54,17 +59,37 @@ class AtomizerServer(xmlrpc.XMLRPC):
             processDict.pop(s)
         processDict[ticket] = result
 
-    def atomize(self, ticket, xmlFile, atomize):
+    def atomize(self, ticket, xmlFile, atomize, userConf = None):
         reaction = 'config/reactionDefinitions.json'
-        print ticket
         try:
+            logStream = StringIO.StringIO()
+            if userConf:
+                jsonpointer = tempfile.mkstemp(suffix='.json', text=True)
+                with open(jsonpointer[1], 'w') as f:
+                    f.write(userConf)
+                jsonpointer = jsonpointer[1]
+            else:
+                jsonpointer = None
             result = libsbml2bngl.readFromString(xmlFile,
-                                                 reaction, False, None, atomize)
-            self.addToDict(ticket, result)
-            print 'sucess', result
+                                                 reaction, False, jsonpointer, atomize, logStream)
+
+            if result and atomize:
+                pointer = tempfile.mkstemp(suffix='.bngl', text=True)
+                with open(pointer[1], 'w') as f:
+                    f.write(result.finalString)
+                print pointer[1]
+                bnglresult = libsbml2bngl.postAnalyzeString(pointer[1], bngDistro, result.database)
+            else:
+                bnglresult = result.finalString
+            self.addToDict(ticket, [bnglresult, logStream.getvalue(), {'finalspecies':result.database.species, 'rawreactions':result.database.rawreactions}])
+            print 'success', ticket
+
         except:
             self.addToDict(ticket, -5)
-            print 'failure'
+            print 'failure', ticket
+        finally:
+            task.deferLater(reactor, 600,  freeQueue, ticket)
+
 
     def extractMoleculeTypes(self,ticket,bnglContents, bnglContents2):
 
@@ -88,32 +113,38 @@ class AtomizerServer(xmlrpc.XMLRPC):
     def compareFiles(self, ticket, bnglContents, bnglContents2, mappingFile):
         finalBNGLContent = []
         finalNamespace = []
-        for mapInfo, bnglContent in zip(mappingFile['model'], [bnglContents, bnglContents2]):
-            pointer = tempfile.mkstemp(suffix='.bngl', text=True)
-            with open(pointer[1], 'w') as f:
-                f.write(bnglContent)
+        try:
+            for mapInfo, bnglContent in zip(mappingFile['model'], [bnglContents, bnglContents2]):
+                pointer = tempfile.mkstemp(suffix='.bngl', text=True)
+                with open(pointer[1], 'w') as f:
+                    f.write(bnglContent)
 
-            print pointer[1]
-            consoleCommands.setBngExecutable(bngDistro)
-            consoleCommands.bngl2xml(pointer[1])
+                print pointer[1]
+                consoleCommands.setBngExecutable(bngDistro)
+                consoleCommands.bngl2xml(pointer[1])
 
-            xmlFileName = pointer[1].split('.')[0] + '.xml'
-            xmlFileName = xmlFileName.split(os.sep)[-1]
-            bnglNamespace = readBNGXML.parseFullXML(xmlFileName)
-            normalizer.normalizeNamespace(bnglNamespace, mapInfo)
+                xmlFileName = pointer[1].split('.')[0] + '.xml'
+                xmlFileName = xmlFileName.split(os.sep)[-1]
+                bnglNamespace = readBNGXML.parseFullXML(xmlFileName)
+                normalizer.normalizeNamespace(bnglNamespace, mapInfo)
+                
+                finalBNGLContent.append(readBNGXML.createBNGLFromDescription(bnglNamespace))
+                finalNamespace.append(bnglNamespace)
+
+
+
+                # os.remove(pointer[1])
+                os.remove(xmlFileName)
+
+            similarity = modelComparison.evaluateSimilarity(finalNamespace[0], finalNamespace[1])
+            self.addToDict(ticket, [finalBNGLContent, similarity])
+            print 'success', ticket
+        except:
+            self.addToDict(ticket,-5)
+            print 'failure',ticket
+        finally:
+            task.deferLater(reactor, 600,  freeQueue, ticket)
             
-            finalBNGLContent.append(readBNGXML.createBNGLFromDescription(bnglNamespace))
-            finalNamespace.append(bnglNamespace)
-
-
-
-            # os.remove(pointer[1])
-            os.remove(xmlFileName)
-
-        similarity = modelComparison.evaluateSimilarity(finalNamespace[0], finalNamespace[1])
-        self.addToDict(ticket, [finalBNGLContent, similarity])
-        print 'success', ticket
-
 
 
         pass
@@ -146,39 +177,61 @@ class AtomizerServer(xmlrpc.XMLRPC):
         pointer = tempfile.mkstemp(suffix='.bngl', text=True)
         with open(pointer[1], 'w') as f:
             f.write(bnglContents)
-        # try:
-        if graphtype in ['regulatory', 'contactmap']:
-            consoleCommands.setBngExecutable(bngDistro)
-            consoleCommands.generateGraph(pointer[1], graphtype)
-            name = pointer[1].split('.')[0].split('/')[-1]
-            with open('{0}_{1}.gml'.format(name, graphtype), 'r') as f:
-                graphContent = f.read()
+        try:
+            if graphtype in ['regulatory', 'contactmap']:
+                consoleCommands.setBngExecutable(bngDistro)
+                consoleCommands.generateGraph(pointer[1], graphtype)
+                name = pointer[1].split('.')[0].split('/')[-1]
+                with open('{0}_{1}.gml'.format(name, graphtype), 'r') as f:
+                    graphContent = f.read()
 
-            gml = networkx.read_gml('{0}_{1}.gml'.format(name, graphtype))
-            result = gml2cyjson(gml, graphtype=graphtype)
-            jsonStr = json.dumps(result, indent=1, separators=(',', ': '))
+                gml = networkx.read_gml('{0}_{1}.gml'.format(name, graphtype))
+                result = gml2cyjson(gml, graphtype=graphtype)
+                jsonStr = json.dumps(result, indent=1, separators=(',', ': '))
 
-            result = {'jsonStr': jsonStr, 'gmlStr': graphContent}
-            self.addToDict(ticket, result)
-            os.remove('{0}_{1}.gml'.format(name, graphtype))
-            print 'success', ticket
+                result = {'jsonStr': jsonStr, 'gmlStr': graphContent}
+                self.addToDict(ticket, result)
+                os.remove('{0}_{1}.gml'.format(name, graphtype))
+                print 'success', ticket
 
-        elif graphtype in ['sbgn_er']:
-            consoleCommands.setBngExecutable(bngDistro)
-            consoleCommands.generateGraph(pointer[1], 'contactmap')
-            name = pointer[1].split('.')[0].split('/')[-1]
-            # with open('{0}_{1}.gml'.format(name,'contactmap'),'r') as f:
-            #   graphContent = f.read()
-            graphContent = networkx.read_gml(
-                '{0}_{1}.gml'.format(name, 'contactmap'))
-            sbgn = libsbgn.createSBNG_ER_gml(graphContent)
-            self.addToDict(ticket, sbgn)
-            os.remove('{0}_{1}.gml'.format(name, 'contactmap'))
-            print 'success', ticket
+            elif graphtype in ['sbgn_er']:
+                consoleCommands.setBngExecutable(bngDistro)
+                consoleCommands.generateGraph(pointer[1], 'contactmap')
+                name = pointer[1].split('.')[0].split('/')[-1]
+                # with open('{0}_{1}.gml'.format(name,'contactmap'),'r') as f:
+                #   graphContent = f.read()
+                graphContent = networkx.read_gml(
+                    '{0}_{1}.gml'.format(name, 'contactmap'))
+                sbgn = libsbgn.createSBNG_ER_gml(graphContent)
+                self.addToDict(ticket, sbgn)
+                os.remove('{0}_{1}.gml'.format(name, 'contactmap'))
+                print 'success', ticket
+            elif graphtype in ['std']:
+                consoleCommands.setBngExecutable(bngDistro)
+                consoleCommands.bngl2xml(pointer[1])
+                xmlFileName = pointer[1].split('.')[0] + '.xml'
+                xmlFileName = xmlFileName.split(os.sep)[-1]
 
-        # except:
-        #  self.addToDict(ticket,-5)
-        #    print 'failure',ticket
+                graph = stdgraph.generateSTDGML(xmlFileName)
+                gmlGraph = networkx.generate_gml(graph)
+
+
+                #os.remove('{0}.gml'.format(xmlFileName))
+                result = gml2cyjson(graph, graphtype=graphtype)
+                jsonStr = json.dumps(result, indent=1, separators=(',', ': '))
+
+                result = {'jsonStr': jsonStr, 'gmlStr': ''.join(gmlGraph)}
+
+                #self.addToDict(ticket, ''.join(gmlGraph))
+                self.addToDict(ticket, result)
+                print 'success', ticket
+        except:
+            import traceback
+            traceback.print_exc()
+            self.addToDict(ticket,-5)
+            print 'failure',ticket
+        finally:
+            task.deferLater(reactor, 600,  freeQueue, ticket)
 
     def xmlrpc_generateGraph(self, bbnglFile, graphtype):
         counter = next_id()
@@ -198,10 +251,14 @@ class AtomizerServer(xmlrpc.XMLRPC):
         processDict[counter] = -2
         return counter
 
-    def xmlrpc_atomize(self, bxmlFile, atomize=False, reaction='config/reactionDefinitions.json', species=None):
+    def xmlrpc_atomize(self, bxmlFile, atomize=False, reaction='config/reactionDefinitions.json', species=None, buser = None):
         counter = next_id()
         xmlFile = bxmlFile.data
-        reactor.callInThread(self.atomize, counter, xmlFile, atomize)
+        if buser:
+            user = buser.data
+        else:
+            user = None
+        reactor.callInThread(self.atomize, counter, xmlFile, atomize, user)
         processDict[counter] = -2
         # result = threads.deferToThread(libsbml2bngl.readFromString,xmlFile,
         #                                     reaction,True,None,atomize)
@@ -236,7 +293,8 @@ class AtomizerServer(xmlrpc.XMLRPC):
 
     def xmlrpc_getDict(self, ticketNumber):
         if ticketNumber in processDict:
-            return processDict.pop(ticketNumber)
+            #return processDict.pop(ticketNumber)
+            return processDict[ticketNumber]
         else:
             return -1
 

@@ -1,0 +1,12 @@
+*.pyc
+tags
+SBMLparser/atomizer_venv
+SBMLparser/build
+SBMLparser/dist
+SBMLparser/libsbml
+SBMLparser/python_libsbml*
+sbmlTranslator.exe
+bin
+test/tmp
+test/BioNetGen-2.*
+test/semantic

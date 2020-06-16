@@ -1,0 +1,30 @@
+{
+    "package": {
+        "name": "atomizer",
+        "repo": "atomizer",
+        "subject": "jczech",
+        "desc": "I was pushed completely automatically",
+        "website_url": "www.bionetgen.org",
+        "issue_tracker_url": "https://github.com/ruleworld/atomizer/issues",
+        "licenses": ["GPL-2.0"],
+        "vcs_url": "https://github.com/ruleworld/atomizer.git",
+        "public_download_numbers": false,
+        "public_stats": false
+    },
+
+    "version": {
+      "name": "1.0",
+      "desc": "The latest release of atomizer",
+      "gpgSign": false
+    },
+
+		"files":
+				[
+        {"includePattern": "SBMLparser/dist/(sbmlTranslator.*)", "uploadPattern": "/$1",
+				"matrixParams": {
+						"override": 1 }
+				}
+		],
+
+    "publish": true
+}

@@ -252,7 +252,7 @@ class Species:
         Sort molecules by number of components, then number of bonded components, then the negative sum of the bond index, then number
         of active states, then string length
         """
-	self.molecules.sort(key=lambda molecule: (len(molecule.components),
+        self.molecules.sort(key=lambda molecule: (len(molecule.components),
                                                   -min([int(y) if y not in ['?','+'] else 999 for x in molecule.components for y in x.bonds] + [999]),
                                                   -len([x for x in molecule.components if len(x.bonds) > 0]),
                                                   -len([x for x in molecule.components if x.activeState not in [0, '0']]),
@@ -536,9 +536,9 @@ class Molecule:
         '''
         if flag:
             graph.add_node(identifier,label=self.__str__(),name="cluster%s_%s" % (identifier,self.idx))
-            print "cluster%s_%s" % (identifier,self.idx)
+            print("cluster%s_%s" % (identifier,self.idx))
         else:
-            print identifier
+            print(identifier)
             graph.add_node(identifier,label=self.__str__(),name=identifier)
         
         moleculeDictionary[self.idx] = identifier
@@ -612,7 +612,7 @@ class Component:
             self.states.append(state)
         if update:
             self.setActiveState(state)
-        #print 'LALALA',state
+        #print('LALALA',state)
     def addStates(self,states,update=True):
         for state in states:
             if state not in self.states:

@@ -1,42 +1,27 @@
 os:
 - linux
 - osx
+
+dist: trusty
+sudo: required
 language: c++
-python:
-- '2.7'
-addons:
-  apt:
-    packages:
-    - python-pip
-    - python-dev
-    - python-numpy
-    - libxml2-dev
-    - zlib1g-dev
-    - libbz2-dev
-    - libxslt-dev
-    - lib32z1-dev
-    - python-lxml
-    - libyaml-dev
-cache: pip
-before_install:
-- source osx_install.sh
-- sudo -H pip install -U pip wheel
-- pip install --user -r requirements.txt
-before_deploy:
-- cd dist; python changeFilename.py; cd ..
+
+before_script:
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y python3-dev; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y python3.4-venv; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install numpy; fi
+
+script: 
+- make
+- "mv ./SBMLparser/dist/sbmlTranslator ./SBMLparser/dist/sbmlTranslator_${TRAVIS_OS_NAME}"
+
 deploy:
-  provider: s3
-  access_key_id:
-    secure: KuIAJoqN+aFKSmAmhFxh8NXT64VD/kXCTl1K9ry53ip1XeHRslsxaPoesx86NANA1yeoEhHh81+xtu2aEXBFcE2r/XRxKNzLXXJUbBNpXnrIJxh+pICaWd9KCudzXNyHJoLzkGqg2Ir8twPseWCkB9AW3uGJk6hHPVqspdn27XDmA+uGuQpG3ec3GwAzPIh2nF/OS8VCHHfFWjr3jx5eOruF2cD0tXwwo7Ii+pYcjZQHKoEv+NDgTXZc6lTnMHE0C++Xu2DeZiiDzvLBDgSpbZvOIUAaLPAaO69j0srR5Phrh5ArW+T7LLykdox/okrHeQBTn4LkPlZ68c1aiRDxre/GphqWtgICZiyDQC7U8p7FQ10sMj6rIiNxH3fuJW6fkXNzznKHjRChELCxQxXIAEfqMoSKXGaqS8oEHyDr7kmgiLIptXiGS4Oo4ROQFfPGVAmTQEyYuIkaJKE3f9Qa2OvK/VK/K4eukCFfT4AyXbV+D6eBS4HB6jg6WIEAkBew+93G3aZrd/BdqhOX35ZZ++Hz5qt7eUweTTks5SYG7e7wnzk4iLVsR/WFMgNaQS5GuWtZAg0+IRH/8mKzYvwmCMZi+jjo7c8bmWKwGFTlfjPvFpul43jBX4varBobJ/0X0Fd20qfZQfMSwYvFYzPjDd+5IsKRRQSgJeBs94nCzBI=
-  secret_access_key:
-    secure: arPvSSy2lLf0+DPhgMkO55BBlYWUFeBbiYiCHWJbZOT7MIioQGP6rM2rxcbYyUE+y2QFBlbTAL304nWz1KRnx9vPX9YSTgz9u+ZHkffKB6MlAYZqfeZlfakcrNQSoi16q8PDmA+HG5Zp8lAiftfXa4XfeTR+oYT84BP0sNhcYD9HRuzAwpjLOtnyaDN9fvs4n+LQmx0tVvwIJHS96cox8r0snz5eNrDIHqzF+/shDDU0AA1DQ9NaSH6XyyAOS+4U+VaC4oFitp4HsgLPHvKSoL2sdSuYwOzBrdlpRWL5NW1po0ortr6pa6FIH82Zi4V3nZVI27SXzeiKEkRV9qfoV/SUxc2QEbsAtnIAgXUJm93jn8MZ4CI2ZLUYc5DtuALP4itN61DIGWqxH1jiS48ThStWTymdq4t4OBkra6Rg+q5BzNP1h+avQqvWMQlACWbrU8Wc9w8YDsaekyV/ZVrJkS6ioUF0S28pskTMyNQmwQIIg08o/0lXFhVPkS33zmruiBCzUEOMXpnzWSeM/SrS7MPNcM/bD8IFGIfImZ66Maefh5QpiRnqHcTbeYX/urr9LRT2S3wGZVuOal1Y/LzpyggX/9PWw46oKr5bd69bdRREz8tcFSJEAkXwvHlpHIgMqpIHTkPn5S1RBuIXE1iEco7IVrO2W6oHlpqWSG5NI8A=
-  bucket: ratomizer
+  provider: bintray
+  file: "./bintray.json"
+  user: jczech
+  key:
+    secure: mim54ge1ziCzoD+CpBy6F+Se2aR6KF0TNA/ML6wj5rWk6/qzG7LLrdN6udOAD/LFV3l52awn0GmsEMQzdMmHKtxCqkdgt+FCrN85y/sZBx0w+ul26uByJoc0W5O6s61FyVStEauMxHC0t4PFYf0KmRnO0Sj1e237ceyTvuzqGIGLlQlu1s+zlMnpW1JNhT2QceWwiuML7PYQU1t76QXiNkE72DKX9k7umaaeB3mFRI3h+pWPOozzIjS/3iFaI5olLgnSF6rm02Xj46TTXiq6WqkvqK00XU+WIs6BLm5Qyz49gFVnTB9C8vldOoUwLiKAJiVO3JfdwWKVr3c/iN7Bnt8clhgPHGLtsTrpfQRsw0oz9Q5aNY/ZV5DKSi+4TRse/633MHHTaP93Eb7sdzJJ0cDN8Hx7/hUEiodYc1JIFALD3tLBfO9wI9yDUhgtMcHsSd8MlK+StwXTy/xtxfiQpYxlhBpw47VxhE0JHkjRZdKmuneruoq7fKqBcwi/yERWKr7VNEKmFJ1pNBqCXEk4T+FZCnUv2sUWQMbW/vdBDlVPp2SfO0EEE6spbM3n5GNzZfupJoqTUrATNSrecoTDrp4qC5sTiOUt2Bu0+ViPW9qKCsNSMTg1VfZgSRTg84H8tH20iE6FdEurKTcYvh0XniVPvH19HIlSAtClie4n4a0=
   skip_cleanup: true
-  acl: public_read
-  local_dir: dist
   on:
-    branch: development
-notifications:
-  slack:
-    secure: uUR4a4uFJTuCaGmSR8mOMrHRmzy2T35wN7MhLS4p/AbQekdMxaEAYBdVtqyb0IlVO58GJ+xPJjCh0f2IhECbYDb8Lyz7tAE41NnYcRrf6qCyv9g8BsvYxNjTbExr4A6bnSu5AKHZjbv9blGPE0dHR0Arskgrj4nTRYNhiv9cLCZ0yGZhKQkV9YMMfT6gNjDMHot6fLrbDCMcBZ7XtE1IGhOETWBGFQt1jj8eiOs3ZMWkVwUuLIF/fRpVjwYFkgUnQVAfQ0bke0/1R9cWeh/bIbKqDhYP9SGW4QD8B3GMRZ9kqRNfjy/DmD/Ss5myCVvdnLVlNp8osT0+UCHhfop3EvYwwE8wgcoapsPXMmHohVKiCwRw0FuPX75nm+btX2EQU1aEhpX2vTV/yEl596YhlFAOoKLXNLJQGkAjWmYalmBh8L0ZokRPDI28L/RGqepRYnx6lPdzEZpcCQMQhlB4TA1pAH/CgJaNMruvqsBAIpWa64+T1icT92BpXgoDPPOCkJLwKTfS2pgJfqvJhUeTYtOQbOlJczrPmrsW6zWTMUf0M6lLjlbl2bbR4e4MFG04/HpGFXj/sIFuwwSJhcuwdMJeAzXdFe2e3N2Oj0Y9NfEWLNM1KM97rqme4q1G8JN/uy+ChImNXD0312nkHlbAZc4SWrbfgD5qp3zn73kbARI=
-script: make; make install;
+    all_branches: true

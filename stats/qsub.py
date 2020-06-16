@@ -29,7 +29,7 @@ def getFiles(directory,extension):
             matches.append([filepath,os.path.getsize(os.path.join(root, filename))])
 
     #sort by size
-    #matches.sort(key=lambda filename: filename[1], reverse=False)
+    matches.sort(key=lambda filename: filename[1], reverse=False)
     
     matches = [x[0] for x in matches]
 
@@ -50,7 +50,7 @@ def start_queue(fileNameSet,outputdirectory,queue,batchSize,outputtype,nodes=1):
     queue -- The queue we will send the job to. It has to make reference to an entry in queue_list
     batchsize -- The total number of jobs per batch job. (in other words, the number of nodes we will be using is <fileNameSet>/<batchSize>. Typically you want this to be a multiple of the number of cores per node.)
     """
-    print len(fileNameSet)
+    print(len(fileNameSet))
     progress = progressbar.ProgressBar()
     settings = 'settings.yaml'
     for idx in progress(range(0,len(fileNameSet),batchSize)):
@@ -159,25 +159,31 @@ if __name__ == "__main__":
             bnglfiles = getFiles(outputfolder, "bngl")
             finalfiles = restart(finalfiles, bnglfiles, '')
             
-    elif namespace.type =='bngxml':
+    elif namespace.type == 'bngxml':
         finalfiles = getFiles(inputfolder, "bngl")
         if namespace.resume:
-            bngxmlfiles = getFiles(inputfolder, "xml")
+            bngxmlfiles = getFiles(outputfolder, "xml")
             finalfiles = restart(finalfiles, bngxmlfiles, '.bngl')
 
-    elif namespace.type =='graph':
+    elif namespace.type == 'graph':
         finalfiles = getFiles(inputfolder, "bngl")
         if namespace.resume:
-            gmlfiles = getFiles(inputfolder,"gml")
-            gmlfiles = [x.replace('_regulatory','') for x in gmlfiles]
-            finalfiles = restart(finalfiles,gmlfiles,'.bngl')
+            gmlfiles = getFiles(outputfolder, "_regulatory.gml")
+            gmlfiles = [x.replace('_regulatory', '') for x in gmlfiles]
+            finalfiles = restart(finalfiles, gmlfiles, '.bngl')
+    elif namespace.type == 'contact':
+        finalfiles = getFiles(inputfolder, "bngl")
+        if namespace.resume:
+            gmlfiles = getFiles(outputfolder, "_contactmap.gml")
+            gmlfiles = [x.replace('_contactmap', '') for x in gmlfiles]
+            finalfiles = restart(finalfiles, gmlfiles, '.bngl')
 
-    elif namespace.type =='entropy':
-        finalfiles = getFiles(inputfolder,"gml")
+    elif namespace.type == 'entropy':
+        finalfiles = getFiles(inputfolder, "gml")
     elif namespace.type == 'atomizationScore':
-        finalfiles = getFiles(inputfolder,"xml")
+        finalfiles = getFiles(inputfolder, "xml")
     elif namespace.type == 'collapsedContact':
-        finalfiles = getFiles(inputfolder,"xml")
+        finalfiles = getFiles(inputfolder, "xml")
 
     elif namespace.type == 'timmings':
         finalfiles = getFiles(inputfolder, "bngl")

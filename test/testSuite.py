@@ -13,7 +13,7 @@ import pexpect
 from subprocess import call
 
 pathname = os.path.abspath(os.path.dirname(__file__))
-print '---', pathname
+print('---', pathname)
 sys.path.insert(0, '.')
 
 sys.path.insert(0, os.path.join(pathname, '..'))
@@ -78,7 +78,7 @@ class ParametrizedTestCase(unittest.TestCase):
     """
 
     def __init__(self, methodName='runTest', param=None):
-        super(ParametrizedTestCase, self).__init__(methodName)
+        super().__init__(methodName)
         self.param = param
 
     @staticmethod
@@ -119,7 +119,7 @@ class AtomizationTestCase(ParametrizedTestCase):
 
         if (self.param) is None:
             return
-        print '+++', self.param
+        print('+++', self.param)
         # deepreload.reload(libsbml2bngl)
         reactionDefinitions = os.path.join(
             pathname, '..', 'reactionDefinitions', 'reactionDefinition7.json')
@@ -131,15 +131,15 @@ class AtomizationTestCase(ParametrizedTestCase):
         #                         False, namingConventions,
         #                         outputFile=outputFile, speciesEquivalence=None, atomize=True, bioGrid=False)
         call([os.path.join(pathname,'..','bin','sbmlTranslator'),'-i',os.path.join(pathname,self.param[0],self.param[1],'{0}-sbml-l2v4.xml'.format(self.param[1])),
-                           '-o',outputFile,'-a'])
+                           '-o',outputFile,'-a','-nc'])
         settings = self.extractSimulationSettings(os.path.join(pathname,self.param[0],self.param[1],'{0}-settings.txt'.format(self.param[1])))
 
         bnglValues, atol, validHeaders = bnglExecution('output{0}'.format(self.param[1]), settings)
         referenceValues = parseCSV(
             '{0}/{1}/{1}-results.csv'.format(self.param[0], self.param[1]), validHeaders)
-        print '---', float(atol), ((bnglValues - referenceValues)**2).mean()
+        print('---', float(atol), (((bnglValues - referenceValues)**2).mean())**0.5)
         self.assertAlmostEqual(
-            ((bnglValues - referenceValues)**2).mean(), 0, delta=float(atol))
+            (((bnglValues - referenceValues)**2).mean())**0.5, 0, delta=float(atol))
         dirs = [f for f in os.listdir(
             os.path.join(pathname, 'tmp')) if self.param[1] in f]
         for element in dirs:
@@ -158,31 +158,37 @@ class TestValid(ParametrizedTestCase):
     '''
     Test for whether a file is recognized as correct by bng --check
     '''
-    # skip stoichiometry math
-    xdirs = ['00068', '00069', '00070', '00518']
-    # non supported operands
-    xdirs.extend(['00028', '00201', '00269', '00279', '00949', '00951'])
-    xdirs.append('00588')
-    xdirs.extend(['00922','00949','00951'])
-    #weird lambda functions
-    xdirs.extend(['00834', '01034'])
-    # time functions not fully supported
-    xdirs.extend(['00853', '00856', '00859', '00862', '00896'])
-    dirs = [f for f in os.listdir(os.path.join(pathname, 'semantic'))]
-    dirs.sort()
-    dirs = [x for x in dirs if x not in xdirs]
-    #dirs=['00001']
-    #dirs = ['00813', '00834', '00853', '00856', '00859', '00862', '00896', '01034', '01059']
-    #dirs = ['01059']
-    #dirs = ['00076', '00077', '00603', '00602']
-    #dirs = ['00001']
-    suite = unittest.TestSuite()
-    for t in [x for x in dirs if x not in xdirs]:
-        suite.addTest(ParametrizedTestCase.parametrize(
-            AtomizationTestCase, param=[os.path.join(pathname, 'semantic'), t]))
+    def __init__(self):
+        super().__init__()
+        # skip stoichiometry math
+        xdirs = ['00068', '00069', '00070', '00518']
+        # non supported operands
+        xdirs.extend(['00028', '00201', '00269', '00279', '00949', '00951'])
+        xdirs.append('00588')
+        xdirs.extend(['00922','00949','00951'])
+        #weird lambda functions
+        xdirs.extend(['00834', '01034'])
+        # time functions not fully supported
+        xdirs.extend(['00853', '00856', '00859', '00862', '00896'])
+        dirs = [f for f in os.listdir(os.path.join(pathname, 'semantic'))]
+        dirs.sort()
+        dirs = [x for x in dirs if x not in xdirs]
+        #dirs=['00465']
+        #dirs = ['00813', '00834', '00853', '00856', '00859', '00862', '00896', '01034', '01059']
+        #dirs = ['01059']
+        #dirs = ['00076', '00077', '00603', '00602']
+        #dirs = ['00001']
+        suite = unittest.TestSuite()
+        for t in [x for x in dirs if x not in xdirs]:
+            suite.addTest(ParametrizedTestCase.parametrize(
+                AtomizationTestCase, param=[os.path.join(pathname, 'semantic'), t]))
 
-    result =  unittest.TextTestRunner(verbosity=2).run(suite)
-    ret = not (result.failures is [] or result.errors is [])
-    ret = 0 if ret else 1
-    print ret
-    sys.exit(ret)    
+        result =  unittest.TextTestRunner(verbosity=2).run(suite)
+        ret = not (result.failures is [] or result.errors is [])
+        ret = 0 if ret else 1
+        print(ret)
+        sys.exit(ret)    
+
+if __name__ == '__main__':
+    TestValid() 
+    unittest.main()

@@ -5,6 +5,12 @@ Created on Mon Oct  8 14:16:25 2012
 @author: proto
 
 """
+import matplotlib.pyplot as plt
+#plt.style.use('ggplot')
+import seaborn as sns
+sns.set_style("white")
+sns.despine()
+sns.set_context("notebook", font_scale=1.5, rc={"lines.linewidth": 2.5})
 import numpy as np
 import libsbml
 import pickle
@@ -29,6 +35,29 @@ import concurrent.futures
 
 import bioservices
 import pprint
+
+
+def constructHistogram(data, fileName, xlabel, ylabel, bins=10):
+    """
+    constructs a histogram based on the information in data
+    """
+    _, axs = plt.subplots(1, 1,figsize=(7, 6))
+    
+    plt.clf()
+    
+    sns.set_palette("BuGn_d")
+    sns.set_context("paper", font_scale=3)
+    sns.set_style("ticks")
+
+    if type(bins) != int:
+        axs.set_xlim(xmin=0,xmax=bins[-1])
+    sns.distplot(data, kde=False, rug=False, bins=bins, hist_kws=dict(alpha=1))
+    #plt.hist(ratomization)
+    plt.xlabel(xlabel, fontsize=32,fontweight='bold')
+    plt.ylabel(ylabel, fontsize=32,fontweight='bold')
+    sns.despine()
+    
+    plt.savefig(fileName,bbox_inches='tight')
 
 
 def main():
@@ -68,7 +97,7 @@ def main():
     np.save('statsFinal.npy',np.array(dictionary))
     for element in dictionary:
         if len(dictionary[element]) > 1:
-            print element,dictionary[element]
+            print(element,dictionary[element])
             
 def bagOfWords():
     with open('sortedC.dump','rb') as f:
@@ -100,7 +129,7 @@ def bagOfWords():
                 if 'Decay' in element:
                     problem['pheno'] += element['Decay']
     
-    print problem
+    print(problem)
     for idx,element in enumerate(annotations):
         if idx < len(bins):
             if len(element) > 0:
@@ -111,7 +140,7 @@ def bagOfWords():
                         annotationDict[bins[idx]][word] += 1.0
     for element in annotationDict:
         annotationDict[element] = {x:annotationDict[element][x] for x in annotationDict[element] if annotationDict[element][x] > 3 and len(x) > 2}
-    print annotationDict
+    print(annotationDict)
     
     for element in annotationDict:
         stringA = ''
@@ -137,7 +166,7 @@ def resolveAnnotation(annotation):
         resolveAnnotation.db = {}
         resolveAnnotation.ch = bioservices.ChEBI(verbose=False)
         resolveAnnotation.uni = bioservices.UniProt(verbose=False)
-        resolveAnnotation.k = bioservices.kegg.KEGGParser(verbose=False)
+        resolveAnnotation.k = bioservices.kegg.KEGG(verbose=False)
         resolveAnnotation.qg = bioservices.QuickGO(verbose=False)
         resolveAnnotation.db['http://identifiers.org/uniprot/P62988'] = 'http://identifiers.org/uniprot/P62988'
         resolveAnnotation.db['http://identifiers.org/uniprot/P06842'] = 'http://identifiers.org/uniprot/P06842'
@@ -154,6 +183,8 @@ def resolveAnnotation(annotation):
         if 'obo.go' in annotation or '/go/GO' in annotation:
 
             res = resolveAnnotation.qg.Term(tAnnotation)
+            if type(res) == int:
+                return annotation, ''
             res = bioservices.Service('name').easyXML(res)            
             tmp = res.findAll('name')
             finalArray = []
@@ -171,8 +202,10 @@ def resolveAnnotation(annotation):
         elif 'kegg' in annotation:
             
             data = resolveAnnotation.k.get(tAnnotation)
+            if type(data) == int:
+                return annotation, ''
             dict_data =  resolveAnnotation.k.parse(data)
-            resolveAnnotation.db[annotation] = dict_data['name']
+            resolveAnnotation.db[annotation] = dict_data['NAME']
             finalAnnotation = resolveAnnotation.db[annotation]
             
         elif 'uniprot' in annotation:
@@ -221,11 +254,11 @@ def resolveAnnotation(annotation):
 
 #def extractAnnotations(xmlFiles):
     
-def main2():
+def main2(directory):
     #go database
-    print '---'    
+    print('---')
     annotationArray = defaultdict(list)
-    with open('annotations.dump','rb') as f:
+    with open('{0}/annotationDictionary.dump'.format(directory),'rb') as f:
         ar = pickle.load(f)
     modelAnnotations = Counter()
 
@@ -233,21 +266,30 @@ def main2():
     futures = []
 
     for idx, element in enumerate(ar):
-        for index in element:
-            for annotation in element[index]:
+        for annarray in ar[element]:
+            for annotation in ar[element][annarray]:
                     annotationSet.add(annotation)
-    print len(annotationSet)
+    print(len(annotationSet))
+    
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         for annotation in annotationSet:
             futures.append(executor.submit(resolveAnnotation, annotation))
         for future in concurrent.futures.as_completed(futures):
             resolvedAnnotation = future.result()
-            if type(resolvedAnnotation) is list:
+            if type(resolvedAnnotation[1]) is list:
                 annotationArray[resolvedAnnotation[0]].extend(resolvedAnnotation[1])
             else:
                 annotationArray[resolvedAnnotation[0]].append(resolvedAnnotation[1])
-    
+    '''
+    for annotation in annotationSet:
+        resolvedAnnotation = resolveAnnotation(annotation)
+        if type(resolvedAnnotation) is list:
+            annotationArray[resolvedAnnotation[0]].extend(resolvedAnnotation[1])
+        else:
+            annotationArray[resolvedAnnotation[0]].append(resolvedAnnotation[1])
+
         #annotationArray.append(modelAnnotations)
+    '''
     with open('parsedAnnotations.dump','wb') as f:
         pickle.dump(annotationArray,f)
 
@@ -261,13 +303,13 @@ def removeTags(taggedInformation):
             tmp = [taggedInformation2]
         return tmp[0]
 
-def compressionDistroAnalysis():
+def compressionDistroAnalysis(directory):
     '''
     analyses the model compression distribution
     (number of molecule types)/total species
     acccording to what the model does
     '''
-    with open('sortedD.dump','rb') as evaluationFile:
+    with open('{0}/sortedD.dump'.format(directory),'rb') as evaluationFile:
         ev1 =     pickle.load(evaluationFile)
     ev2 = []
     for x in ev1:
@@ -305,9 +347,9 @@ def compressionDistroAnalysis():
                 else:
                     modelName = modelName[0]
             modelAnnotationArray.append([element,compression,modelName])
-            print modelAnnotationArray[-1]
+            print(modelAnnotationArray[-1])
         except:
-            print parsedInfo
+            print(parsedInfo)
             break
     with open('compressionAnnotation.dump','wb') as f:
         pickle.dump(modelAnnotationArray,f)
@@ -327,12 +369,12 @@ def compressionDistroAnalysisCont():
     
     for binIndex,annotation in zip(binIndexArray,annotations):
         annotationBinDict[binIndex][annotation] +=1
-    print annotationBinDict
-    print hist,bin_edges
+    print(annotationBinDict)
+    print(hist,bin_edges)
 
 
 def getColourTemp(maxVal, minVal, actual):
-    midVal = (maxVal - minVal)/2;
+    midVal = (maxVal - minVal)/2
     intB = 0
 
     if (actual >= midVal):
@@ -343,19 +385,23 @@ def getColourTemp(maxVal, minVal, actual):
         intG = 1
         intR =  abs((actual - minVal) *1.0/ (midVal - minVal))
 
-    return (intR, intG, intB)
+    return (intB, intG, intR)
 
 
 from collections import defaultdict
-def histogram(inputFile):
-    import matplotlib.pyplot as plt
-    import numpy as np
+def histogram(inputDirectory, configFile):
+    inputFile = os.path.join(inputDirectory,configFile)
+    directory = os.path.join('resultImages', inputDirectory)
+    zeroCounter = 0
     with open(inputFile,'rb') as evaluationFile:
         ev1 =     pickle.load(evaluationFile)
     ev2 = []
     for x in ev1:
         try:
+            #if x['atomization'] == 0:
             ev2.append([x['index'],x['nreactions'],x['nspecies'],x['atomization'],x['compression']])
+            #else:
+            #    zeroCounter+=1
         except:
             continue
     number,rulesLength,speciesLength,evaluation,evaluation2 =  zip(*ev2)
@@ -366,13 +412,13 @@ def histogram(inputFile):
     ratio20 = []
     ration20 = []
 
-
+    print('there are {0} elements with compression 0'.format(zeroCounter))
     #with open('ratomization.dump','rb') as f:
     #    ratomizationDict = pickle.load(f) 
     
     
     problemModels = []
-    print 'syndec',len([x for x in rulesLength if x == -1])
+    print('syndec',len([x for x in rulesLength if x == -1]))
     for x,x2,y,z,w in zip(rulesLength,speciesLength,evaluation,number,evaluation2):
         if x>=10:
             if 1-w <= 0.2:
@@ -380,7 +426,7 @@ def histogram(inputFile):
                 problemModels.append(z)
             evaluation20.append(y)
             ratio20.append(1-w)
-        if x>=0:
+        if x>0:
             if x<10:
                 evaluationn20.append(y)
                 ration20.append(1-w)
@@ -389,24 +435,29 @@ def histogram(inputFile):
             #else:
             trueEvaluation.append([1,y])
                 
-            trueRatio.append(1-w)
+            trueRatio.append(w)
             
     weights,trueEvaluation = zip(*trueEvaluation)
     #print '0 atom large models',problemModels
-    print 'largeModels',len(evaluation20),np.median(evaluation20),np.median(ratio20)
-    print 'models <10 reactions',np.average(evaluationn20), '+/-', np.std(evaluationn20), 'no of models',len(evaluationn20)
-    print 'models >=10 reactions',np.average(evaluation20), '+/-', np.std(evaluation20), 'no of models',len(evaluation20)
-    print 'total models',np.average(trueEvaluation), '+/-', np.std(trueEvaluation), 'no of models',len(trueEvaluation)
+    print('largeModels',len(evaluation20),np.median(evaluation20),np.median(ratio20))
+    print('models <10 reactions',np.average(evaluationn20), '+/-', np.std(evaluationn20), 'no of models',len(evaluationn20))
+    print('models >=10 reactions',np.average(evaluation20), '+/-', np.std(evaluation20), 'no of models',len(evaluation20))
+    print('total models',np.average(trueEvaluation), '+/-', np.std(trueEvaluation), 'no of models',len(trueEvaluation))
     plt.clf()
     hist,bins = np.histogram(rulesLength,bins=10,density=True)
-    plt.hist(rulesLength,bins=bins)
+    plt.hist(rulesLength,bins=20 ** np.linspace(np.log10(1), np.log10(1000), 20))
     plt.xlabel('Number of reactions',fontsize=18)
-    plt.savefig('lengthDistro.png')
+    plt.ylabel('Number of models',fontsize=18)
+    plt.xscale('log')
+
+    plt.savefig('{0}/lengthDistro.png'.format(directory))
 
     plt.clf()
     plt.hist(speciesLength,bins=[0,10,20,30,40,50,60,70,80,90,100])
     plt.xlabel('Number of species',fontsize=18)
-    plt.savefig('speciesDistro.png')
+    plt.ylabel('Number of models',fontsize=18)
+    plt.savefig('{0}/speciesDistro.png'.format(directory))
+
 
 
     plt.clf()
@@ -417,26 +468,39 @@ def histogram(inputFile):
     ax.grid(True)
     ax.set_xscale('log')
     ax.set_yscale('log')
-    plt.savefig('reactionsvsspecies.png')
+    plt.savefig('{0}/reactionsvsspecies.png'.format(directory))
     
+    #import pandas
+    #import graphBatchAnalysis  as gba
+    #reactioninfo = pandas.DataFrame({'reactions': rulesLength,'species': speciesLength})
+    #gba.create2DdensityPlot(reactioninfo,["reactions","species"],'{0}/reactionsvsspeciesjoint.png'.format(directory), sns.jointplot)
+    #g = sns.jointplot(x="reactions", y="species", data=tips);
+
     plt.clf()
-    
-    plt.scatter(rulesLength, speciesLength, s=40, 
-                c=np.array([getColourTemp(0,1,max(0,x)) for x in evaluation2]),cmap='hot')
-    plt.xlabel('Number of reactions',fontsize=24)
-    plt.ylabel('Number of species',fontsize=24)
+    cm = plt.cm.get_cmap('YlGnBu')
+    cax = plt.scatter(rulesLength, speciesLength, s=40, 
+                c=np.array([1 - x for x in evaluation2]),cmap=cm)
+    plt.xlabel('Number of reactions',fontsize=18)
+    plt.ylabel('Number of species',fontsize=18)
     ax = plt.gca()
     ax.grid(True)
     ax.set_xscale('log')
     ax.set_yscale('log')
     plt.xlim(xmin=1)
     ax.grid(True)
-    #cb = plt.colorbar()
-    #cb.set_label('Compression level')
-    plt.savefig('reactionsvsspeciescomp.png')
+
+    m = plt.cm.ScalarMappable(cmap=plt.cm.get_cmap('YlGnBu'))
+    m.set_array([1 - x for x in evaluation2])
+    cb = plt.colorbar(m)
+
+    #cb = plt.colorbar(cax)
+    cb.set_label('Compression level')
+    cb.ax.set_xticklabels(['Low', 'Medium', 'High'])  
+    plt.ylim(1,1000)
+    plt.savefig('{0}/reactionsvsspeciescomp.png'.format(directory))
 
     plt.clf()
-    cm = plt.cm.get_cmap('YlOrRd')
+    cm = plt.cm.get_cmap('YlGnBu')
     cax= plt.scatter(rulesLength, speciesLength, s=40, 
                 c=evaluation,cmap=cm)
     plt.xlabel('Number of reactions',fontsize=24)
@@ -452,65 +516,71 @@ def histogram(inputFile):
     cb.set_label('Atomization level')
     cb.ax.set_xticklabels(['Low', 'Medium', 'High'])  
     plt.ylim(1,1000)
-    plt.savefig('reactionsvsspeciesato.png')
+    plt.savefig('{0}/reactionsvsspeciesato.png'.format(directory))
 
-    
+    '''    
     plt.clf()
     plt.hist(trueEvaluation, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
                                 0.8, 0.9, 1.0])
-    plt.xlabel('Atomization Degree ({0} models)'.format(len(trueEvaluation)),fontsize=18)    
-    plt.savefig('atomizationDistroHist.png')
-
+    plt.xlabel('Percentage of mechanistic reactions'.format(len(trueEvaluation)),fontsize=18)    
+    plt.ylabel('Number of models',fontsize=18)
+    plt.savefig('{0}/atomizationDistroHist.png'.format(directory))
+    '''
+    constructHistogram(trueEvaluation, '{0}/atomizationDistroHist.png'.format(directory), 'Mechanistic processes ratio', 'Number of models', bins=10)
     plt.clf()
-    plt.hist(trueRatio, bins=[ 0.,0.18139535,0.3627907,
-                              0.54418605,0.7255814,0.90697674],weights=weights,normed=True)
-    plt.xlabel('Compression Degree ({0} models)'.format(len(trueRatio)),fontsize=18)
-    plt.savefig('compressionDistroHistWeighted.png')
-
+    #bins=[ 0.,0.18139535,0.3627907,
+    #                          0.54418605,0.7255814,0.90697674]
+    #plt.hist(trueRatio, bins=[ 0.,0.18139535,0.3627907,
+    #                          0.54418605,0.7255814,0.90697674],weights=weights,normed=True)
+    #plt.xlabel('Compression Degree ({0} models)'.format(len(trueRatio)),fontsize=18)
+    #plt.savefig('compressionDistroHistWeighted.png')
+    '''
     plt.clf()
     fig, ax = plt.subplots()
-    plt.hist(trueRatio, bins=[ 0.,0.18139535,0.3627907,
-                              0.54418605,0.7255814,0.90697674],normed=False)
-    plt.xlabel('Compression Degree ({0} models)'.format(len(trueRatio)),fontsize=18)    
+    plt.hist(trueRatio, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
+                                0.8, 0.9, 1.0],normed=False)
+    plt.xlabel('Compression Degree'.format(len(trueRatio)),fontsize=18)    
     plt.ylabel('Number of models',fontsize=18)
     bin_centers =[ 0.,0.18139535,0.3627907,
                               0.54418605,0.7255814,0.90697674]
-    for count, x in zip([1,2,3,4,5], bin_centers):
-        # Label the raw counts
-        ax.annotate(str(count), xy=(x, 0), xycoords=('data', 'axes fraction'),
-            xytext=(40, 365), textcoords='offset points', va='top', ha='center',fontsize=22)
+    #for count, x in zip([1,2,3,4,5], bin_centers):
+    #    # Label the raw counts
+    #    ax.annotate(str(count), xy=(x, 0), xycoords=('data', 'axes fraction'),
+    #        xytext=(40, 365), textcoords='offset points', va='top', ha='center',fontsize=22)
     
     ax.tick_params(axis='x', pad=10)
     #plt.subplots_adjust(bottom=0.15)
-    plt.savefig('compressionDistroHist.png')
-    
+    plt.savefig('{0}/compressionDistroHist.png'.format(directory))
+    '''
+
+    constructHistogram(trueRatio, '{0}/compressionDistroHist.png'.format(directory), 'Compression Degree', 'Number of models', bins=10)
 
 
     plt.clf()
     plt.hist(ratio20, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
                                 0.8, 0.9, 1.0])
     plt.xlabel('Compression Degree '.format(len(ratio20)),fontsize=18)    
-    plt.savefig('compressionDistroHist10more.png')
+    plt.savefig('{0}/compressionDistroHist10more.png'.format(directory))
 
     plt.clf()
     plt.hist(ration20, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
                                 0.8, 0.9, 1.0])
     plt.xlabel('Compression Degree '.format(len(ration20)),fontsize=18)    
-    plt.savefig('compressionDistroHist10less.png')
+    plt.savefig('{0}/compressionDistroHist10less.png'.format(directory))
     
 
     plt.clf()
-    print plt.hist(evaluation20, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
-                                0.8, 0.9, 1.0])
+    print(plt.hist(evaluation20, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
+                                0.8, 0.9, 1.0]))
     plt.xlabel('Atomization Degree '.format(len(evaluation20)), fontsize=18)
     plt.ylabel('Number of models',fontsize=18)
-    plt.savefig('atomizationDistroHist10ormore.png')
+    plt.savefig('{0}/atomizationDistroHist10ormore.png'.format(directory))
 
     plt.clf()
     plt.hist(evaluationn20, bins=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
                                 0.8, 0.9, 1.0])
     plt.xlabel('Atomization Degree'.format(len(evaluationn20)), fontsize=18)
-    plt.savefig('atomizationDistroHist10orless.png')
+    plt.savefig('{0}/atomizationDistroHist10orless.png'.format(directory))
 
     strueEvaluation=np.sort( trueEvaluation )
     yvals=np.arange(len(strueEvaluation))/float(len(strueEvaluation))
@@ -518,7 +588,7 @@ def histogram(inputFile):
     plt.plot( strueEvaluation, yvals )
     plt.axis([0, 1, 0, 1])
     plt.xlabel('Atomization Degree CDF', fontsize=18)
-    plt.savefig('atomizationDistroCDF.png')
+    plt.savefig('{0}/atomizationDistroCDF.png'.format(directory))
 
     strueRatio=np.sort( trueRatio )
     yvals=np.arange(len(trueRatio))/float(len(trueRatio))
@@ -526,7 +596,7 @@ def histogram(inputFile):
     plt.plot( strueRatio, yvals )
     plt.axis([0, 1, 0, 1])
     plt.xlabel('Compression Degree CDF', fontsize=18)
-    plt.savefig('compressionDistroCDF.png')
+    plt.savefig('{0}/compressionDistroCDF.png'.format(directory))
 
     s10ormore=np.sort( evaluation20 )
     yvals=np.arange(len(evaluation20))/float(len(evaluation20))
@@ -534,7 +604,7 @@ def histogram(inputFile):
     plt.plot( s10ormore, yvals )
     plt.axis([0, 1, 0, 1])
     plt.xlabel('Atomization Degree CDF (>10 reactions)', fontsize=18)
-    plt.savefig('atomizationDistroCDF10ormore.png')
+    plt.savefig('{0}/atomizationDistroCDF10ormore.png'.format(directory))
 
     strueRatio=np.sort( ratio20 )
     yvals=np.arange(len(ratio20))/float(len(ratio20))
@@ -542,7 +612,7 @@ def histogram(inputFile):
     plt.plot( strueRatio, yvals )
     plt.axis([0, 1, 0, 1])
     plt.xlabel('Compression Degree CDF (>10 reactions)', fontsize=18)
-    plt.savefig('compressionDistro10orMoreCDF.png')
+    plt.savefig('{0}/compressionDistro10orMoreCDF.png'.format(directory))
 
     s10orless=np.sort( evaluationn20 )
     yvals=np.arange(len(evaluationn20))/float(len(evaluationn20))
@@ -550,7 +620,7 @@ def histogram(inputFile):
     plt.plot( s10orless, yvals )
     plt.axis([0, 1, 0, 1])
     plt.xlabel('Atomization Degree CDF (<= 10 reactions)', fontsize=18)
-    plt.savefig('atomizationDistroCDF10orless.png')
+    plt.savefig('{0}/atomizationDistroCDF10orless.png'.format(directory))
 
     strueRatio=np.sort( ration20 )
     yvals=np.arange(len(ration20))/float(len(ration20))
@@ -558,7 +628,7 @@ def histogram(inputFile):
     plt.plot( strueRatio, yvals )
     plt.axis([0, 1, 0, 1])
     plt.xlabel('Compression Degree CDF (<= 10 reactions)', fontsize=18)
-    plt.savefig('compressionDistro10orlessCDF.png')
+    plt.savefig('{0}/compressionDistro10orlessCDF.png'.format(directory))
 
     ev = []
     idx = 1
@@ -601,12 +671,12 @@ def rankingAnalysis():
     sortedAnnotations = sorted(totalAnnotations.iteritems(), key=operator.itemgetter(1),reverse=True)
     sortedAppereances = sorted(totalAppereances.iteritems(), key=operator.itemgetter(1),reverse=True)
     sortedWeightedAppereances = sorted(weightedTotalAppereances.iteritems(), key=operator.itemgetter(1),reverse=True)
-    print '--- top proteins weighted by the number of times they appear and how atomizable their model is'
-    print sortedAnnotations[0:10]
-    print '--- top protein by number of appereances in a model'
-    print sortedAppereances[0:10]
-    print '--- top proteins by number of weighted appeareances in a model'
-    print sortedWeightedAppereances[0:10]
+    print('--- top proteins weighted by the number of times they appear and how atomizable their model is')
+    print(sortedAnnotations[0:10])
+    print('--- top protein by number of appereances in a model')
+    print(sortedAppereances[0:10])
+    print('--- top proteins by number of weighted appeareances in a model')
+    print(sortedWeightedAppereances[0:10])
     #print sortedAnnotations
     
 def inverseAnnotationClassification():
@@ -663,28 +733,25 @@ def extractXMLInfo(fileName):
             
        
     
-def biomodelsInteractome():
-    directory = 'complex'
+def biomodelsInteractome(directory):
     onlyfiles = [ f for f in listdir('./' + directory) if isfile(join('./' + directory,f))]
     bnglFiles = [x for x in onlyfiles if 'bngl' in x and 'log' not in x]
 
-    xmlFiles = [ f for f in listdir('./XMLExamples/curated') if isfile(join('./XMLExamples/curated',f)) and f.endswith('.xml')]
+    xmlFiles = [ f for f in listdir('./XMLExamples/{0}'.format(directory)) if isfile(join('./XMLExamples/{0}'.format(directory),f)) and f.endswith('.xml')]
     xmlFiles = sorted(xmlFiles)
     xmlArray = []
     xmlExtendedArray = []
     xmlExtendedArray2 = {}
     for xml in xmlFiles:
-        if '019.' in xml:
-            pass
         metaArray,metaDict ,metaDict2= extractXMLInfo(join('./XMLExamples/curated',xml))
         xmlArray.append(metaArray)
         xmlExtendedArray.append(metaDict)
         xmlExtendedArray2[xml] = metaDict2
-    with open('xmlAnnotationsExtended.dump','wb') as f:
+    with open('{0}/xmlAnnotationsExtended.dump'.format(directory),'wb') as f:
         pickle.dump(xmlExtendedArray,f)
-    with open('xmlAnnotations.dump','wb') as f:
+    with open('{0}/xmlAnnotations.dump'.format(directory),'wb') as f:
         pickle.dump(xmlArray,f)
-    with open('xmlAnnotationsExtended2.dump','wb') as f:
+    with open('{0}/xmlAnnotationsExtended2.dump'.format(directory),'wb') as f:
         pickle.dump(xmlExtendedArray2,f)
 
 def reduceElements(element,linkArray):
@@ -731,7 +798,7 @@ def getLinkArray(relationshipMatrix):
     for idx,element in enumerate(relationshipMatrix):
         tmp = set([idx+1])
         s = np.nonzero(element)[0]+1
-        print s
+        print(s)
         for element in s:
             tmp.add(element)
         linkArray.append(tmp)
@@ -771,8 +838,8 @@ def getModelRelationshipMatrix(annotations,threshold=3):
             negativeRelationshipMatrix[element,element2] = nscore
     return relationshipMatrix,negativeRelationshipMatrix
 
-def biomodelsInteractomeAnalysis():
-    with open('xmlAnnotations.dump','rb') as f:
+def biomodelsInteractomeAnalysis(directory):
+    with open('{0}/xmlAnnotations.dump'.format(directory),'rb') as f:
         annotations = pickle.load(f)
 
     relationshipMatrix,negativeRelationshipMatrix = getModelRelationshipMatrix(annotations)
@@ -798,15 +865,15 @@ def biomodelsInteractomeAnalysis():
     linkArray = sorted(linkArray, key =lambda x:len(x),reverse=True)
     
     degrees =  [len(x) for x in linkArray]
-    print np.average(degrees),np.std(degrees),np.median(degrees)
+    print(np.average(degrees),np.std(degrees),np.median(degrees))
 
-    with open('xmlAnnotations.txt','w') as f:
+    with open('{0}/xmlAnnotations.txt'.format(directory),'w') as f:
         pprint.pprint([('biomodels {0}'.format(idx+1),x) for idx,x in enumerate(annotations)],f)
         pprint.pprint(linkArray,f)
         
-    with open('linkArray.dump','wb') as f:
+    with open('{0}/linkArray.dump'.format(directory),'wb') as f:
         pickle.dump(linkArray,f)
-    print [len(x) for x in linkArray]
+    print([len(x) for x in linkArray])
      
 def annotationSharingFinder():
     with open('xmlAnnotations.dump','rb') as f:
@@ -828,7 +895,7 @@ def annotationSharingFinder():
                 if sc1*sc2 > 0 and (1-sc1)*(1-sc2) > 0:
                     relationshipTracker.append([idx+1,idx2+1,float((0.5*relationshipMatrix[idx][idx2])+ negativeRelationshipMatrix[idx][idx2])*(1-sc1)*(1-sc2)])
     relationshipTracker =  sorted(relationshipTracker,key=itemgetter(2),reverse=True)
-    print relationshipTracker
+    print(relationshipTracker)
     #print relationshipTracker
     
 
@@ -882,7 +949,7 @@ def compareConventions(name1,name2):
     counter = 0
     for element in [x for x in dic1 if x in dic2]:
         counter += 1
-        print '---',element,dic1[element],dic2[element]
+        print('---',element,dic1[element],dic2[element])
         if standardizeName(dic2[element][0][1]) !=standardizeName(dic1[element][0][1]):
             while re.search(r'(\W|^)({0})(\W|$)'.format(standardizeName(dic2[element][0][1])),bnglContent): 
                 bnglContent = re.sub(r'(\W|^)({0})(\W|$)'.format(standardizeName(dic2[element][0][1])),r'\g<1>{0}\g<3>'.format(standardizeName(dic1[element][0][1])),bnglContent)
@@ -894,12 +961,14 @@ def compareConventions(name1,name2):
         
 if __name__ == "__main__":
     #bagOfWords()
-    main2()
-    #histogram('sortedD.dump')
-    #compressionDistroAnalysisCont()
+    main2('XMLExamples/curated')
+    #histogram('curated', 'sortedD.dump')
+    #histogram('non_curated', 'sortedD.dump')
+    #compressionDistroAnalysisCont('curated')
     #rankingAnalysis()
     #print resolveAnnotation('http://identifiers.org/reactome/REACT_9417.3')
-    #biomodelsInteractome()
+    #biomodelsInteractome('curated')
+    #biomodelsInteractome('non_curated')
     #biomodelsInteractomeAnalysis()
     #biomodelsInteractome()
     #counter = []

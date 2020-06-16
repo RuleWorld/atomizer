@@ -119,15 +119,18 @@ class Species:
                 
     def extend(self,species,update=True):
         if(len(self.molecules) == len(species.molecules)):
-            
             list1 = sorted(self.molecules,key=lambda x:len(x.components))
             list1 = sorted(list1,key=lambda x:x.name)
             list2 = sorted(species.molecules,key=lambda x:len(x.components))
             list2 = sorted(list2,key=lambda x:x.name)
             
             for (selement,oelement) in zip(list1,list2):
+               
+                cocomponents = Counter([x.name for x in oelement.components])
                 for component in oelement.components:
-                    if component.name not in [x.name for x in selement.components]:
+                    refcomponents = Counter([x.name for x in selement.components])
+                    # theres not enough components in the base molecule of type 'component'
+                    if refcomponents[component.name] < cocomponents[component.name]:
                         selement.components.append(component)
                     else:
                         for element in selement.components:
@@ -233,9 +236,17 @@ class Species:
 import pickle
 class Molecule:
     def __init__(self, name):
+        '''
+        Initializes an empty molecule
+
+        >>> str(Molecule('mol'))
+        'mol()'
+
+        '''
         self.components = []
         self.name = name
         self.compartment = ''
+        self.trueName = ''
         
         a = numpy.random.rand(10, 100)
         self.hash = hashlib.sha1(a).digest()
@@ -253,6 +264,24 @@ class Molecule:
         self.addComponent(component)
         
     def addComponent(self,component,overlap=0):
+        """
+        Adds a component, optionally refusing to add a component if it already exists and sorting components by name
+        ---
+        Args:
+            component (Component): component structure
+            overlap (bool): check for overlap before adding
+
+            >>> mol = Molecule('mol')
+            >>> mol.addComponent(Component('gamma'))
+            >>> mol.addComponent(Component('beta'))
+            >>> mol.addComponent(Component('alpha'))
+            >>> mol.addComponent(Component('alpha'), overlap=1)
+            >>> str(mol)
+            'mol(alpha,beta,gamma)'
+            >>> mol.addComponent(Component('alpha'), overlap=0)
+            >>> str(mol)
+            'mol(alpha,alpha,beta,gamma)'
+        """
         if not overlap:
             self.components.append(component)
         else:
@@ -366,6 +395,17 @@ class Molecule:
     
 class Component:
     def __init__(self,name,bonds = [],states=[]):
+        '''
+        Component initialization setting only the name field
+        ---
+        Args:
+            name (str): The parameter name
+
+            >>> [str(Component('test'))]
+            ['test']
+            >>> [str(Component('1test'))]
+            ['_1test']
+        '''
         self.name = name
         self.states = []
         self.bonds = []
@@ -373,11 +413,37 @@ class Component:
         
         
     def copy(self):
+        '''
+        Returns an indepent copy of this component
+        
+        >>> c = Component('first')
+        >>> c2 = c.copy()
+        >>> c2.name = 'second'
+        >>> [str(c), str(c2)]
+        ['first', 'second']
+        '''
         component = Component(self.name,deepcopy(self.bonds),deepcopy(self.states))
         component.activeState = deepcopy(self.activeState)     
         return component
         
     def addState(self,state,update=True):
+        '''
+        Adds an state to this component, optionally become the active state. The method adds base state 0 if the state
+        doesnt exist
+        ---
+        Args:
+            state (str): A string representing the new state variable
+            update (bool): A flag indicating whether it should become the new active state (default True)
+
+            >>> c =Component('comp')
+            >>> c.addState('first')
+            >>> [str(c)]
+            ['comp~first']
+            >>> c.addState('second', False)
+            >>> c.states.sort()
+            >>> [str(c), c.str2()]
+            ['comp~first', 'comp~0~first~second']
+        '''
         if not state in self.states:
             self.states.append(state)
         if update:
@@ -386,11 +452,36 @@ class Component:
             self.states.append('0')
         #print 'LALALA',state
     def addStates(self,states,update=True):
+        '''
+        adds a state list to this component, the active state will be the last component in the lsit
+        ----
+        Args:
+            states (list): list of states to add to this component
+            
+            >>> c = Component('comp')
+            >>> c.addStates(['z1','z2'])
+            >>> c.states.sort()
+            >>> [str(c), c.str2()]
+            ['comp~z2', 'comp~0~z1~z2']
+        '''
         for state in states:
             if state not in self.states:
                 self.addState(state,update)
         
     def addBond(self,bondName):
+        '''
+        Adds bond information to this component while checking that the bond doesn't already exist
+        ---
+        Args:
+            bondName: Bond identifier to be associated to this component. Its partner is handled at the species level
+            >>> c = Component('comp')
+            >>> result = c.addBond('1')
+            >>> [result, str(c)]
+            [True, 'comp!1']
+            >>> result = c.addBond('1')
+            >>> [result, str(c)]
+            [False, 'comp!1']
+        '''
         #if len(self.bonds) == 0:
         #    self.bonds.append('U')
         if not bondName in self.bonds:
@@ -399,6 +490,21 @@ class Component:
         return False
         
     def setActiveState(self,state):
+        '''
+        Sets the active state of the component if the state already exists
+        ---
+        Args:
+            state: Sets the new active state
+
+            >>> c = Component('comp')
+            >>> c.addState('z1')
+            >>> result = c.setActiveState('0')
+            >>> [result, str(c)]
+            [True, 'comp~0']
+            >>> result = c.setActiveState('nonexistant')
+            >>> [result, str(c)]
+            [False, 'comp~0']
+        '''
         if state not in self.states:
             return False
         self.activeState = state
@@ -465,7 +571,10 @@ class Databases:
         self.rawDatabase = {}
         self.labelDictionary = {}
         self.synthesisDatabase2 = {}
-        self.assumptions = defaultdict(list)
+        self.assumptions = defaultdict(set)
+        self.softConstraints = False
+        self.constructedSpecies = set([])
+        self.processName = ''
         
     def getRawDatabase(self):
         return self.rawDatabase

@@ -32,9 +32,10 @@ import re
 class AnnotationExtractor:
     def __init__(self, fileName, speciesEquivalencesFlag=None):
         self.fileName = fileName
-        self.sct, self.database, self.sbmlDocument = self.obtainSCT(self.fileName, 'config/reactionDefinitions.json', False,
-                                                                    'config/namingConventions.json',
-                                                                    speciesEquivalences=speciesEquivalencesFlag)
+        reader = libsbml.SBMLReader()
+        self.sct = None
+        self.database = None
+        self.sbmlDocument = reader.readSBMLFromFile(fileName)
 
     def standardizeName(self, name):
         '''
@@ -211,11 +212,12 @@ class AnnotationExtractor:
     def getAnnotationSystem(self):
 
         annotationDict, speciesNameDict = self.buildAnnotationDict(self.sbmlDocument)
-        self.buildAnnotationTree(annotationDict, self.sct, self.database)
+        #self.buildAnnotationTree(annotationDict, self.sct, self.database)
 
         return annotationDict
 
     def getModelAnnotations(self):
+
         model = self.sbmlDocument.getModel()
         annotationXML = model.getAnnotation()
         lista = libsbml.CVTermList()
@@ -244,7 +246,8 @@ if __name__ == "__main__":
     namespace = parser.parse_args()
     #input_file = '/home/proto/workspace/bionetgen/parsers/SBMLparser/XMLExamples/curated/BIOMD%010i.xml' % 19
     annotationExtractor = AnnotationExtractor(namespace.input_file)
-    annotationExtractor.getModelAnnotations()
+    modelAnnotations = annotationExtractor.getModelAnnotations()
     #elementalMolecules = [x for x in annotationExtractor.sct if annotationExtractor.sct[x] == []]
-    #print {x:annotationExtractor.getAnnotationSystem()[x] for x in elementalMolecules}
+    complexMolecules = [x for x in annotationExtractor.sct if annotationExtractor.sct[x] != []]
+    print({x:annotationExtractor.getAnnotationSystem()[x] for x in complexMolecules})
 

@@ -5,8 +5,12 @@ Created on Mon Nov 19 14:28:16 2012
 @author: proto
 """
 from lxml import etree
+import sys
+sys.path.append("/home/monoid/Development/fresh_atomizer_checks/atomizer/stats/")
 import smallStructures as st
-from cStringIO import StringIO
+# from . import smallStructures as st
+# from cStringIO import StringIO
+from io import StringIO
 
 # http://igraph.sourceforge.net/documentation.html
 # ----------------------------------------------------------------------
@@ -289,6 +293,9 @@ def parseXMLFromString(xmlString):
     doc = etree.fromstring(xmlString)
     return parseXMLStruct(doc)
 
+def parseFullXMLFromString(xmlString):
+    doc = etree.fromstring(xmlString)
+    return parseFullXML(doc)
 
 
 def parseXML(xmlFile):
@@ -360,9 +367,9 @@ def createBNGLFromDescription(namespace):
 
 if __name__ == "__main__":
     #mol,rule,par = parseXML("output19.xml")
-    # print [str(x) for x in mol]
+    # print([str(x) for x in mol])
     with open('output19.xml','r') as f:
         s = f.read()
-    print parseXMLFromString(s)
-    #print getNumObservablesXML('output19.xml')
+    print(parseFullXML('output19.xml')['rules'][0][0].actions[0].action)
+    #print(getNumObservablesXML('output19.xml'))
 

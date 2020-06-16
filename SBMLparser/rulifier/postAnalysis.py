@@ -1,4 +1,4 @@
-import componentGroups
+from . import componentGroups
 import argparse
 import pprint
 from collections import defaultdict
@@ -6,7 +6,40 @@ import itertools
 from copy import copy
 from utils import readBNGXML
 
+import functools
+import marshal
+def memoize(obj):
+    cache = obj.cache = {}
 
+    @functools.wraps(obj)
+    def memoizer(*args, **kwargs):
+        key = marshal.dumps([args, kwargs])
+        if key not in cache:
+            cache[key] = obj(*args, **kwargs)
+        return cache[key]
+    return memoizer
+
+
+@memoize
+def resolveEntry(dependencyGraph, moleculeSet):
+    """
+    resolve an entry to its basic components according to dependency graph
+    >>> dependencyGraph = {'EGF_EGFR_2':[['EGF_EGFR','EGF_EGFR']],'EGF_EGFR':[['EGF','EGFR']],'EGFR':[],'EGF':[]}
+    >>> resolveEntry(dependencyGraph, ['EGF_EGFR_2'])
+    ['EGF', 'EGFR', 'EGF', 'EGFR']
+
+    """
+    if type(moleculeSet) == str:
+        return [moleculeSet]
+    if len(moleculeSet) == 1 and dependencyGraph[moleculeSet[0]] == []:
+        return moleculeSet
+    compositionList = []
+    for molecule in moleculeSet:
+        if len(dependencyGraph[molecule]) == 0:
+            compositionList.append(molecule)
+        else:
+            compositionList.extend(resolveEntry(dependencyGraph, dependencyGraph[molecule][0]))
+    return compositionList
 
 
 class ModelLearning:
@@ -127,19 +160,6 @@ class ModelLearning:
         """
         pass
 
-    def resolveEntry(self, dependencyGraph, moleculeSet):
-        """
-        resolve an entry to its basic components according to dependency graph
-        """
-        if type(moleculeSet) == str:
-            return [moleculeSet]
-        if len(moleculeSet) == 1 and dependencyGraph[moleculeSet[0]] == []:
-            return moleculeSet
-        compositionList = []
-        for molecule in moleculeSet:
-            compositionList.extend(self.resolveEntry(dependencyGraph, dependencyGraph[molecule][0]))
-        return compositionList
-
     def getDifference(self, pattern1, pattern2, translator):
         if pattern1 not in translator or pattern2 not in translator:
             return None
@@ -196,8 +216,8 @@ class ModelLearning:
                                 #    continue
                                 if localAnalysisFlag:
                                     # get those elements that differ between the two candidates and that correspond to the current <molecule> being analyzed
-                                    difference = [x for x in candidate if x not in alternativeCandidate and self.resolveEntry(database.prunnedDependencyGraph, [x])[0] == molecule]
-                                    alternativeDifference = [x for x in alternativeCandidate if x not in candidate and molecule in self.resolveEntry(database.prunnedDependencyGraph, [x])[0]]
+                                    difference = [x for x in candidate if x not in alternativeCandidate and resolveEntry(database.prunnedDependencyGraph, [x])[0] == molecule]
+                                    alternativeDifference = [x for x in alternativeCandidate if x not in candidate and molecule in resolveEntry(database.prunnedDependencyGraph, [x])[0]]
 
                                     # get the difference patterns for the two species
                                     if not difference or not alternativeDifference:
@@ -254,28 +274,28 @@ class ModelLearning:
             #analyze reactions with cis-allostery (e.g. two actions sites are on the same molecule)
             if len([x for x in self.reactionsXpatterns[reaction[0].label] if len(self.reactionsXpatterns[reaction[0].label][x]) > 1]) ==0:
                 continue
-            print '----------'
+            print('----------')
             if reaction[0].label in self.rawRules:
-                print str(self.rawRules[reaction[0].label])
-                print '>>>>>>'
-                print str(reaction[0])
+                print(str(self.rawRules[reaction[0].label]))
+                print('>>>>>>')
+                print(str(reaction[0]))
             else:
-                print str(reaction[0].label)
-            #print str(reaction[0])
+                print(str(reaction[0].label))
+            #print(str(reaction[0]))
             resolvedActions = []
-            print 'Actions:'
+            print('Actions:')
             changeFlag = 0
             for action in reaction[0].actions:
                 molecule1 = reaction[-3]['_'.join(action.site1.split('_')[:-1])] if action.site1 else ''
                 molecule2 = reaction[-3]['_'.join(action.site2.split('_')[:-1])] if action.site2 else ''
                 site1 = reaction[-3][action.site1] if action.site1 else ''
                 site2 = reaction[-3][action.site2] if action.site2 else ''
-                print '\t{0}= {1}({2}), {3}({4})'.format(action.action,molecule1,site1,molecule2,site2)
+                print('\t{0}= {1}({2}), {3}({4})'.format(action.action,molecule1,site1,molecule2,site2))
                 if action.action == 'DeleteBond':
                     changeFlag = 1
                 resolvedActions.append([action.action,site1,site2])
 
-            print 'Context:'
+            print('Context:')
             for reactionCenter in self.reactionsXpatterns[reaction[0].label]:
                 #cys rules
 
@@ -283,51 +303,62 @@ class ModelLearning:
                     for state in self.reactionsXpatterns[reaction[0].label][reactionCenter]:
                         #we will focus on statechange actions for now
                         if state[2] not in ['']:
-                            #print self.patternXreactions[reactionCenter]
+                            #print(self.patternXreactions[reactionCenter])
                             actionableComponents = getActionableComponentPartners([x for x in resolvedActions if x[0] in ['AddBond', 'DeleteBond']],reactionCenter)
                             for component in actionableComponents:
-                                print '\treaction center <{0}>, context <{1}> in molecule <{2}>:'.format(component,state[0],reactionCenter)
-                                print '\t', {x: dict(self.patternXreactions[reactionCenter][(component, changeFlag, '')][x]) \
-                                for x in self.patternXreactions[reactionCenter][(component, changeFlag, '')] if x in [state[0],state[0].lower()]}
+                                print('\treaction center <{0}>, context <{1}> in molecule <{2}>:'.format(component,state[0],reactionCenter))
+                                print('\t', {x: dict(self.patternXreactions[reactionCenter][(component, changeFlag, '')][x]) \
+                                      for x in self.patternXreactions[reactionCenter][(component, changeFlag, '')] if x in [state[0],state[0].lower()]})
                             
-            print '+++++++++'
+            print('+++++++++')
 
 def defineConsole():
     """
     defines the program console line commands
     """
     parser = argparse.ArgumentParser(description='SBML to BNGL translator')
-    parser.add_argument('-i', '--input', type=str, help='sbml file', required=True)
+    parser.add_argument('-i', '--input', type=str, help='sbml file')
     parser.add_argument('-r', '--raw', type=str, help='raw sbml file')
+    parser.add_argument('-t','--tests',action='store_true',help='run unit tests')
     return parser
 
+
+def runTests():
+    import doctest
+    doctest.testmod()
 
 
 if __name__ == "__main__":
     parser = defineConsole()
     namespace = parser.parse_args()
+
+
+    if namespace.tests:
+        runTests()
+        exit()
     inputFile = namespace.input
 
+
     modelLearning = ModelLearning(namespace.input, namespace.raw)
-    #print modelLearning.getMotifFromPair('EGFR','grb2','shc')
-    #print modelLearning.getMotifFromPair('Shc','grb2','egfr')
+    #print(modelLearning.getMotifFromPair('EGFR','grb2','shc'))
+    #print(modelLearning.getMotifFromPair('Shc','grb2','egfr'))
     #modelLearning.analyzeComplexReactions()
 
     #for rule in complexRules:
-    #    print str(rule[0])
+    #    print(str(rule[0]))
     
     relationshipCombinations = itertools.combinations(['independent', 'requirement', 'nullrequirement', 'exclusion'], 2)    
     motifDictionary = {}
     for relCombi in relationshipCombinations:
         motifDictionary[relCombi] = modelLearning.getPairsFromMotif(relCombi[0], relCombi[1],['imod'])
         if len(motifDictionary[relCombi]) > 0:
-            print relCombi, {x:len(motifDictionary[relCombi][x]) for x in motifDictionary[relCombi]}
+            print(relCombi, {x:len(motifDictionary[relCombi][x]) for x in motifDictionary[relCombi]})
     for requirementClass in ['independent', 'requirement', 'nullrequirement', 'exclusion']:
         motifDictionary[(requirementClass,requirementClass)] = modelLearning.getPairsFromMotif(requirementClass, requirementClass, ['imod'])
         if len(motifDictionary[(requirementClass, requirementClass)]) > 0:
-            print (requirementClass, requirementClass), {x:len(motifDictionary[(requirementClass,requirementClass)][x]) for x in motifDictionary[(requirementClass,requirementClass)]}
-    print modelLearning.getPairsFromMotif('independent','requirement',['imod'])
-    print '---'
-    #print modelLearning.getPairsFromMotif('independent','nullrequirement',['imod'])
+            print((requirementClass, requirementClass), {x:len(motifDictionary[(requirementClass,requirementClass)][x]) for x in motifDictionary[(requirementClass,requirementClass)]})
+    print(modelLearning.getPairsFromMotif('independent','requirement',['imod']))
+    print('---')
+    #print(modelLearning.getPairsFromMotif('independent','nullrequirement',['imod']))
 
 

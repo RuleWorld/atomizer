@@ -96,7 +96,7 @@ class SimplePrinter:
             if edges == []:
                 return False
             tmpNodeList = [set(x) for x in edges]
-            superGraph = set.intersection(*map(set, edges))
+            superGraph = set.intersection(*list(map(set, edges)))
             if len(superGraph) > 0:
                 return True
             return False
@@ -145,17 +145,17 @@ class SimplePrinter:
             #analyze reactions with cis-allostery (e.g. two actions sites are on the same molecule)
             #if len([x for x in self.reactionsXpatterns[reaction[0].label] if len(self.reactionsXpatterns[reaction[0].label][x]) > 1]) ==0:
             #    continue
-            print '----------'
+            print('----------')
             if reaction[0].label in self.rawRules:
-                print str(self.rawRules[reaction[0].label])
-                print '>>>>>>'
-                print str(reaction[0])
-                print '<<<<<<'
+                print(str(self.rawRules[reaction[0].label]))
+                print('>>>>>>')
+                print(str(reaction[0]))
+                print('<<<<<<')
             else:
-                print str(reaction[0].label)
+                print(str(reaction[0].label))
             #print str(reaction[0])
             resolvedActions = []
-            print 'Actions:'
+            print('Actions:')
             changeFlag = 0
             for action in reaction[0].actions:
                 molecule1 = reaction[-3]['_'.join(action.site1.split('_')[:-1])] if action.site1 else ''
@@ -163,14 +163,14 @@ class SimplePrinter:
                 site1 = reaction[-3][action.site1] if action.site1 else ''
                 site2 = reaction[-3][action.site2] if action.site2 else ''
                 if action.action not in ['StateChange','ChangeCompartment']:
-                    print '\t{0}= {1}({2}), {3}({4})'.format(action.action,molecule1,site1,molecule2,site2)
+                    print('\t{0}= {1}({2}), {3}({4})'.format(action.action,molecule1,site1,molecule2,site2))
                 elif action.action in ['StateChange']:
-                    print '\t{0}= {1}({2}))'.format(action.action,molecule1,site1)
+                    print('\t{0}= {1}({2}))'.format(action.action,molecule1,site1))
                 if action.action == 'DeleteBond':
                     changeFlag = 1
                 resolvedActions.append([action.action,site1,site2])
 
-            print '+++++++++'
+            print('+++++++++')
 
 def defineConsole():
     """
