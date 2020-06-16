@@ -7,8 +7,10 @@ Created on Mon Nov 19 14:28:16 2012
 from lxml import etree
 import sys
 sys.path.append("/home/monoid/Development/fresh_atomizer_checks/atomizer/stats/")
-import smallStructures as st
-# from . import smallStructures as st
+try:
+    import smallStructures as st
+except ModuleNotFoundError:
+    from . import smallStructures as st
 # from cStringIO import StringIO
 from io import StringIO
 
