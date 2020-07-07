@@ -566,6 +566,10 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     pr = cProfile.Profile()
     pr.enable()
     '''
+    ###################################################################### 
+    # TODO: IF A REACTION HAS MORE THAN 3-4 REACTANTS/HIGH STOICHIOMETRY # 
+    # AUTOMATICALY ASSUME A DIFF EQ INSTEAD OF TRYING TO MAKE A RULE     # 
+    ###################################################################### 
     setupLog(outputFile + '.log', getattr(logging, logLevel.upper()), quietMode=quietMode)
 
     logMess.log = []
