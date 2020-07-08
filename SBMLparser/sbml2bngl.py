@@ -821,7 +821,6 @@ class SBML2BNGL:
 
     def __getRawRules(self, reaction, symmetryFactors, parameterFunctions, translator, sbmlfunctions):
         zerospecies = ['emptyset','trash','sink','source']
-        # ASS - Issue is here
         if self.useID:
             reactant = [(reactant.getSpecies(), reactant.getStoichiometry(), reactant.getSpecies())
                         for reactant in reaction.getListOfReactants() if
@@ -884,6 +883,8 @@ class SBML2BNGL:
                 compartmentList.append(compartment.getId())
 
             # remove compartments from expression. also separate left hand and right hand side
+
+            #### ADD REACTION SEPARATION HERE? #### 
 
             rateL, rateR, nl, nr, uReversible = self.analyzeReactionRate(math, compartmentList,
                 reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers, sbmlfunctions)
