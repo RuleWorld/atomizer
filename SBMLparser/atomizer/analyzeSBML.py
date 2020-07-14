@@ -44,7 +44,7 @@ name = Word(alphanums + '_-') + ':'
 species = (Word(alphanums + "_" + ":#-")
            + Suppress('()') + Optional(Suppress('@' + Word(alphanums + '_-')))) + ZeroOrMore(Suppress('+') + Word(alphanums + "_" + ":#-")
                                           + Suppress("()") + Optional(Suppress('@' + Word(alphanums + '_-'))))
-rate = Word(alphanums + "()")
+rate = Word("-" + alphanums + "()")
 grammar = Suppress(Optional(name)) + ((Group(species) | '0') + Suppress(Optional("<") + "->") + (Group(species) | '0') + Suppress(rate))
 
 

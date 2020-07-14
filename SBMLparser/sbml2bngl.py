@@ -606,7 +606,7 @@ class SBML2BNGL:
             replace_dict["not"] = "sympyNot"
         return form, replace_dict
 
-    def analyzeReactionRate(self, math, compartmentList, reversible, rReactant, rProduct, reactionID, parameterFunctions, rModifier=[], sbmlFunctions={}):
+    def analyzeReactionRate(self, math, compartmentList, reversible, rReactant, rProduct, reactionID, parameterFunctions, rModifier=[], sbmlFunctions={}, split_rxn=False):
         """
         This functions attempts to obtain the left and right hand sides of a rate reaction 
         function given a MathML tree. It also removes compartments and chemical factors from the function
@@ -634,7 +634,7 @@ class SBML2BNGL:
         prod = rProduct
         rateL = None
         rateR = None
-
+        
         # Let's pull everything in the formula as symbols to use 
         # with sympify 
         form, replace_dict = self.find_all_symbols(math, reactionID)
@@ -668,9 +668,19 @@ class SBML2BNGL:
                     sym = sym*comp
                 else:
                     pass
+
+        # If we are splitting, we don't need to do much
+        if split_rxn:
+            rate = str(sym).replace("**","^")
+            return rate, "", 0, 0, False, split_rxn
+
         # expand and take the terms out as left and right
         exp = sympy.expand(sym)
         # This shows if we can get X - Y 
+        ###### SPLIT RXN #######
+        # TODO: Figure out if something CAN be mass action
+        # and if not, just skip the rest and use split_rxn
+        ###### SPLIT RXN #######
         if exp.is_Add:
             react_expr,prod_expr = self.gather_terms(exp)
             #l,r = exp.as_two_terms()
@@ -817,11 +827,11 @@ class SBML2BNGL:
         for it in replace_dict.items():
             MrateL = MrateL.replace(it[1],it[0])
             MrateR = MrateR.replace(it[1],it[0])
-        return MrateL, MrateR, Mnl, Mnr, uRev
+        return MrateL, MrateR, Mnl, Mnr, uRev, split_rxn
 
     def __getRawRules(self, reaction, symmetryFactors, parameterFunctions, translator, sbmlfunctions):
         zerospecies = ['emptyset','trash','sink','source']
-        # ASS - Issue is here
+        split_rxn = False
         if self.useID:
             reactant = [(reactant.getSpecies(), reactant.getStoichiometry(), reactant.getSpecies())
                         for reactant in reaction.getListOfReactants() if
@@ -885,8 +895,18 @@ class SBML2BNGL:
 
             # remove compartments from expression. also separate left hand and right hand side
 
-            rateL, rateR, nl, nr, uReversible = self.analyzeReactionRate(math, compartmentList,
-                reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers, sbmlfunctions)
+            # check reaction molecularity and determine if it's 
+            # possible to have a mass action to begin with 
+            r_stoi = sum([r[1] for r in rReactant])
+            if r_stoi > 3:
+                # modified analyze reaction rate call because we'll be splitting
+                # the raection downstream
+                split_rxn = True
+                rateL, rateR, nl, nr, uReversible, split_rxn = self.analyzeReactionRate(math, compartmentList,
+                reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers, sbmlfunctions, split_rxn)
+            else:
+                rateL, rateR, nl, nr, uReversible, split_rxn = self.analyzeReactionRate(math, compartmentList,
+                reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers, sbmlfunctions, split_rxn)
 
             if rateR == '0':
                 reversible = False
@@ -912,7 +932,7 @@ class SBML2BNGL:
                              rateR = '{0} * {1}'.format(rateR,compartment.getSize())
             '''
         return {'reactants': reactant, 'products': product, 'parameters': parameters, 'rates': [rateL, rateR],
-                'reversible': uReversible, 'reactionID': reaction.getId(), 'numbers': [nl, nr], 'modifiers': rModifiers}
+                'reversible': uReversible, 'reactionID': reaction.getId(), 'numbers': [nl, nr], 'modifiers': rModifiers, 'split_rxn': split_rxn}
 
     def getReactionCenter(self, reactant, product, translator):
         rcomponent = Counter()
@@ -1231,6 +1251,7 @@ class SBML2BNGL:
             compartmentList = []
             compartmentList.extend([[self.__getRawCompartments(x)[0], self.__getRawCompartments(x)[2]] for x in self.model.getListOfCompartments()])
             threshold = 0
+
             if rawRules['numbers'][0] > threshold  or rawRules['rates'][0] in translator:
                 functionName = '%s%d()' % (functionTitle, index)
             else:
@@ -1286,10 +1307,48 @@ class SBML2BNGL:
             products = [x for x in rawRules['products']]
             modifierComment = '#Modifiers({0})'.format(', '.join(rawRules['modifiers'])) if rawRules['modifiers'] else ''
 
-            rxn_str = writer.bnglReaction(reactants, products, functionName, self.tags, translator,
+            #### ADD RXN SEP HERE #### 
+            if rawRules['split_rxn']:
+                ctr = 0
+                # Now we write a single reaction for each
+                # member with modified reaction rate constants
+                # first RHS
+                for reactant in reactants:
+                    r = reactant
+                    stoi = r[1]
+                    if int(stoi) > 1.0:
+                        nfunctionName = "-{}*{}".format(stoi, functionName)
+                    else:
+                        nfunctionName = "-{}".format(functionName)
+                    nr = (r[0], 1.0, r[2])
+                    # adjust reaction name
+                    rxn_name = rawRules['reactionID']+"_reactants_" + str(ctr)
+                    rxn_str = writer.bnglReaction([], [nr], nfunctionName, self.tags, translator, (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),rawRules['reversible'], reactionName=rxn_name, comment=modifierComment)
+                    reactions.append(rxn_str)
+                    ctr += 1
+                # then LHS
+                ctr = 0
+                for product in products:
+                    p = product 
+                    stoi = p[1]
+                    if int(stoi) > 1.0:
+                        nfunctionName = "{}*{}".format(stoi, functionName)
+                    else:
+                        nfunctionName = "{}".format(functionName)
+                    np = (p[0], 1.0, p[2])
+                    # adjust reaction name
+                    rxn_name = rawRules['reactionID']+"_products_" + str(ctr)
+                    rxn_str = writer.bnglReaction([], [np], nfunctionName, self.tags, translator, (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),rawRules['reversible'], reactionName=rxn_name, comment=modifierComment)
+                    reactions.append(rxn_str)
+                # import ipdb;ipdb.set_trace()
+                # import IPython;IPython.embed()
+            #### END RXN SEP #### 
+            else:
+                rxn_str = writer.bnglReaction(reactants, products, functionName, self.tags, translator,
                              (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),
                              rawRules['reversible'], reactionName=rawRules['reactionID'], comment=modifierComment)
-            reactions.append(rxn_str)
+            
+                reactions.append(rxn_str)
 
         if atomize:
             self.getReactions.__func__.functionFlag = True
@@ -1551,6 +1610,7 @@ class SBML2BNGL:
         artificialReactions = []
         artificialObservables = {}
         nonamecounter = 0
+        # import ipdb;ipdb.set_trace()
         for arule in self.model.getListOfRules():
             rawArule = self.__getRawAssignmentRules(arule)
 

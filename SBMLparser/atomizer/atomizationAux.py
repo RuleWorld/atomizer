@@ -49,7 +49,7 @@ speciesNameGrammar = (Word(alphanums + "_" + ":#-")
 
 nameGrammar = Word(alphanums + '_-') + ':'
 
-rateGrammar = Word(alphanums + "()")
+rateGrammar = Word("-" + alphanums + "()")
 
 grammar = Suppress(Optional(nameGrammar)) + ((Group(speciesNameGrammar) | '0') + Suppress(Optional("<") + "->") +
                                              (Group(speciesNameGrammar) | '0') + Suppress(rateGrammar)) \
