@@ -783,6 +783,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             rawSpecies[rawtemp['identifier']] = rawtemp
     parser.reset()
 
+    # import ipdb;ipdb.set_trace()
     molecules, initialConditions, observables, speciesDict, \
         observablesDict, annotationInfo = parser.getSpecies(translator, [x.split(' ')[0] for x in param])
 
@@ -988,6 +989,8 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     prnter = StrPrinter({'full_prec': False})    
     try: 
         new_funcs = []
+        obs_syms = list(map(sympy.Symbol, parser.obs_names))
+        # import IPython;IPython.embed()
         for func in functions:
             splt = func.split("=")
             n = splt[0] 
@@ -1009,8 +1012,9 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             if parser.all_syms["__epsilon__"] in d.atoms():
                 d = d - parser.all_syms["__epsilon__"]
                 had_epsilon = True
-            for item in parser.all_syms.items():
-                k, s = item
+            # for item in parser.all_syms.items():
+            for s in obs_syms:
+                # k, s = item
                 if s in d.atoms():
                     d = d.subs(s, 0)
             if d == 0:

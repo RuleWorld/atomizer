@@ -102,6 +102,8 @@ class SBML2BNGL:
         self.speciesCompartments = None
         self.unitDefinitions = self.getUnitDefinitions()
         self.convertSubstanceUnits = False
+        # keep track of obs names
+        self.obs_names = []
 
         # ASS - I think there should be a check for compartments right here
         # to determine if a) any compartment is actually used and
@@ -503,8 +505,6 @@ class SBML2BNGL:
         '''
         Calculates factors from reactants and products? 
         '''
-        # What is REALLY going on here? It's related to symmetry but 
-        # eh?
         ifStack = Counter()
         remainderPatterns = []
         highStoichoiMetryFactor = 1
@@ -724,8 +724,12 @@ class SBML2BNGL:
                     if bol in d.atoms():
                         d = d.subs(bol, 0)
                 if d == 0:
-                    logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
+                    # logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
                     add_eps_react = True
+                    # let's instead split the rxn
+                    split_rxn = True
+                    rate = str(sym).replace("**","^")
+                    return rate, "", 0, 0, False, split_rxn
 
                 #prod_expr = back_expr
                 removedR = []
@@ -742,8 +746,12 @@ class SBML2BNGL:
                     if bol in d.atoms():
                         d = d.subs(bol, 0)
                 if d == 0:
-                    logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
+                    # logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
+                    # let's instead split the rxn
+                    split_rxn = True
+                    rate = str(sym).replace("**","^")
                     add_eps_prod = True
+                    return rate, "", 0, 0, False, split_rxn
 
                 # prod_expr = prod_expr * -1
                 # TODO: We still need to figure out if we have 
@@ -755,19 +763,26 @@ class SBML2BNGL:
                 pe_proc = prod_expr.nsimplify().evalf().simplify()
 
                 # Adding epsilon if we have to
-                # TODO: Figure out a way to pool everything 
-                # that can go to 0 and check for those instead of 
-                # just the reactants and products! 
                 if add_eps_react:
-                    n,d = re_proc.as_numer_denom()
-                    rateL = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
-                    self.write_epsilon = True
+                    # n,d = re_proc.as_numer_denom()
+                    # rateL = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
+                    # self.write_epsilon = True
+                    # add_eps_prod = True
+                    # instead splitting the reaction
+                    split_rxn = True
+                    rate = str(sym).replace("**","^")
+                    return rate, "", 0, 0, False, split_rxn
                 else:
                     rateL = str(re_proc)
                 if add_eps_prod:
-                    n,d = pe_proc.as_numer_denom()
-                    rateR = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
-                    self.write_epsilon = True
+                    # n,d = pe_proc.as_numer_denom()
+                    # rateR = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
+                    # self.write_epsilon = True
+                    # add_eps_prod = True
+                    # instead splitting the reaction
+                    split_rxn = True
+                    rate = str(sym).replace("**","^")
+                    return rate, "", 0, 0, False, split_rxn
                 else:
                     rateR = str(pe_proc)
                 nl = self.calculate_factor(react, prod, rateL, removedL)
@@ -800,13 +815,21 @@ class SBML2BNGL:
                 if bol in d.atoms():
                     d = d.subs(bol, 0)
             if d == 0:
-                logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
-                add_eps_react = True
+                # logMess('WARNING:RATE001', 'Denominator of rate constant in reaction {} can be 0. We are adding a small value epsilon to avoid discontinuities which can cause small errors in the model.'.format(reactionID))
+                # add_eps_react = True
+                # instead splitting the reaction
+                split_rxn = True
+                rate = str(sym).replace("**","^")
+                return rate, "", 0, 0, False, split_rxn
             re_proc = react_expr.nsimplify().evalf().simplify()
             if add_eps_react:
-                n,d = re_proc.as_numer_denom()
-                rateL = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
-                self.write_epsilon = True
+                # n,d = re_proc.as_numer_denom()
+                # rateL = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
+                # self.write_epsilon = True
+                # instead splitting the reaction
+                split_rxn = True
+                rate = str(sym).replace("**","^")
+                return rate, "", 0, 0, False, split_rxn
             else:
                 rateL = str(re_proc)
             nl = self.calculate_factor(react, prod, rateL, removedL)
@@ -893,20 +916,24 @@ class SBML2BNGL:
             for compartment in (self.model.getListOfCompartments()):
                 compartmentList.append(compartment.getId())
 
+            # check for non-integer stoichiometry
+            stoi = sum([r[1] for r in rReactant]) + sum([l[1] for l in rProduct])
+            if stoi != int(stoi):
+                print("non integer stoi {}".format(stoi))
+                print(rReactant, rProduct)
+                non_integer_stoi = True
+            else:
+                non_integer_stoi = False
             # remove compartments from expression. also separate left hand and right hand side
-
             # check reaction molecularity and determine if it's 
             # possible to have a mass action to begin with 
             r_stoi = sum([r[1] for r in rReactant])
-            if r_stoi > 3:
+            if r_stoi > 3 or non_integer_stoi:
                 # modified analyze reaction rate call because we'll be splitting
                 # the raection downstream
                 split_rxn = True
-                rateL, rateR, nl, nr, uReversible, split_rxn = self.analyzeReactionRate(math, compartmentList,
-                reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers, sbmlfunctions, split_rxn)
-            else:
-                rateL, rateR, nl, nr, uReversible, split_rxn = self.analyzeReactionRate(math, compartmentList,
-                reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers, sbmlfunctions, split_rxn)
+
+            rateL, rateR, nl, nr, uReversible, split_rxn = self.analyzeReactionRate(math, compartmentList,reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers, sbmlfunctions, split_rxn)
 
             if rateR == '0':
                 reversible = False
@@ -1316,10 +1343,10 @@ class SBML2BNGL:
                 for reactant in reactants:
                     r = reactant
                     stoi = r[1]
-                    if int(stoi) > 1.0:
-                        nfunctionName = "-{}*{}".format(stoi, functionName)
+                    if int(stoi) != 1.0:
+                        nfunctionName = "-1*{}*{}".format(stoi, functionName)
                     else:
-                        nfunctionName = "-{}".format(functionName)
+                        nfunctionName = "-1*{}".format(functionName)
                     nr = (r[0], 1.0, r[2])
                     # adjust reaction name
                     rxn_name = rawRules['reactionID']+"_reactants_" + str(ctr)
@@ -1331,7 +1358,7 @@ class SBML2BNGL:
                 for product in products:
                     p = product 
                     stoi = p[1]
-                    if int(stoi) > 1.0:
+                    if int(stoi) != 1.0:
                         nfunctionName = "{}*{}".format(stoi, functionName)
                     else:
                         nfunctionName = "{}".format(functionName)
@@ -1340,6 +1367,7 @@ class SBML2BNGL:
                     rxn_name = rawRules['reactionID']+"_products_" + str(ctr)
                     rxn_str = writer.bnglReaction([], [np], nfunctionName, self.tags, translator, (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),rawRules['reversible'], reactionName=rxn_name, comment=modifierComment)
                     reactions.append(rxn_str)
+                    ctr += 1
                 # import ipdb;ipdb.set_trace()
                 # import IPython;IPython.embed()
             #### END RXN SEP #### 
@@ -2018,10 +2046,12 @@ class SBML2BNGL:
             # user defined zero molecuels are not included in the observable list
             if str(tmp) != '0':
                 if rawSpecies['compartment'] != '' and len(list(self.model.getListOfCompartments())) > 1:
+                    self.obs_names.append(modifiedName)
                     observablesText.append('Species {0}_{3} @{3}:{1} #{2}'.format(modifiedName, tmp,rawSpecies['name'],rawSpecies['compartment']))
                     observablesDict[modifiedName] = '{0}_{1}'.format(modifiedName,rawSpecies['compartment'])
                 else:
                     # ASS - Is this not supposed to be the version without compartments?
+                    self.obs_names.append(modifiedName)
                     observablesText.append('Species {0} {1} #{2}'.format(modifiedName, tmp,rawSpecies['name']))
                     observablesDict[modifiedName] = '{0}'.format(modifiedName)
                 speciesTranslationDict[rawSpecies['identifier']] = tmp
