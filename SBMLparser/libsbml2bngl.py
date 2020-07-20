@@ -957,7 +957,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                     continue
                 if sbml in sbmlfunctions[sbml2]:
                     sbmlfunctions[sbml2] = writer.extendFunction(sbmlfunctions[sbml2], sbml, sbmlfunctions[sbml])
-
+    
     # 
     functions = reorderFunctions(functions)
     # 
@@ -968,9 +968,15 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     functions = unrollFunctions(functions)
     rules = changeRates(rules, aParameters)
 
-    
-    # Switch up AR stuff that's used as rate constants
     ar_names = {}
+    # Some observables are encoded as functions
+    for func in functions:
+        fname = func.split("=")[0].split("(")[0]
+        if fname.endswith("_ar"):
+            potential_obs = fname.replace("_ar","")
+            if potential_obs in observablesDict:
+                ar_names[potential_obs] = fname
+    # Switch up AR stuff that's used as rate constants
     for item in observablesDict.items():
         k, t = item
         if t.endswith("_ar"):
@@ -1044,7 +1050,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         # I know there will be random small things and that 
         # this bit is entirely optional
         pass
-    
+
     functions = reorder_and_replace_arules(functions, parser)
     # ASS2019 - we need to adjust initial conditions of assignment rules
     # so that they start with the correct values. While this doesn't
