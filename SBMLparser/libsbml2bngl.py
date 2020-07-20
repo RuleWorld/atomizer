@@ -958,6 +958,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                 if sbml in sbmlfunctions[sbml2]:
                     sbmlfunctions[sbml2] = writer.extendFunction(sbmlfunctions[sbml2], sbml, sbmlfunctions[sbml])
     
+    # import ipdb;ipdb.set_trace()
     # 
     functions = reorderFunctions(functions)
     # 

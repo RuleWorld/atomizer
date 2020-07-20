@@ -672,7 +672,7 @@ class SBML2BNGL:
         # If we are splitting, we don't need to do much
         if split_rxn:
             rate = str(sym).replace("**","^")
-            return rate, "", 0, 0, False, split_rxn
+            return rate, "", 1, 1, False, split_rxn
 
         # expand and take the terms out as left and right
         exp = sympy.expand(sym)
@@ -729,7 +729,7 @@ class SBML2BNGL:
                     # let's instead split the rxn
                     split_rxn = True
                     rate = str(sym).replace("**","^")
-                    return rate, "", 0, 0, False, split_rxn
+                    return rate, "", 1, 1, False, split_rxn
 
                 #prod_expr = back_expr
                 removedR = []
@@ -751,7 +751,7 @@ class SBML2BNGL:
                     split_rxn = True
                     rate = str(sym).replace("**","^")
                     add_eps_prod = True
-                    return rate, "", 0, 0, False, split_rxn
+                    return rate, "", 1, 1, False, split_rxn
 
                 # prod_expr = prod_expr * -1
                 # TODO: We still need to figure out if we have 
@@ -771,7 +771,7 @@ class SBML2BNGL:
                     # instead splitting the reaction
                     split_rxn = True
                     rate = str(sym).replace("**","^")
-                    return rate, "", 0, 0, False, split_rxn
+                    return rate, "", 1, 1, False, split_rxn
                 else:
                     rateL = str(re_proc)
                 if add_eps_prod:
@@ -782,7 +782,7 @@ class SBML2BNGL:
                     # instead splitting the reaction
                     split_rxn = True
                     rate = str(sym).replace("**","^")
-                    return rate, "", 0, 0, False, split_rxn
+                    return rate, "", 1, 1, False, split_rxn
                 else:
                     rateR = str(pe_proc)
                 nl = self.calculate_factor(react, prod, rateL, removedL)
@@ -820,7 +820,7 @@ class SBML2BNGL:
                 # instead splitting the reaction
                 split_rxn = True
                 rate = str(sym).replace("**","^")
-                return rate, "", 0, 0, False, split_rxn
+                return rate, "", 1, 1, False, split_rxn
             re_proc = react_expr.nsimplify().evalf().simplify()
             if add_eps_react:
                 # n,d = re_proc.as_numer_denom()
@@ -829,7 +829,7 @@ class SBML2BNGL:
                 # instead splitting the reaction
                 split_rxn = True
                 rate = str(sym).replace("**","^")
-                return rate, "", 0, 0, False, split_rxn
+                return rate, "", 1, 1, False, split_rxn
             else:
                 rateL = str(re_proc)
             nl = self.calculate_factor(react, prod, rateL, removedL)
@@ -1260,7 +1260,8 @@ class SBML2BNGL:
             for p in rawRules['products']:
                 if p[0] not in self.used_molecules:
                     self.used_molecules.append(p[0])
-
+        
+            # import ipdb;ipdb.set_trace()
             if len(rawRules['parameters']) > 0:
                 for parameter in rawRules['parameters']:
                     """
