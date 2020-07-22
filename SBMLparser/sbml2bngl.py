@@ -598,7 +598,7 @@ class SBML2BNGL:
         if "and(" in form:
             form = form.replace("and(","sympyAnd(")
             replace_dict["and"] = "sympyAnd"
-        if "or(" in form:
+        if " or(" in form:
             form = form.replace("or(","sympyOr(")
             replace_dict["or"] = "sympyOr"
         if "not(" in form:
