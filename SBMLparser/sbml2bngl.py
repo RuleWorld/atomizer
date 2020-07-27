@@ -247,7 +247,7 @@ class SBML2BNGL:
         # to this observable have to be changed to the referrencing variable.
         # http://sbml.org/Software/libSBML/docs/java-api/org/sbml/libsbml/Species.html
         if isBoundary and not isConstant:
-            isConstant = True
+            # isConstant = True
             if not species.isSetInitialConcentration() \
                 and not species.isSetInitialAmount():
                 initialValue = 1
@@ -598,6 +598,11 @@ class SBML2BNGL:
         if "and(" in form:
             form = form.replace("and(","sympyAnd(")
             replace_dict["and"] = "sympyAnd"
+        # TODO: "or(" catches stuff like "floor(" and other
+        # potential functions. This needs to be extended 
+        # to more potential or statements (e.g. *or(, +or( etc
+        # the same goes for other functions too but this is 
+        # particularly a problem for this one
         if " or(" in form:
             form = form.replace("or(","sympyOr(")
             replace_dict["or"] = "sympyOr"
@@ -672,6 +677,8 @@ class SBML2BNGL:
         # If we are splitting, we don't need to do much
         if split_rxn:
             rate = str(sym).replace("**","^")
+            for it in replace_dict.items():
+                rate = rate.replace(it[1],it[0])
             return rate, "", 1, 1, False, split_rxn
 
         # expand and take the terms out as left and right
@@ -729,6 +736,8 @@ class SBML2BNGL:
                     # let's instead split the rxn
                     split_rxn = True
                     rate = str(sym).replace("**","^")
+                    for it in replace_dict.items():
+                        rate = rate.replace(it[1],it[0])
                     return rate, "", 1, 1, False, split_rxn
 
                 #prod_expr = back_expr
@@ -751,6 +760,8 @@ class SBML2BNGL:
                     split_rxn = True
                     rate = str(sym).replace("**","^")
                     add_eps_prod = True
+                    for it in replace_dict.items():
+                        rate = rate.replace(it[1],it[0])
                     return rate, "", 1, 1, False, split_rxn
 
                 # prod_expr = prod_expr * -1
@@ -771,6 +782,8 @@ class SBML2BNGL:
                     # instead splitting the reaction
                     split_rxn = True
                     rate = str(sym).replace("**","^")
+                    for it in replace_dict.items():
+                        rate = rate.replace(it[1],it[0])
                     return rate, "", 1, 1, False, split_rxn
                 else:
                     rateL = str(re_proc)
@@ -782,6 +795,8 @@ class SBML2BNGL:
                     # instead splitting the reaction
                     split_rxn = True
                     rate = str(sym).replace("**","^")
+                    for it in replace_dict.items():
+                        rate = rate.replace(it[1],it[0])
                     return rate, "", 1, 1, False, split_rxn
                 else:
                     rateR = str(pe_proc)
@@ -820,6 +835,8 @@ class SBML2BNGL:
                 # instead splitting the reaction
                 split_rxn = True
                 rate = str(sym).replace("**","^")
+                for it in replace_dict.items():
+                    rate = rate.replace(it[1],it[0])
                 return rate, "", 1, 1, False, split_rxn
             re_proc = react_expr.nsimplify().evalf().simplify()
             if add_eps_react:
@@ -829,6 +846,8 @@ class SBML2BNGL:
                 # instead splitting the reaction
                 split_rxn = True
                 rate = str(sym).replace("**","^")
+                for it in replace_dict.items():
+                    rate = rate.replace(it[1],it[0])
                 return rate, "", 1, 1, False, split_rxn
             else:
                 rateL = str(re_proc)
@@ -934,13 +953,14 @@ class SBML2BNGL:
                 split_rxn = True
 
             rateL, rateR, nl, nr, uReversible, split_rxn = self.analyzeReactionRate(math, compartmentList,reversible, rReactant, rProduct, reaction.getId(), parameterFunctions, rModifiers, sbmlfunctions, split_rxn)
+            # import IPython;IPython.embed()
 
             if rateR == '0':
                 reversible = False
-            if symmetryFactors[0] > 1:
-                rateL = '({0})/{1}'.format(rateL, symmetryFactors[0])
-            if symmetryFactors[1] > 1:
-                rateR = '({0})/{1}'.format(rateR, symmetryFactors[1])
+            # if symmetryFactors[0] > 1:
+            #     rateL = '({0})/{1}'.format(rateL, symmetryFactors[0])
+            # if symmetryFactors[1] > 1:
+            #     rateR = '({0})/{1}'.format(rateR, symmetryFactors[1])
             if not self.useID:
                 rateL = self.convertToName(rateL)
                 rateR = self.convertToName(rateR)
@@ -1345,9 +1365,9 @@ class SBML2BNGL:
                     r = reactant
                     stoi = r[1]
                     if int(stoi) != 1.0:
-                        nfunctionName = "-1*{}*{}".format(stoi, functionName)
+                        nfunctionName = "-1*{}*({})".format(stoi, functionName)
                     else:
-                        nfunctionName = "-1*{}".format(functionName)
+                        nfunctionName = "-1*({})".format(functionName)
                     nr = (r[0], 1.0, r[2])
                     # adjust reaction name
                     rxn_name = rawRules['reactionID']+"_reactants_" + str(ctr)
@@ -1461,9 +1481,8 @@ class SBML2BNGL:
                     # Adding epsilon if we have to
                     rateL = str(re_proc)
                     if add_eps_prod:
-                        n,d = pe_proc.as_numer_denom()
-                        rateR = "(" + str(n) + ")/(" + str(d) + "+__epsilon__)"
-                        self.write_epsilon = True
+                        rateL = str(sym)
+                        rateR = "0"
                     else:
                         rateR = str(pe_proc)
                     rateL = rateL.replace("**","^")
@@ -1540,7 +1559,6 @@ class SBML2BNGL:
             # I'm a bit vary of this, not sure if this is 
             # the only way the $ might appear honestly
             # keep an eye out for bugs here
-            # TODO: Check this, $ means a fixed parameter?
             if splt[0].startswith("$"):
                 check_name = splt[0][1:]
             else:
@@ -1627,9 +1645,7 @@ class SBML2BNGL:
         # if need be
         param_map = dict([(x.split()[0],x) for x in parameters])
 
-        # ASS - trying to remove cell as a default compartment
         compartmentList = []
-        # compartmentList = [['cell',1]]
         compartmentList.extend([[self.__getRawCompartments(x)[0], self.__getRawCompartments(x)[2]] for x in self.model.getListOfCompartments()])
 
         arules = []
@@ -1639,29 +1655,24 @@ class SBML2BNGL:
         artificialReactions = []
         artificialObservables = {}
         nonamecounter = 0
-        # import ipdb;ipdb.set_trace()
         for arule in self.model.getListOfRules():
             rawArule = self.__getRawAssignmentRules(arule)
-
             #rule has no name
             if rawArule[0] == '':
                 logMess('ERROR:SIM215','atomizer has found an sbml rule without a name. {0}'.format(rawArule[1:]))
                 rawArule = list(rawArule)
                 rawArule[0] = 'noname{0}'.format(nonamecounter)
                 nonamecounter += 1
-            #tmp.remove(rawArule[0])
-            #newRule = rawArule[1].replace('+',',').strip()
             if rawArule[3] == True:
                 #it is a rate rule
-
                 if rawArule[0] in self.boundaryConditionVariables:
                     logMess('WARNING:SIM105','rate rules ({0}) are not properly supported in BioNetGen simulator'.format(rawArule[0]))
 
                 rateLaw1 = rawArule[1][0]
                 rateLaw2 = rawArule[1][1]
                 arules.append(writer.bnglFunction(rateLaw1, 'arRate{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
-                arules.append(writer.bnglFunction(rateLaw2, 'armRate{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
-                #moleculeString = str(translator[rawArule[0]]) if rawArule[0] in translator else rawArule[0]
+                if rateLaw2 != "0":
+                    arules.append(writer.bnglFunction(rateLaw2, 'armRate{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
 
                 # ASS2019 - I'm not sure if this is the right place to fix the tags. Basically, up until this point, the artificial reactions don't have tags. This results in the 0 <-> A type reactions to lack a compartment, leading to a non-functional BNGL file. I think the better solution might be during rule (SBML rule, not BNGL rule) parsing and update the parser/SBML2BNGL tags instead. 
                 try:
@@ -1674,13 +1685,18 @@ class SBML2BNGL:
                 # ASS - If self.useID is set, use the ID value, not the name
                 if self.useID:
                     self.used_molecules.append(rawArule[0])
-                    rxn_str = writer.bnglReaction([], [[rawArule[0],1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw')
+                    if rateLaw2 == "0":
+                        rxn_str = writer.bnglReaction([], [[rawArule[0],1, rawArule[0]]],'{0}'.format('arRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw', reversible=False)
+                    else:
+                        rxn_str = writer.bnglReaction([], [[rawArule[0],1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw')
                     artificialReactions.append(rxn_str)
                 else:
                     self.used_molecules.append(self.convertToName(rawArule[0]).strip())
-                    rxn_str = writer.bnglReaction([], [[self.convertToName(rawArule[0]).strip(),1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw')
+                    if rateLaw2 == "0":
+                        rxn_str = writer.bnglReaction([], [[self.convertToName(rawArule[0]).strip(),1, rawArule[0]]],'{0}'.format('arRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw', reversible=False)
+                    else:
+                        rxn_str = writer.bnglReaction([], [[self.convertToName(rawArule[0]).strip(),1, rawArule[0]]],'{0},{1}'.format('arRate{0}'.format(rawArule[0]), 'armRate{0}'.format(rawArule[0])), self.tags, translator, isCompartments=True, comment = '#rateLaw')
                     artificialReactions.append(rxn_str)
-                #arules.append(writer.bnglFunction('({0}) - ({1})'.format(rawArule[1][0],rawArule[1][1]), '{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
                 if rawArule[0] in zparams:
                     removeParameters.append('{0} 0'.format(rawArule[0]))
                     zRules.remove(rawArule[0])
@@ -1707,13 +1723,6 @@ class SBML2BNGL:
                 if rawArule[0] in zRules:
                     # dont show assignment rules as parameters
                     zRules.remove(rawArule[0])
-
-                    #zRules.append([rawArule[0] + '_assignment', rawArule[1], rawArule[2], rawArule[3]])
-
-                    #aParameters[rawArule[0]] = 'arj' + rawArule[0]
-                    #tmp = list(rawArule)
-                    #tmp[0] = 'arj' + rawArule[0]
-                    #rawArule= tmp
                     matches = [molecules[x] for x in molecules if molecules[x]['name'] == rawArule[0]]
                     
                     if matches:
@@ -1938,8 +1947,7 @@ class SBML2BNGL:
         unitFlag = True
         for species in self.model.getListOfSpecies():
             rawSpecies = self.getRawSpecies(species, parameters)
-            # # ASS: So, we need to handle boundary variables differently 
-            # # and shouldn't be rules IMO. 
+            # import ipdb;ipdb.set_trace()
             # if rawSpecies['returnID'] in self.boundaryConditionVariables:
             #     # TODO: Make sure we don't need to have constant species
             #     # in seed species and if we do, handle it here
@@ -1984,7 +1992,7 @@ class SBML2BNGL:
                 tmp2 = temp
                 if rawSpecies['identifier'] in self.tags:
                     tmp2 = (self.tags[rawSpecies['identifier']])
-                if rawSpecies['initialAmount'] > 0.0:
+                if rawSpecies['initialAmount'] >= 0.0:
                     # Removing the compartment section if we are not using it
                     if self.noCompartment:
                         speciesText.append('{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
@@ -1992,7 +2000,7 @@ class SBML2BNGL:
                     else:
                         speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
                             rawSpecies['initialAmount'],rawSpecies['returnID'],rawSpecies['identifier']))
-                elif rawSpecies['initialConcentration'] > 0.0:
+                elif rawSpecies['initialConcentration'] >= 0.0:
                     if self.isConversion:
                         # convert to molecule counts
                         if 'substance' in unitDefinitions:

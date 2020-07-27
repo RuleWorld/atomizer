@@ -783,7 +783,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             rawSpecies[rawtemp['identifier']] = rawtemp
     parser.reset()
 
-    # import ipdb;ipdb.set_trace()
     molecules, initialConditions, observables, speciesDict, \
         observablesDict, annotationInfo = parser.getSpecies(translator, [x.split(' ')[0] for x in param])
 
@@ -794,11 +793,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     aParameters, aRules, nonzparam, artificialRules, removeParams, artificialObservables = parser.getAssignmentRules(zparam, param, rawSpecies,
                                                                                                                      observablesDict, translator)
 
-
     compartments = parser.getCompartments()
     functions = []
     assigmentRuleDefinedParameters = []
-
+    
     # FIXME: We should determine if an assignment rule 
     # if being used along with a reaction and ignore the
     # reaction if it is being modified by both. This will
@@ -851,8 +849,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             artificialObservables[key] = fn.split()[0]+" = "+fd
     # Here we are adding removed parameters back as 
     # molecules, species and observables? How do we know 
-    # we need these? If we do, WHY ARE THEY CALLED REMOVE 
-    # PARAMETERS FFS
+    # we need these? 
     for remPar in removeParams:
         par_nam = remPar.split()[0]
         write = True
@@ -872,13 +869,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             init_cond = par_nam + tags + " " + " ".join(remPar.split()[1:])
             if init_cond not in initialConditions:
                 initialConditions.append(init_cond)
-    #molecules.extend([x.split(' ')[0] for x in removeParams])
-    #if len(molecules) == 0:
-    #    compartments = []
-    #observables.extend('Species {0} {0}'.format(x.split(' ')[0]) for x in removeParams)
-    #for x in removeParams:
-    #    initialConditions.append(x.split(' ')[0] + tags + ' ' + ' '.join(x.split(' ')[1:]))
-
     ## Comment out those parameters that are defined with assignment rules
     ## TODO: I think this is correct, but it may need to be checked
     tmpParams = []
@@ -947,7 +937,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     sbmlfunctions = parser.getSBMLFunctions()
     functions.extend(aRules)
-
+    
     processFunctions(functions, sbmlfunctions, artificialObservables, rateFunctions)
 
     for interation in range(0, 3):
@@ -958,7 +948,13 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                 if sbml in sbmlfunctions[sbml2]:
                     sbmlfunctions[sbml2] = writer.extendFunction(sbmlfunctions[sbml2], sbml, sbmlfunctions[sbml])
     
-    # import ipdb;ipdb.set_trace()
+    # import IPython;IPython.embed()
+
+    # TODO: if an observable is defined via artificial obs
+    # we should overwrite it in obs dict
+    for key in observablesDict:
+        if key + "_ar" in artificialObservables:
+            observablesDict[key] = key+"_ar"
     # 
     functions = reorderFunctions(functions)
     # 
@@ -999,6 +995,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         obs_syms = list(map(sympy.Symbol, parser.obs_names))
         # import IPython;IPython.embed()
         for func in functions:
+            # import ipdb;ipdb.set_trace()
             splt = func.split("=")
             n = splt[0] 
             f = "=".join(splt[1:])
@@ -1104,8 +1101,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # BUT are then used in some functions. The original modeller
     # should have turned these into parameters but didn't. Let's 
     # turn them into parameters? or leave them be? 
-    # import IPython
-    # IPython.embed()
     # also remove from seed species 
     init_to_rem = []
     turn_to_param = []

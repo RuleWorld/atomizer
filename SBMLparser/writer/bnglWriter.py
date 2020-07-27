@@ -418,7 +418,7 @@ def extendFunction(function, subfunctionName,subfunction):
         raise e
     while re.search(r'(\W|^){0}\([^)]*\)(\W|$)'.format(subfunctionName),function) != None:
         contentRule = pyparsing.Word(pyparsing.alphanums + '_.') |  ',' | '+' | '-' | '*' | '/' | '^' | '&' | '>' | '<' | '=' | '|'  
-        parens     = pyparsing.nestedExpr( '(', ')', content=contentRule)
+        parens = pyparsing.nestedExpr( '(', ')', content=contentRule)
         subfunctionList = parens.parseString('(' + function + ')').asList()
         function = constructFromList(subfunctionList[0],[subfunctionName],param.split(','),body)
     return function
