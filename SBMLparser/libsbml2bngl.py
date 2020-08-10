@@ -566,10 +566,6 @@ def analyzeFile(bioNumber, reactionDefinitions, useID, namingConventions, output
     pr = cProfile.Profile()
     pr.enable()
     '''
-    ###################################################################### 
-    # TODO: IF A REACTION HAS MORE THAN 3-4 REACTANTS/HIGH STOICHIOMETRY # 
-    # AUTOMATICALY ASSUME A DIFF EQ INSTEAD OF TRYING TO MAKE A RULE     # 
-    ###################################################################### 
     setupLog(outputFile + '.log', getattr(logging, logLevel.upper()), quietMode=quietMode)
 
     logMess.log = []
@@ -754,28 +750,10 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     useArtificialRules = False
     parser = SBML2BNGL(document.getModel(), useID, replaceLocParams=replaceLocParams)
     # ASS: Port over other parsers? used_molecules list
-    # WHY ARE THERE TWO SEPARATE PARSERS?
     if hasattr(database, "parser"):
         parser.used_molecules.extend(database.parser.used_molecules)
     parser.setConversion(database.isConversion)
-    #database = structures.Databases()
-    #database.assumptions = defaultdict(set)
-    #translator, log, rdf = m2c.transformMolecules(parser, database, reactionDefinitions, speciesEquivalence)
-
-    #try:
-    #bioGridDict = {}
-    #if biogrid:
-    #    bioGridDict = biogrid()
-    #if atomize:
-    #    translator = mc.transformMolecules(parser, database, reactionDefinitions, speciesEquivalence, bioGridDict)
-    #else:
-    #    translator={}
-
-    #except:
-    #    print('failure')
-    #    return None, None, None, None
-
-    #translator = {}
+    # 
     param, zparam = parser.getParameters()
     rawSpecies = {}
     for species in parser.model.getListOfSpecies():
@@ -785,6 +763,8 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     molecules, initialConditions, observables, speciesDict, \
         observablesDict, annotationInfo = parser.getSpecies(translator, [x.split(' ')[0] for x in param])
+
+    # import IPython;IPython.embed()
 
     # finally, adjust parameters and initial concentrations according to whatever  initialassignments say
     param, zparam, initialConditions = parser.getInitialAssignments(translator, param, zparam, molecules, initialConditions)

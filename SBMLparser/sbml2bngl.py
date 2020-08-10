@@ -13,6 +13,7 @@ from collections import defaultdict
 import math as pymath
 from utils.util import logMess, TranslationException
 import libsbml
+from bngModel import bngModel
 
 import sympy, IPython
 from sympy import Function, Symbol
@@ -86,6 +87,8 @@ class SBML2BNGL:
     that are translatable into bngl
     '''
     def __init__(self, model, useID=True, replaceLocParams=True):
+        
+        self.bngModel = bngModel()
 
         self.useID = useID
         self.replaceLocParams = replaceLocParams
@@ -120,7 +123,7 @@ class SBML2BNGL:
         self.all_syms = {}
         self.all_syms.update(_clash)
         self.all_syms.update({"pow":pow})
-        self.all_syms["__epsilon__"] = sympy.symbols("__epsilon__")
+        # self.all_syms["__epsilon__"] = sympy.symbols("__epsilon__")
         # Do we want this? we'll have to handle it downstream
         # handling a lot of functions via a dummy function
         # that can take 1,2,3 variables
@@ -203,6 +206,8 @@ class SBML2BNGL:
                 metaInformation[element] = list(metaInformation[element])
             metaString += '#@{0}:{1}\n'.format(element,(metaInformation[element]))
         metaString += '###\n'
+        # adding the string to model
+        self.bngModel.metaString = metaString
         return metaString
 
 
@@ -232,6 +237,12 @@ class SBML2BNGL:
             name = identifier
         if species.isSetInitialConcentration():
             initialValue = species.getInitialConcentration()
+            # if we have compartments and a set volume
+            # we need to convert this to species counts
+            # species_comp = species.compartment
+            # compVol = self.compartmentDict[species_comp]
+            # # TODO: Handle unit conversions here if units are given
+            # initialValue *= float(compVol)
         else:
             initialValue = species.getInitialAmount()
             # we need to ensure we have concentrations
@@ -453,20 +464,15 @@ class SBML2BNGL:
         for element in ifStack:
             if ifStack[element] > 1:
                 # ASS - removing if statement from functional rate definitions
-                rateR = '{1}/({0}^{2} + __epsilon__)'.format(element, rateR, ifStack[element])
+                # rateR = '{1}/({0}^{2} + __epsilon__)'.format(element, rateR, ifStack[element])
+                rateR = '{1}/({0}^{2})'.format(element, rateR, ifStack[element])
                 self.write_epsilon = True
             else:
                 # ASS - removing if statement from functional rate definitions
-                rateR = '{1}/({0} + __epsilon__)'.format(element, rateR)
-                self.write_epsilon = True
+                # rateR = '{1}/({0} + __epsilon__)'.format(element, rateR)
+                rateR = '{1}/({0})'.format(element, rateR)
+                # self.write_epsilon = True
 
-        # what the hell is even this thing? math.getNumChild is at
-        # most 2 and only gives you if the operator is unary or binary
-        # really, ifStack has the things that are left-over after removal 
-        # from math object. I don't get what this number is.
-        # print("math form {}".format(libsbml.formulaToString(math)))
-        # print("math children {}".format(math.getNumChildren()))
-        # print("remove if stack 2 {}".format(len(ifStack)))
         numFactors = max(math.getNumChildren(), len(ifStack))
 
         if pymath.isinf(highStoichoiMetryFactor):
@@ -1173,14 +1179,13 @@ class SBML2BNGL:
         '''
         idid = compartment.getId()
         name = compartment.getName()
-        size = compartment.getSize()
+        # size = compartment.getSize()
+        # volume messes up the reactions
+        size = 1.0
         dimensions = compartment.getSpatialDimensions()
         if dimensions in [0, 1]:
             logMess('WARNING:SIM103', '{1}-D compartments are not supported. Changing for 2-D compartments for {0}. Please verify this does not affect simulation'.format(name, dimensions))
             dimensions = 2
-        #if size != 1:
-        #    print '!',
-        #return name,3,size
         return idid, dimensions, size, name
         
     def __getRawFunctions(self,function):
@@ -1203,21 +1208,26 @@ class SBML2BNGL:
         '''
         compartments = []
         # ASS - return empty if we are not using compartments
+        units = None
         if self.noCompartment:
             return compartments
         unitDefinitions = self.getUnitDefinitions()
         if 'volume' in unitDefinitions:
-            compartments.append('#volume units: {0}'.format('*'.join([x['name'] for x in unitDefinitions['volume']])))
+            units = '#volume units: {0}'.format('*'.join([x['name'] for x in unitDefinitions['volume']]))
+            compartments.append(units)
+
         else:
-            compartments.append('#volume units: L')
+            units = '#volume units: L'
+            compartments.append(units)
         for _,compartment in enumerate(self.model.getListOfCompartments()):
             compartmentInfo = self.__getRawCompartments(compartment)
             # ASS - removing "cell" as default compartment
-            # name = 'cell' if compartmentInfo[0] == '' else compartmentInfo[0]
             name = compartmentInfo[0]
             if name != compartmentInfo[3] and compartmentInfo[3] != '':
+                self.bngModel.add_compartment((name, compartmentInfo[1], compartmentInfo[2], compartmentInfo[3],units))
                 compartments.append("%s %d %s #%s" % (name, compartmentInfo[1], compartmentInfo[2], compartmentInfo[3]))
             else:
+                self.bngModel.add_compartment((name, compartmentInfo[1], compartmentInfo[2], compartmentInfo[3],units))
                 compartments.append("%s %d %s" % (name, compartmentInfo[1], compartmentInfo[2]))
         return compartments
 
@@ -1857,12 +1867,14 @@ class SBML2BNGL:
         zparam = []
         for parameter in self.model.getListOfParameters():
             parameterSpecs = (parameter.getId(), parameter.getValue(), parameter.getConstant(), parameter.getUnits())
-            #print parameterSpecs
             #reserved keywords
             if parameterSpecs[0] == 'e':
-                parameterSpecs = ('are', parameterSpecs[1])
+                # TODO: raise a warning
+                # TODO: go from are to __e__
+                parameterSpecs = ('__e__', parameterSpecs[1])
             if parameterSpecs[1] == 0:
                 zparam.append(parameterSpecs[0])
+                self.bngModel.add_parameter(parameterSpecs)
             else:
                 """
                 if self.convertSubstanceUnits:
@@ -1875,8 +1887,8 @@ class SBML2BNGL:
                     parameters.append('{0} {1} #units:{2}'.format(parameterSpecs[0], parameterSpecs[1], parameter.getUnits()))
                 else:
                     parameters.append('{0} {1}'.format(parameterSpecs[0], parameterSpecs[1]))
+                self.bngModel.add_parameter(parameterSpecs)
 
-        #return ['%s %f' %(parameter.getId(),parameter.getValue()) for parameter in self.model.getListOfParameters() if parameter.getValue() != 0], [x.getId() for x in self.model.getListOfParameters() if x.getValue() == 0]
         return parameters, zparam
 
 
@@ -1899,10 +1911,14 @@ class SBML2BNGL:
         # this is the case for most SBML models.
         if len(allUsedCompartments) == 1:
             # We are using only 1 compartment, check volume
-            if self.compartmentDict[allUsedCompartments.pop()] == 1:
-                # we have 1 compartment and it's volume is 1
-                # just don't use compartments.
-                self.noCompartment = True
+            # FIXME: We will try removing the compartment
+            # if only one is used
+            self.noCompartment = True
+            self.bngModel.noCompartment = True
+            # if self.compartmentDict[allUsedCompartments.pop()] == 1:
+            #     # we have 1 compartment and it's volume is 1
+            #     # just don't use compartments.
+            #     self.noCompartment = True
         elif len(allUsedCompartments) > 1:
             logMess("WARNING:COMP001", "Multiple compartments are used, please note that Atomizer does not automatically try to infer your compartment topology which is important for how rules fire in cBNGL. Make sure your comparment topology is set correctly after translation")
         self.speciesMemory = []
@@ -1943,15 +1959,9 @@ class SBML2BNGL:
         annotationInfo = {'moleculeTypes': {}, 'species': {}}
         for compartment in self.model.getListOfCompartments():
             compartmentDict[compartment.getId()] = compartment.getSize()
-        #speciesText.append('#units: {0}'.format(concentrationUnits))
         unitFlag = True
         for species in self.model.getListOfSpecies():
             rawSpecies = self.getRawSpecies(species, parameters)
-            # import ipdb;ipdb.set_trace()
-            # if rawSpecies['returnID'] in self.boundaryConditionVariables:
-            #     # TODO: Make sure we don't need to have constant species
-            #     # in seed species and if we do, handle it here
-            #     continue
             if (rawSpecies['compartment'] != ''):
                 # ASS - First change for "noCompartments"
                 if self.noCompartment:
@@ -1975,12 +1985,22 @@ class SBML2BNGL:
                             entry = ', '.join([':'.join(x.split('/')[-2:]) for x in speciesAnnotationInfo[rawSpecies['returnID']][annotation]])
                             annotationTemp.append('#^ {0}:{1} {2}'.format(header,qual, entry))
                      
-                    moleculesText.append(translator[rawSpecies['returnID']].str2())
+                    # we'll add this to our model
+                    mtext = translator[rawSpecies['returnID']].str2()
+                    rawSpecies['atomizer_text'] = mtext
+                    self.bngModel.add_molecule(rawSpecies)
+                    moleculesText.append(mtext)
+
                     if rawSpecies['returnID'] in speciesAnnotationInfo:
                         annotationInfo['moleculeTypes'][translator[rawSpecies['returnID']].str2()] = annotationTemp
                         del speciesAnnotationInfo[rawSpecies['returnID']]
             else:
-                moleculesText.append(rawSpecies['returnID'] + '()')
+                # we'll add this to our model
+                mtext = rawSpecies['returnID'] + '()'
+                rawSpecies['atomizer_text'] = mtext
+                self.bngModel.add_molecule(rawSpecies)
+                moleculesText.append(mtext)
+
                 if rawSpecies['returnID'] in speciesAnnotationInfo:
                     annotationInfo['moleculeTypes'][rawSpecies['returnID']] = speciesAnnotationInfo[rawSpecies['returnID']]
                     del speciesAnnotationInfo[rawSpecies['returnID']]
@@ -1988,11 +2008,12 @@ class SBML2BNGL:
             temp = '$' if rawSpecies['isConstant'] != 0 else ''
             tmp = translator[str(rawSpecies['returnID'])] if rawSpecies['returnID'] in translator \
                 else rawSpecies['returnID'] + '()'
-            if rawSpecies['initialConcentration'] >= 0 or rawSpecies['initialAmount'] >=0:
+            # don't write if == 0 CHECK
+            if rawSpecies['initialConcentration'] > 0 or rawSpecies['initialAmount'] > 0:
                 tmp2 = temp
                 if rawSpecies['identifier'] in self.tags:
                     tmp2 = (self.tags[rawSpecies['identifier']])
-                if rawSpecies['initialAmount'] >= 0.0:
+                if rawSpecies['initialAmount'] > 0.0:
                     # Removing the compartment section if we are not using it
                     if self.noCompartment:
                         speciesText.append('{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
@@ -2000,7 +2021,7 @@ class SBML2BNGL:
                     else:
                         speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
                             rawSpecies['initialAmount'],rawSpecies['returnID'],rawSpecies['identifier']))
-                elif rawSpecies['initialConcentration'] >= 0.0:
+                elif rawSpecies['initialConcentration'] > 0.0:
                     if self.isConversion:
                         # convert to molecule counts
                         if 'substance' in unitDefinitions:
@@ -2049,7 +2070,7 @@ class SBML2BNGL:
                         speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 0,
                             rawSpecies['returnID'],rawSpecies['identifier']))
             if rawSpecies['returnID'] == 'e':
-                modifiedName = 'are'
+                modifiedName = '__e__'
             else:
                 modifiedName = rawSpecies['returnID']
             # user defined zero molecuels are not included in the observable list
@@ -2074,6 +2095,8 @@ class SBML2BNGL:
         annotationInfo['species'] = speciesAnnotationInfo
 
         self.speciesMemory = []
+
+        # import IPython,sys;IPython.embed();sys.exit()
 
         return list(set(moleculesText)),speciesText,observablesText,speciesTranslationDict, observablesDict, annotationInfo
 
@@ -2142,7 +2165,7 @@ class SBML2BNGL:
                     initialConditions = initialConditions2
             except:
                 continue
-
+        
         return param,zparam,initialConditions
             
             
