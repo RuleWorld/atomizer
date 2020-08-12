@@ -89,6 +89,7 @@ class SBML2BNGL:
     def __init__(self, model, useID=True, replaceLocParams=True):
         
         self.bngModel = bngModel()
+        self.bngModel.useID = useID
 
         self.useID = useID
         self.replaceLocParams = replaceLocParams
@@ -1221,14 +1222,20 @@ class SBML2BNGL:
             compartments.append(units)
         for _,compartment in enumerate(self.model.getListOfCompartments()):
             compartmentInfo = self.__getRawCompartments(compartment)
+            comp_obj = self.bngModel.make_compartment()
             # ASS - removing "cell" as default compartment
             name = compartmentInfo[0]
+            # making the obj before adding
+            comp_obj.Id = name
+            comp_obj.dim = compartmentInfo[1]
+            comp_obj.size = compartmentInfo[2]
+            comp_obj.unit = units
             if name != compartmentInfo[3] and compartmentInfo[3] != '':
-                self.bngModel.add_compartment((name, compartmentInfo[1], compartmentInfo[2], compartmentInfo[3],units))
                 compartments.append("%s %d %s #%s" % (name, compartmentInfo[1], compartmentInfo[2], compartmentInfo[3]))
+                comp_obj.cmt = compartmentInfo[3]
             else:
-                self.bngModel.add_compartment((name, compartmentInfo[1], compartmentInfo[2], compartmentInfo[3],units))
                 compartments.append("%s %d %s" % (name, compartmentInfo[1], compartmentInfo[2]))
+            self.bngModel.add_compartment(comp_obj)
         return compartments
 
 
@@ -1283,6 +1290,9 @@ class SBML2BNGL:
                 else:
                     raise TranslationException(e.value + " during reaction processing")
 
+            # making the rule object
+            rule_obj = self.bngModel.make_rule()
+            rule_obj.parse_raw(rawRules)
             # Let's add our molecules
             for r in rawRules['reactants']:
                 if r[0] not in self.used_molecules:
@@ -1291,7 +1301,6 @@ class SBML2BNGL:
                 if p[0] not in self.used_molecules:
                     self.used_molecules.append(p[0])
         
-            # import ipdb;ipdb.set_trace()
             if len(rawRules['parameters']) > 0:
                 for parameter in rawRules['parameters']:
                     """
@@ -1306,24 +1315,31 @@ class SBML2BNGL:
                     parameters.append(curr_param)
                     parameterDict[parameter[0]] = parameter[1]
                     currParamConv[parameter[0]] = curr_param_name
+                    # add these to parameters in obj
+                    param_obj = self.bngModel.make_parameter()
+                    param_obj.Id = curr_param_name
+                    param_obj.val = parameter[1]
+                    param_obj.rxn_ind = index+1
+                    self.bngModel.add_parameter(param_obj)
             compartmentList = []
             compartmentList.extend([[self.__getRawCompartments(x)[0], self.__getRawCompartments(x)[2]] for x in self.model.getListOfCompartments()])
             threshold = 0
 
-            if rawRules['numbers'][0] > threshold  or rawRules['rates'][0] in translator:
+            if rule_obj.raw_num[0] > threshold  or rule_obj.raw_rates[0] in translator:
                 functionName = '%s%d()' % (functionTitle, index)
             else:
                 # append reactionNumbers to parameterNames
-                finalString = str(rawRules['rates'][0])
+                finalString = str(rule_obj.raw_rates[0])
                 for parameter in parameterDict:
                     finalString = re.sub(r'(\W|^)({0})(\W|$)'.format(parameter),
                                          r'\1{0}\3'.format('r{0}_{1}'.format(index + 1, parameter)),
                                          finalString)
                 functionName = finalString
-            if self.getReactions.functionFlag and 'delay' in rawRules['rates'][0]:
+            if self.getReactions.functionFlag and 'delay' in rule_obj.raw_rates[0]:
                 logMess('ERROR:SIM202', 'BNG cannot handle delay functions in function %s' % functionName)
-            if rawRules['reversible']:
-                if rawRules['numbers'][0] > threshold or rawRules['rates'][0] in translator:
+            if rule_obj.reversible:
+                if rule_obj.raw_num[0] > threshold or rule_obj.raw_rates[0] in translator:
+                    # TODO add these functions to bngModel
                     if self.getReactions.functionFlag:
                         # local parameter replacement flag
                         if self.replaceLocParams:
@@ -1339,14 +1355,16 @@ class SBML2BNGL:
                         else: 
                             functions.append(writer.bnglFunction(rawRules['rates'][1], functionName2, rawRules['products'],compartmentList, currParamConv, self.reactionDictionary))
                     self.reactionDictionary[rawRules['reactionID']] = '({0} - {1})'.format(functionName, functionName2)
-                    functionName = '{0},{1}'.format(functionName, functionName2)
+                    finalRateStr = '{0},{1}'.format(functionName, functionName2)
+                    rule_obj.rate_cts = (functionName,functionName2)
                 else:
                     finalString = str(rawRules['rates'][1])
                     for parameter in parameterDict:
                         finalString = re.sub(r'(\W|^)({0})(\W|$)'.format(parameter),
                                              r'\1{0}\3'.format('r{0}_{1}'.format(index + 1, parameter)),
                                              finalString)
-                    functionName = '{0},{1}'.format(functionName, finalString)
+                    finalRateStr = '{0},{1}'.format(functionName, finalString)
+                    rule_obj.rate_cts = (functionName,finalString)
 
             else:
 
@@ -1359,14 +1377,15 @@ class SBML2BNGL:
                         else:
                             functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'],compartmentList, currParamConv, self.reactionDictionary))
                     self.reactionDictionary[rawRules['reactionID']] = '{0}'.format(functionName)
-            #reactants = [x for x in rawRules[0] if x[0] not in self.boundaryConditionVariables]
-            #products = [x for x in rawRules[1] if x[0] not in self.boundaryConditionVariables]
+                finalRateStr = functionName
+                rule_obj.rate_cts = (functionName,)
+
             reactants = [x for x in rawRules['reactants']]
             products = [x for x in rawRules['products']]
             modifierComment = '#Modifiers({0})'.format(', '.join(rawRules['modifiers'])) if rawRules['modifiers'] else ''
 
             #### ADD RXN SEP HERE #### 
-            if rawRules['split_rxn']:
+            if rule_obj.raw_splt:
                 ctr = 0
                 # Now we write a single reaction for each
                 # member with modified reaction rate constants
@@ -1375,14 +1394,24 @@ class SBML2BNGL:
                     r = reactant
                     stoi = r[1]
                     if int(stoi) != 1.0:
-                        nfunctionName = "-1*{}*({})".format(stoi, functionName)
+                        nRateStr = "-1*{}*({})".format(stoi, finalRateStr)
                     else:
-                        nfunctionName = "-1*({})".format(functionName)
+                        nRateStr = "-1*({})".format(finalRateStr)
                     nr = (r[0], 1.0, r[2])
                     # adjust reaction name
                     rxn_name = rawRules['reactionID']+"_reactants_" + str(ctr)
-                    rxn_str = writer.bnglReaction([], [nr], nfunctionName, self.tags, translator, (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),rawRules['reversible'], reactionName=rxn_name, comment=modifierComment)
+                    rxn_str = writer.bnglReaction([], [nr], nRateStr, self.tags, translator, (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),rawRules['reversible'], reactionName=rxn_name, comment=modifierComment)
                     reactions.append(rxn_str)
+                    # same thing for the model
+                    nrule_obj = self.bngModel.make_rule()
+                    nrule_obj.parse_raw(rawRules)
+                    nrule_obj.reversible = False
+                    nrule_obj.Id = rxn_name
+                    nrule_obj.rate_cts = (nRateStr,)
+                    nrule_obj.reactants = []
+                    nrule_obj.products = [nr]
+                    self.bngModel.add_rule(nrule_obj)
+                    # tick the ctr
                     ctr += 1
                 # then LHS
                 ctr = 0
@@ -1390,20 +1419,33 @@ class SBML2BNGL:
                     p = product 
                     stoi = p[1]
                     if int(stoi) != 1.0:
-                        nfunctionName = "{}*{}".format(stoi, functionName)
+                        nRateStr = "{}*{}".format(stoi, finalRateStr)
                     else:
-                        nfunctionName = "{}".format(functionName)
+                        nRateStr = "{}".format(finalRateStr)
                     np = (p[0], 1.0, p[2])
                     # adjust reaction name
                     rxn_name = rawRules['reactionID']+"_products_" + str(ctr)
-                    rxn_str = writer.bnglReaction([], [np], nfunctionName, self.tags, translator, (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),rawRules['reversible'], reactionName=rxn_name, comment=modifierComment)
+                    rxn_str = writer.bnglReaction([], [np], nRateStr, self.tags, translator, (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),rawRules['reversible'], reactionName=rxn_name, comment=modifierComment)
                     reactions.append(rxn_str)
+                    # same thing for the model
+                    nrule_obj = self.bngModel.make_rule()
+                    nrule_obj.parse_raw(rawRules)
+                    nrule_obj.reversible = False
+                    nrule_obj.Id = rxn_name
+                    nrule_obj.rate_cts = (nRateStr,)
+                    nrule_obj.reactants = []
+                    nrule_obj.products = [np]
+                    self.bngModel.add_rule(nrule_obj)
+                    # tick the ctr
                     ctr += 1
-                # import ipdb;ipdb.set_trace()
-                # import IPython;IPython.embed()
             #### END RXN SEP #### 
             else:
-                rxn_str = writer.bnglReaction(reactants, products, functionName, self.tags, translator,
+                # add the rule
+                rule_obj.reactants = reactants
+                rule_obj.products = products 
+                self.bngModel.add_rule(rule_obj)
+
+                rxn_str = writer.bnglReaction(reactants, products, finalRateStr, self.tags, translator,
                              (isCompartments or ((len(reactants) == 0 or len(products) == 0) and self.getReactions.__func__.functionFlag)),
                              rawRules['reversible'], reactionName=rawRules['reactionID'], comment=modifierComment)
             
@@ -1667,22 +1709,36 @@ class SBML2BNGL:
         nonamecounter = 0
         for arule in self.model.getListOfRules():
             rawArule = self.__getRawAssignmentRules(arule)
+
+            print("looping over assignment rules")
+            # import ipdb;ipdb.set_trace()
+            arule_obj = self.bngModel.make_arule()
+            arule_obj.parse_raw(rawArule)
             #rule has no name
-            if rawArule[0] == '':
+            if arule_obj.Id == '':
                 logMess('ERROR:SIM215','atomizer has found an sbml rule without a name. {0}'.format(rawArule[1:]))
                 rawArule = list(rawArule)
-                rawArule[0] = 'noname{0}'.format(nonamecounter)
+                new_arule_name = 'noname{0}'.format(nonamecounter)
+                rawArule[0] = new_arule_name
                 nonamecounter += 1
-            if rawArule[3] == True:
+                arule_obj.Id = new_arule_name
+            if arule_obj.isRate == True:
                 #it is a rate rule
                 if rawArule[0] in self.boundaryConditionVariables:
                     logMess('WARNING:SIM105','rate rules ({0}) are not properly supported in BioNetGen simulator'.format(rawArule[0]))
 
-                rateLaw1 = rawArule[1][0]
-                rateLaw2 = rawArule[1][1]
-                arules.append(writer.bnglFunction(rateLaw1, 'arRate{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
+                rateLaw1 = arule_obj.rates[0]
+                rateLaw2 = arule_obj.rates[1]
+                # TODO: Add to bngModel functions
+                arate_name = 'arRate{0}'.format(rawArule[0])
+                func_str = writer.bnglFunction(rateLaw1, arate_name,[],compartments=compartmentList, reactionDict=self.reactionDictionary)
+                arules.append(func_str)
+
                 if rateLaw2 != "0":
-                    arules.append(writer.bnglFunction(rateLaw2, 'armRate{0}'.format(rawArule[0]),[],compartments=compartmentList, reactionDict=self.reactionDictionary))
+                    # TODO: Add to bngModel functions
+                    armrate_name = 'armRate{0}'.format(rawArule[0])
+                    func2_str = writer.bnglFunction(rateLaw2, armrate_name,[],compartments=compartmentList, reactionDict=self.reactionDictionary)
+                    arules.append(func2_str)
 
                 # ASS2019 - I'm not sure if this is the right place to fix the tags. Basically, up until this point, the artificial reactions don't have tags. This results in the 0 <-> A type reactions to lack a compartment, leading to a non-functional BNGL file. I think the better solution might be during rule (SBML rule, not BNGL rule) parsing and update the parser/SBML2BNGL tags instead. 
                 try:
@@ -1726,9 +1782,6 @@ class SBML2BNGL:
                  and observables dict keeps track of that. however when a species is defined by an assignment function we wish to 
                  keep track of reference <speciesName> that points to a standard BNGL function
                 '''
-                #if rawArule[0] in observablesDict:
-                #    del observablesDict[rawArule[0]]
-
                 # it was originially defined as a zero parameter, so delete it from the parameter list definition                
                 if rawArule[0] in zRules:
                     # dont show assignment rules as parameters
@@ -1868,26 +1921,22 @@ class SBML2BNGL:
         for parameter in self.model.getListOfParameters():
             parameterSpecs = (parameter.getId(), parameter.getValue(), parameter.getConstant(), parameter.getUnits())
             #reserved keywords
+            param_obj = self.bngModel.make_parameter()
             if parameterSpecs[0] == 'e':
                 # TODO: raise a warning
-                # TODO: go from are to __e__
                 parameterSpecs = ('__e__', parameterSpecs[1])
             if parameterSpecs[1] == 0:
                 zparam.append(parameterSpecs[0])
-                self.bngModel.add_parameter(parameterSpecs)
             else:
-                """
-                if self.convertSubstanceUnits:
-                    newParameterSpecs = [parameterSpecs[0], self.convertToStandardUnits(parameterSpecs[1], self.unitDictionary[parameterSpecs[3]]), parameterSpecs[2], parameterSpecs[3]]
-                    parameters.append('{0} {1} #original units:{2}={3}'.format(newParameterSpecs[0], newParameterSpecs[1], newParameterSpecs[3],parameterSpecs[1]))
-
-                else:
-                """
                 if parameter.getUnits() != '':
                     parameters.append('{0} {1} #units:{2}'.format(parameterSpecs[0], parameterSpecs[1], parameter.getUnits()))
+                    param_obj.units = parameter.getUnits()
                 else:
                     parameters.append('{0} {1}'.format(parameterSpecs[0], parameterSpecs[1]))
-                self.bngModel.add_parameter(parameterSpecs)
+            param_obj.Id = parameterSpecs[0]
+            param_obj.val = parameterSpecs[1]
+            param_obj.cts = parameterSpecs[2]
+            self.bngModel.add_parameter(param_obj)
 
         return parameters, zparam
 
@@ -1900,6 +1949,7 @@ class SBML2BNGL:
         for compartment in self.model.getListOfCompartments():
             self.compartmentDict[compartment.getId()] = compartment.getSize()
         self.noCompartment = False
+        self.bngModel.noCompartment = False
         # Get all rawSpecies
         allRawSpecies = map(lambda x: self.getRawSpecies(x, parameters), self.model.getListOfSpecies())
         # Pull all used compartments in those speices and make a set
@@ -1933,6 +1983,11 @@ class SBML2BNGL:
                 d = {k: default_to_regular(v) for k, v in d.items()}
             return d
 
+        # gotta reset the bngModel everytime 
+        # this is called
+        self.bngModel.molecules = {}
+        self.bngModel.species = {}
+
         #find concentration units
         unitDefinitions = self.getUnitDefinitions()
 
@@ -1961,7 +2016,16 @@ class SBML2BNGL:
             compartmentDict[compartment.getId()] = compartment.getSize()
         unitFlag = True
         for species in self.model.getListOfSpecies():
+            # making molecule and seed species objs for 
+            # the obj based model
+            molec_obj = self.bngModel.make_molecule()
+            spec_obj = self.bngModel.make_species()
+            # 
             rawSpecies = self.getRawSpecies(species, parameters)
+            # letting the objs parse the rawSpecies
+            molec_obj.parse_raw(rawSpecies)
+            spec_obj.parse_raw(rawSpecies)
+
             if (rawSpecies['compartment'] != ''):
                 # ASS - First change for "noCompartments"
                 if self.noCompartment:
@@ -1986,9 +2050,8 @@ class SBML2BNGL:
                             annotationTemp.append('#^ {0}:{1} {2}'.format(header,qual, entry))
                      
                     # we'll add this to our model
+                    self.bngModel.add_molecule(molec_obj)
                     mtext = translator[rawSpecies['returnID']].str2()
-                    rawSpecies['atomizer_text'] = mtext
-                    self.bngModel.add_molecule(rawSpecies)
                     moleculesText.append(mtext)
 
                     if rawSpecies['returnID'] in speciesAnnotationInfo:
@@ -1996,31 +2059,33 @@ class SBML2BNGL:
                         del speciesAnnotationInfo[rawSpecies['returnID']]
             else:
                 # we'll add this to our model
+                self.bngModel.add_molecule(molec_obj)
                 mtext = rawSpecies['returnID'] + '()'
-                rawSpecies['atomizer_text'] = mtext
-                self.bngModel.add_molecule(rawSpecies)
                 moleculesText.append(mtext)
 
                 if rawSpecies['returnID'] in speciesAnnotationInfo:
                     annotationInfo['moleculeTypes'][rawSpecies['returnID']] = speciesAnnotationInfo[rawSpecies['returnID']]
                     del speciesAnnotationInfo[rawSpecies['returnID']]
 
+
             temp = '$' if rawSpecies['isConstant'] != 0 else ''
             tmp = translator[str(rawSpecies['returnID'])] if rawSpecies['returnID'] in translator \
                 else rawSpecies['returnID'] + '()'
-            # don't write if == 0 CHECK
+            # this determines the name to be written
             if rawSpecies['initialConcentration'] > 0 or rawSpecies['initialAmount'] > 0:
                 tmp2 = temp
                 if rawSpecies['identifier'] in self.tags:
                     tmp2 = (self.tags[rawSpecies['identifier']])
                 if rawSpecies['initialAmount'] > 0.0:
                     # Removing the compartment section if we are not using it
+                    # self.bngModel.add_species((tmp2,
                     if self.noCompartment:
                         speciesText.append('{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
                             rawSpecies['initialAmount'],rawSpecies['returnID'],rawSpecies['identifier']))
                     else:
                         speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
                             rawSpecies['initialAmount'],rawSpecies['returnID'],rawSpecies['identifier']))
+                    self.bngModel.add_species(spec_obj)
                 elif rawSpecies['initialConcentration'] > 0.0:
                     if self.isConversion:
                         # convert to molecule counts
@@ -2045,6 +2110,7 @@ class SBML2BNGL:
                                 speciesText.append('{0}:{1}{2} {3} # {4}mol/L * 6.022e23/mol *{7}L #{5} #{6}'.format(tmp2, temp, str(tmp), 
                                     newParameter,newParameterStr,rawSpecies['returnID'], rawSpecies['identifier'], compartmentSize, concentrationUnits))
                             unitFlag = False
+                            self.bngModel.add_species(spec_obj)
                         else:
                             if self.noCompartment:
                                 speciesText.append('{1}{2} {3} #original {4}{8}  #{5} #{6}'.format(tmp2, temp, str(tmp), 
@@ -2054,6 +2120,7 @@ class SBML2BNGL:
                                 speciesText.append('{0}:{1}{2} {3} #original {4}{8}  #{5} #{6}'.format(tmp2, temp, str(tmp), 
                                     newParameter,rawSpecies['initialConcentration'],rawSpecies['returnID'], 
                                     rawSpecies['identifier'], compartmentSize, concentrationUnits))
+                            self.bngModel.add_species(spec_obj)
                     else:
                         if self.noCompartment:
                             speciesText.append('{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
@@ -2061,7 +2128,7 @@ class SBML2BNGL:
                         else:
                             speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
                                 rawSpecies['initialConcentration'],rawSpecies['returnID'],rawSpecies['identifier']))
-
+                        self.bngModel.add_species(spec_obj)
                 elif rawSpecies['isConstant']:
                     if self.noCompartment:
                         speciesText.append('{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 0,
@@ -2069,13 +2136,16 @@ class SBML2BNGL:
                     else:
                         speciesText.append('{0}:{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 0,
                             rawSpecies['returnID'],rawSpecies['identifier']))
+                    self.bngModel.add_species(spec_obj)
             if rawSpecies['returnID'] == 'e':
                 modifiedName = '__e__'
             else:
                 modifiedName = rawSpecies['returnID']
+
             # user defined zero molecuels are not included in the observable list
             if str(tmp) != '0':
                 if rawSpecies['compartment'] != '' and len(list(self.model.getListOfCompartments())) > 1:
+
                     self.obs_names.append(modifiedName)
                     observablesText.append('Species {0}_{3} @{3}:{1} #{2}'.format(modifiedName, tmp,rawSpecies['name'],rawSpecies['compartment']))
                     observablesDict[modifiedName] = '{0}_{1}'.format(modifiedName,rawSpecies['compartment'])
@@ -2085,7 +2155,13 @@ class SBML2BNGL:
                     observablesText.append('Species {0} {1} #{2}'.format(modifiedName, tmp,rawSpecies['name']))
                     observablesDict[modifiedName] = '{0}'.format(modifiedName)
                 speciesTranslationDict[rawSpecies['identifier']] = tmp
+            # add the observable in the model
+            obs_obj = self.bngModel.make_observable()
+            obs_obj.parse_raw(rawSpecies)
+            obs_obj.Id = modifiedName
+            self.bngModel.add_observable(obs_obj)
 
+        # TODO: make sure this is replicated in bngModel
         sorted(rawSpeciesName,key=len)
         for species in rawSpeciesName:
             if translator[species].getSize()==1 and translator[species].molecules[0].name not in names:
@@ -2095,8 +2171,6 @@ class SBML2BNGL:
         annotationInfo['species'] = speciesAnnotationInfo
 
         self.speciesMemory = []
-
-        # import IPython,sys;IPython.embed();sys.exit()
 
         return list(set(moleculesText)),speciesText,observablesText,speciesTranslationDict, observablesDict, annotationInfo
 
@@ -2115,26 +2189,27 @@ class SBML2BNGL:
             pparam[element] = (0,None)
         for species in self.model.getListOfSpecies():
             tmp = self.getRawSpecies(species)
-
-            #name = species.getName() if species.isSetName() else species.getId()
             name = tmp['returnID']
-            constant = '$' if species.getConstant() or species.getBoundaryCondition() else ''
-            if name in  translator:
+            constant = '$' if species.getConstant() else ''
+            if name in translator:
                 if self.noCompartment:
                     extendedStr = '{1}{0}'.format(translator[name],constant)
                 else:
                     extendedStr = '@{0}:{2}{1}'.format(species.getCompartment(),translator[name],constant)
             else:
+                std_name = standardizeName(tmp['name']) +"()"
                 # ASS - deal with no compartment case
                 if self.noCompartment:
-                    extendedStr = '{1}{0}()'.format(standardizeName(tmp['name']),constant)
+                    extendedStr = '{1}{0}()'.format(std_name,constant)
                 else:
-                    extendedStr = '@{0}:{2}{1}()'.format(tmp['compartment'],standardizeName(tmp['name']),constant)
+                    extendedStr = '@{0}:{2}{1}()'.format(tmp['compartment'],std_name,constant)
             initConc = species.getInitialConcentration() if \
             species.isSetInitialConcentration() else species.getInitialAmount()
             pparam[species.getId()] = (initConc,extendedStr)
         from copy import copy
         for initialAssignment in self.model.getListOfInitialAssignments():
+            print("in getInitialAssignments")
+            import ipdb;ipdb.set_trace()
             symbol = initialAssignment.getSymbol()
             math = libsbml.formulaToString(initialAssignment.getMath())
             for element in pparam:
@@ -2154,12 +2229,16 @@ class SBML2BNGL:
                 zparam = zparam2
             '''
             try:
+                # TODO: Replicate this in bngModel
+                print("In getInitialAssignments")
+                print("check pparam[symbol]/param2/initialConditions2")
+                import IPython;IPython.embed()
+                # TODO: Replicate this in bngModel
                 if pparam[symbol][1] == None:
                     param2.append('{0} {1}'.format(symbol,math))
                     param = param2
                     zparam = zparam2
                 else:
-                    
                     initialConditions2 = [x for x in initialConditions if '#{0}'.format(symbol) not in x]
                     initialConditions2.append('{0} {1} #{2}'.format(pparam[symbol][1],math,symbol))
                     initialConditions = initialConditions2

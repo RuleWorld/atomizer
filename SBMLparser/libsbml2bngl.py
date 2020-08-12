@@ -761,10 +761,9 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             rawSpecies[rawtemp['identifier']] = rawtemp
     parser.reset()
 
+    parser.bngModel.translator = translator
     molecules, initialConditions, observables, speciesDict, \
         observablesDict, annotationInfo = parser.getSpecies(translator, [x.split(' ')[0] for x in param])
-
-    # import IPython;IPython.embed()
 
     # finally, adjust parameters and initial concentrations according to whatever  initialassignments say
     param, zparam, initialConditions = parser.getInitialAssignments(translator, param, zparam, molecules, initialConditions)
@@ -786,6 +785,9 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
                                                                    atomize=atomize, parameterFunctions=artificialObservables, database=database)
 
     functions.extend(rateFunctions)
+
+    # print("in libsbml, done with major bits")
+    # import IPython;IPython.embed()
 
     for element in nonzparam:
         param.append('{0} 0'.format(element))
