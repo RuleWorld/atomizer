@@ -312,7 +312,7 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
     #log for log 10
     finalString = re.sub(r'(\W|^)log\(',r'\1 ln(',finalString)
     #reserved keyword: e
-    finalString = re.sub(r'(\W|^)(e)(\W|$)',r'\g<1>are\g<3>',finalString)
+    finalString = re.sub(r'(\W|^)(e)(\W|$)',r'\g<1>__e__\g<3>',finalString)
     #changing ceil
     #avoiding variables whose name starts with a number
     

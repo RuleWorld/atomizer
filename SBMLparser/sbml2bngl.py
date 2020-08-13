@@ -90,6 +90,7 @@ class SBML2BNGL:
         
         self.bngModel = bngModel()
         self.bngModel.useID = useID
+        self.bngModel.replaceLocParams = replaceLocParams
 
         self.useID = useID
         self.replaceLocParams = replaceLocParams
@@ -945,8 +946,6 @@ class SBML2BNGL:
             # check for non-integer stoichiometry
             stoi = sum([r[1] for r in rReactant]) + sum([l[1] for l in rProduct])
             if stoi != int(stoi):
-                print("non integer stoi {}".format(stoi))
-                print(rReactant, rProduct)
                 non_integer_stoi = True
             else:
                 non_integer_stoi = False
@@ -1292,6 +1291,7 @@ class SBML2BNGL:
 
             # making the rule object
             rule_obj = self.bngModel.make_rule()
+            rule_obj.rule_ind = index+1
             rule_obj.parse_raw(rawRules)
             # Let's add our molecules
             for r in rawRules['reactants']:
@@ -1337,23 +1337,41 @@ class SBML2BNGL:
                 functionName = finalString
             if self.getReactions.functionFlag and 'delay' in rule_obj.raw_rates[0]:
                 logMess('ERROR:SIM202', 'BNG cannot handle delay functions in function %s' % functionName)
+            fobj = self.bngModel.make_function()
+            fobj.Id = functionName
+            fobj.rule_ptr = rule_obj
+            # import ipdb;ipdb.set_trace()
             if rule_obj.reversible:
                 if rule_obj.raw_num[0] > threshold or rule_obj.raw_rates[0] in translator:
-                    # TODO add these functions to bngModel
+                    fobj.definition = rule_obj.raw_rates[0]
                     if self.getReactions.functionFlag:
                         # local parameter replacement flag
                         if self.replaceLocParams:
-                            functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'], compartmentList, parameterDict, self.reactionDictionary))
+                            fstr = writer.bnglFunction(rule_obj.raw_rates[0], functionName, rawRules['reactants'], compartmentList, parameterDict, self.reactionDictionary)
+                            functions.append(fstr)
+                            fobj.local_dict = parameterDict
+                            self.bngModel.add_function(fobj)
                         else:
-                            functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'], compartmentList, currParamConv, self.reactionDictionary))
-                if rawRules['numbers'][1] > threshold  or rawRules['rates'][1] in translator:
+                            fstr = writer.bnglFunction(rule_obj.raw_rates[0], functionName, rawRules['reactants'], compartmentList, currParamConv, self.reactionDictionary)
+                            functions.append(fstr)
+                            fobj.local_dict = currParamConv
+                            self.bngModel.add_function(fobj)
+                if rawRules['numbers'][1] > threshold  or rule_obj.raw_rates[1] in translator:
                     functionName2 = '%s%dm()' % (functionTitle, index)
+                    fobj_2 = self.bngModel.make_function()
+                    fobj_2.Id = functionName2
+                    fobj_2.rule_ptr = rule_obj
+                    fobj_2.definition = rule_obj.raw_rates[1]
                     if self.getReactions.functionFlag:
                         # local parameter replacement flag
                         if self.replaceLocParams:
-                            functions.append(writer.bnglFunction(rawRules['rates'][1], functionName2, rawRules['products'],compartmentList, parameterDict, self.reactionDictionary))
+                            functions.append(writer.bnglFunction(rule_obj.raw_rates[1], functionName2, rule_obj.raw_prod,compartmentList, parameterDict, self.reactionDictionary))
+                            fobj_2.local_dict = parameterDict 
+                            self.bngModel.add_function(fobj_2)
                         else: 
-                            functions.append(writer.bnglFunction(rawRules['rates'][1], functionName2, rawRules['products'],compartmentList, currParamConv, self.reactionDictionary))
+                            functions.append(writer.bnglFunction(rule_obj.raw_rates[1], functionName2, rule_obj.raw_prod,compartmentList, currParamConv, self.reactionDictionary))
+                            fobj_2.local_dict = currParamConv
+                            self.bngModel.add_function(fobj_2)
                     self.reactionDictionary[rawRules['reactionID']] = '({0} - {1})'.format(functionName, functionName2)
                     finalRateStr = '{0},{1}'.format(functionName, functionName2)
                     rule_obj.rate_cts = (functionName,functionName2)
@@ -1367,15 +1385,18 @@ class SBML2BNGL:
                     rule_obj.rate_cts = (functionName,finalString)
 
             else:
-
                 if rawRules['numbers'][0] > threshold or rawRules['rates'][0] in translator:
-
+                    fobj.definition = rule_obj.raw_rates[0]
                     if self.getReactions.functionFlag:
                         # local parameter replacement flag
                         if self.replaceLocParams:
                             functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'],compartmentList, parameterDict, self.reactionDictionary))
+                            fobj.local_dict = parameterDict
+                            self.bngModel.add_function(fobj)
                         else:
                             functions.append(writer.bnglFunction(rawRules['rates'][0], functionName, rawRules['reactants'],compartmentList, currParamConv, self.reactionDictionary))
+                            fobj.local_dict = currParamConv
+                            self.bngModel.add_function(fobj)
                     self.reactionDictionary[rawRules['reactionID']] = '{0}'.format(functionName)
                 finalRateStr = functionName
                 rule_obj.rate_cts = (functionName,)
@@ -1710,7 +1731,7 @@ class SBML2BNGL:
         for arule in self.model.getListOfRules():
             rawArule = self.__getRawAssignmentRules(arule)
 
-            print("looping over assignment rules")
+            # print("looping over assignment rules")
             # import ipdb;ipdb.set_trace()
             arule_obj = self.bngModel.make_arule()
             arule_obj.parse_raw(rawArule)
@@ -1776,7 +1797,7 @@ class SBML2BNGL:
                             and a rate rule, verify behavior".format(element))
                             removeParameters.append(element)
             # it is an assigment rule
-            elif rawArule[2] is True:
+            elif arule_obj.isAssignment:
                 '''
                  normal species observables references in functions keep the format <speciesName>_<compartment> in function references,
                  and observables dict keeps track of that. however when a species is defined by an assignment function we wish to 
@@ -1818,6 +1839,7 @@ class SBML2BNGL:
                         self.arule_map[rawArule[0]] = name+"_ar"
                         # TODO: Let's store what we know are assignment rules. We can maybe assume that, if something has an assignment rule, it can't in turn be in a reaction? If this is wrong, we can't model this anyway, so we should probably just make an assumption and let people know.
                         self.only_assignment_dict[name] = name+"_ar"
+                        self.bngModel.add_arule(arule_obj)
                         continue
                     else: 
                         # if not boundary but is a species, Jose
@@ -1834,6 +1856,7 @@ class SBML2BNGL:
                         self.only_assignment_dict[name] = name+"_ar"
                         if name in observablesDict:
                             observablesDict[name] = name+"_ar"
+                        self.bngModel.add_arule(arule_obj)
                         continue
                 else:
                     #check if it is defined as an observable
@@ -1880,6 +1903,9 @@ class SBML2BNGL:
                     if re.search('^{0}\s'.format(rawArule[0]),parameter):
                         print '////',rawArule[0]
             '''
+            # we can't decide any of this here, we need the 
+            # full model setup before deciding
+            self.bngModel.add_arule(arule_obj)
         return aParameters, arules, zRules, artificialReactions, removeParameters, artificialObservables
 
     def convertToStandardUnits(self, parameterValue, unitDefinition):
@@ -2166,7 +2192,13 @@ class SBML2BNGL:
         for species in rawSpeciesName:
             if translator[species].getSize()==1 and translator[species].molecules[0].name not in names:
                 names.append(translator[species].molecules[0].name)
-                moleculesText.append(translator[species].str2())
+                mtext = translator[species].str2()
+                moleculesText.append(mtext)
+
+                molec_obj = self.bngModel.make_molecule()
+                molec_obj.Id = species
+                molec_obj.name = str(translator[species])
+                self.bngModel.add_molecule(molec_obj)
 
         annotationInfo['species'] = speciesAnnotationInfo
 

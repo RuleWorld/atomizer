@@ -786,8 +786,8 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     functions.extend(rateFunctions)
 
-    # print("in libsbml, done with major bits")
-    # import IPython;IPython.embed()
+    print("in libsbml, done with major bits")
+    import IPython;IPython.embed()
 
     for element in nonzparam:
         param.append('{0} 0'.format(element))
