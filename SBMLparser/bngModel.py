@@ -89,10 +89,11 @@ class Species:
         if self.noCompartment or self.compartment == "":
             txt = "{}{} {} #{} #{}".format(mod, trans_id, self.val, self.raw['returnID'], self.raw['identifier'])
         else:
-            # if we have a translation we use the second string
-            # associated with the species for this section
-            if hasattr(trans_id, "str2"):
-                trans_id = trans_id.str2()
+            # removing identical compartments because 
+            # we'll be usgin @comp: notation
+            comp_str = "@{}".format(self.compartment)
+            if comp_str in str(trans_id):
+                trans_id = str(trans_id).replace(comp_str, "")
             txt = "@{}:{}{} {} #{} #{}".format(self.compartment, mod, trans_id, self.val, self.raw['returnID'], self.raw['identifier'])
         return txt
 
@@ -131,8 +132,11 @@ class Observable:
         if self.noCompartment or self.compartment == "":
             txt += " {0} {1} #{2}".format(obs_name, pattern, self.name)
         else:
-            if hasattr(pattern, "str2"):
-                pattern = pattern.str2()
+            # removing identical compartments because 
+            # we'll be usgin @comp: notation
+            comp_str = "@{}".format(self.compartment)
+            if comp_str in str(pattern):
+                pattern = str(pattern).replace(comp_str, "")
             txt += " {0} @{2}:{1} #{3}".format(obs_name, pattern, self.compartment, self.name)
         return txt
 
