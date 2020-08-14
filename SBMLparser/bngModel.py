@@ -459,12 +459,21 @@ class bngModel:
     def consolidate_molecules(self):
         # potentially remove unused ones
         # or EmptySet and similar useless ones
-        to_remove = []
+        turn_param = []
         for molec in self.molecules:
-            if molec not in self.molecule_mod_dict:
-                to_remove.append(molec)
-        for molec in to_remove:
+            if molec not in self.molecule_mod_dict \
+                    and self.molecules[molec].isConstant:
+                turn_param.append(molec)
+                if molec in self.observables:
+                    self.observables.pop(molec)
+                if molec in self.species:
+                    self.species.pop(molec)
+        for molec in turn_param:
             m = self.molecules.pop(molec)
+            param = self.make_parameter()
+            param.Id = m.Id
+            param.val = m.initConc if m.initConc > 0 else m.initAmount
+            self.add_parameter(param)
 
     def consolidate_observables(self):
         # if we are using compartments, we need 
@@ -476,7 +485,7 @@ class bngModel:
 
     def consolidate(self):
         self.consolidate_arules()
-        # self.consolidate_molecules()
+        self.consolidate_molecules()
         self.consolidate_observables()
         self.reorder_functions()
 
