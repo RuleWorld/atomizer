@@ -27,8 +27,8 @@ class Compartment:
         self.unit = None
 
     def __str__(self):
-        if cmt != '':
-            txt = "{} {} {} #{}".format(self.Id, self.dim, self.size)
+        if self.cmt is not None and self.cmt != '':
+            txt = "{} {} {} #{}".format(self.Id, self.dim, self.size, self.cmt)
         else:
             txt = "{} {} {}".format(self.Id, self.dim, self.size)
         return txt
@@ -48,7 +48,7 @@ class Molecule:
         self.isConstant = raw['isConstant']
         self.isBoundary = raw['isBoundary']
         self.compartment = raw['compartment']
-        self.name = raw['name']
+        self.name = raw['name'].replace(" ","")
         self.identifier = raw['identifier']
 
     def __str__(self):
@@ -75,7 +75,7 @@ class Species:
         self.isConstant = raw['isConstant']
         self.isBoundary = raw['isBoundary']
         self.compartment = raw['compartment']
-        self.name = raw['name']
+        self.name = raw['name'].replace(" ","")
         self.identifier = raw['identifier']
         if self.initAmount > 0:
             self.val = self.initAmount
@@ -89,6 +89,10 @@ class Species:
         if self.noCompartment or self.compartment == "":
             txt = "{}{} {} #{} #{}".format(mod, trans_id, self.val, self.raw['returnID'], self.raw['identifier'])
         else:
+            # if we have a translation we use the second string
+            # associated with the species for this section
+            if hasattr(trans_id, "str2"):
+                trans_id = trans_id.str2()
             txt = "@{}:{}{} {} #{} #{}".format(self.compartment, mod, trans_id, self.val, self.raw['returnID'], self.raw['identifier'])
         return txt
 
@@ -111,16 +115,25 @@ class Observable:
         self.isConstant = raw['isConstant']
         self.isBoundary = raw['isBoundary']
         self.compartment = raw['compartment']
-        self.name = raw['name']
+        self.name = raw['name'].replace(" ","")
         self.identifier = raw['identifier']
+
+    def get_obs_name(self):
+        if self.noCompartment or self.compartment == "":
+            return self.Id
+        else:
+            return "{0}_{1}".format(self.Id, self.compartment)
 
     def __str__(self):
         txt = self.type
+        obs_name = self.get_obs_name()
         pattern = self.translator[self.raw['returnID']] if self.Id in self.translator else self.raw['returnID']+"()"
         if self.noCompartment or self.compartment == "":
-            txt += " {0} {1} #{2}".format(self.Id, pattern, self.name)
+            txt += " {0} {1} #{2}".format(obs_name, pattern, self.name)
         else:
-            txt += " {0}_{2} @{2}:{1} #{3}".format(self.Id, pattern, self.compartment, self.name)
+            if hasattr(pattern, "str2"):
+                pattern = pattern.str2()
+            txt += " {0} @{2}:{1} #{3}".format(obs_name, pattern, self.compartment, self.name)
         return txt
 
     def __repr__(self):
@@ -143,12 +156,11 @@ class Function:
         return "r{}_{}".format(rind, pname)
 
     def __str__(self):
-        # TODO: implement parameter replacement here
-        # now we have a pointer to the rule itself, we can 
-        # use that to resolve the parameter values, we can 
-        # link to the overall model to get the values there
-        # or we can just re-generate the local parameter names
-        # and use those
+        # TODO: Replace species names with observable names
+        # in function definitions 
+        # TODO: Implement function scrubbing, replace SBML conventions
+        # with BNGL conventions
+
         fdef = self.definition
         if self.replaceLocParams:
             # check possible places, local dict first
@@ -280,6 +292,7 @@ class bngModel:
         self.functions = {}
         self.metaString = ""
         self.translator = {}
+        self.obs_map = {}
         self.molecule_mod_dict = {}
         self.noCompartment = None
         self.useID = False
@@ -326,6 +339,13 @@ class bngModel:
             txt += "begin functions\n"
             for func in self.functions.values():
                 func.replaceLocParams = self.replaceLocParams
+                # we need to update the local dictionary
+                # with potential observable name changes
+                if len(self.obs_map) > 1:
+                    if func.local_dict is not None:
+                        func.local_dict.update(self.obs_map)
+                    else:
+                        func.local_dict = self.obs_map
                 txt += "  " + str(func) + "\n"
             txt += "end functions\n"
 
@@ -353,6 +373,7 @@ class bngModel:
            into a function which also requires a modification
            of any reaction rules the species is associated with
         '''
+        # import ipdb;ipdb.set_trace()
         for arule in self.arules.values():
             # first one is to check parameters
             # import IPython;IPython.embed()
@@ -432,6 +453,8 @@ class bngModel:
                 pass
 
     def consolidate_molecules(self):
+        # potentially remove unused ones
+        # or EmptySet and similar useless ones
         to_remove = []
         for molec in self.molecules:
             if molec not in self.molecule_mod_dict:
@@ -439,9 +462,19 @@ class bngModel:
         for molec in to_remove:
             m = self.molecules.pop(molec)
 
+    def consolidate_observables(self):
+        # if we are using compartments, we need 
+        # to adjust names in functions to match 
+        # with new observable names
+        for obs in self.observables:
+            obs_obj = self.observables[obs]
+            self.obs_map[obs_obj.Id] = obs_obj.get_obs_name()
+
     def consolidate(self):
         self.consolidate_arules()
         # self.consolidate_molecules()
+        self.consolidate_observables()
+        self.reorder_functions()
 
     def reorder_functions(self):
         '''
