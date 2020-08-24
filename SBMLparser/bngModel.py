@@ -1,4 +1,4 @@
-import re 
+import re, pyparsing, sympy
 
 class Parameter:
     def __init__(self):
@@ -39,6 +39,11 @@ class Compartment:
 class Molecule:
     def __init__(self):
         self.translator = {}
+        self.initConc = -1
+        self.initAmount = -1
+        self.isConstant = False
+        self.isBoundary = False
+        self.compartment = None
 
     def parse_raw(self, raw):
         self.raw = raw
@@ -191,9 +196,155 @@ class Function:
         return str(self)
 
     def adjust_func_def(self,fdef):
-        # TODO: All function definitions has to be adjusted to 
-        # work with BNGL. E.g. switching log to ln and many more
-        # adjustments 
+        # if this function is related to a rule, we'll pull all the 
+        # relevant info
+        if self.rule_ptr is not None:
+            #TODO: pull info
+            # react/prod/comp
+            pass
+
+        # This is stuff ported from bnglWriter
+        # deals with comparison operators
+        def compParse(match):
+            translator = {'gt':'>','lt':'<','and':'&&','or':'||','geq':'>=','leq':'<=','eq':'==','neq':'!='}
+            exponent = match.group(3)
+            operator = translator[match.group(1)]
+            return '{0} {1} {2}'.format(match.group(2),operator,exponent)
+
+        def changeToBNGL(functionList,rule,function):
+            oldrule = ''
+            #if the rule contains any mathematical function we need to reformat
+            while any([re.search(r'(\W|^)({0})(\W|$)'.format(x),rule) != None for x in functionList]) and (oldrule != rule):
+                oldrule = rule
+                for x in functionList:
+                    rule  = re.sub('({0})\(([^,]+),([^)]+)\)'.format(x),function,rule)
+                if rule == oldrule:
+                    logMess('ERROR:TRS001','Malformed pow or root function %s' % rule)
+            return rule
+          
+        def constructFromList(argList,optionList):
+            parsedString = ''
+            idx = 0
+            translator = {'gt':'>','lt':'<','and':'&&','or':'||','geq':'>=','leq':'<=','eq':'=='}
+            while idx < len(argList):
+                if type(argList[idx]) is list:
+                    parsedString += '(' + constructFromList(argList[idx],optionList) + ')'
+                elif argList[idx] in optionList:
+                    if argList[idx] == 'ceil':
+                        parsedString += 'min(rint(({0}) + 0.5),rint(({0}) + 1))'.format(constructFromList(argList[idx+1],optionList))
+                        idx += 1
+                    elif argList[idx] == 'floor':
+                        parsedString += 'min(rint(({0}) -0.5),rint(({0}) + 0.5))'.format(constructFromList(argList[idx+1],optionList))
+                        idx += 1
+                    elif argList[idx] in ['pow']:
+                        index = rindex(argList[idx+1],',')
+                        parsedString += '(('+ constructFromList(argList[idx+1][0:index],optionList) + ')' 
+                        parsedString += ' ^ '  + '(' + constructFromList(argList[idx+1][index+1:] ,optionList) + '))'
+                        idx += 1
+                    elif argList[idx] in ['sqr','sqrt']:
+                        tag = '1/' if argList[idx] == 'sqrt' else ''
+                        parsedString += '((' + constructFromList(argList[idx+1],optionList) + ') ^ ({0}2))'.format(tag)
+                        idx += 1
+                    elif argList[idx] == 'root':
+                        index = rindex(argList[idx+1],',')
+                        tmp =  '1/('+ constructFromList(argList[idx+1][0:index],optionList) + '))' 
+                        parsedString += '((' + constructFromList(argList[idx+1][index+1:] ,optionList) + ') ^ ' + tmp
+                        idx += 1
+                    elif argList[idx] == 'piecewise':
+                        index1 = argList[idx+1].index(',')
+                        try:
+                            index2 = argList[idx+1][index1+1:].index(',') + index1+1
+                            try:
+                                index3 = argList[idx+1][index2+1:].index(',') + index2+1
+                            except ValueError:
+                                index3 = -1
+                        except ValueError:
+                            parsedString += constructFromList([argList[idx+1][index1+1:]],optionList)
+                            index2 = -1
+                        if index2 != -1:
+                            condition = constructFromList([argList[idx+1][index1+1:index2]],optionList)
+                            result = constructFromList([argList[idx+1][:index1]],optionList)
+                            if index3 == -1:
+                                result2 = constructFromList([argList[idx+1][index2+1:]],optionList)
+                            else:
+                                result2 = constructFromList(['piecewise', argList[idx+1][index2+1:]],optionList)
+                            parsedString += 'if({0},{1},{2})'.format(condition,result,result2)
+                        idx+=1
+                    elif argList[idx] in ['and', 'or']:
+                        symbolDict = {'and':' && ','or':' || '}
+                        indexArray = [-1]
+                        elementArray = []
+                        for idx2,element in enumerate(argList[idx+1]):
+                            if element ==',':
+                                indexArray.append(idx2)
+                        indexArray.append(len(argList[idx+1]))
+                        tmpStr = argList[idx+1]
+                        for idx2,_ in enumerate(indexArray[0:-1]):
+                            elementArray.append(constructFromList(tmpStr[indexArray[idx2]+1:indexArray[idx2+1]],optionList))
+                        parsedString += symbolDict[argList[idx]].join(elementArray)
+                        idx+=1
+                    elif argList[idx] == 'lambda':
+                        tmp = '('
+                        try:
+                            upperLimit = rindex(argList[idx+1],',')
+                        except ValueError:
+                            idx += 1
+                            continue
+                        parsedParams = []
+                        for x in argList[idx+1][0:upperLimit]:
+                            if x == ',':
+                                tmp += ', '
+                            else:
+                                tmp += 'param_' + x
+                                parsedParams.append(x)
+                        tmp2 = ') = ' + constructFromList(argList[idx+1][rindex(argList[idx+1],',')+1:],optionList)
+                        for x in parsedParams:
+                            while re.search(r'(\W|^)({0})(\W|$)'.format(x),tmp2) != None:
+                                tmp2 = re.sub(r'(\W|^)({0})(\W|$)'.format(x),r'\1param_\2 \3',tmp2)
+                        idx+= 1
+                        parsedString += tmp + tmp2
+                else:
+                    parsedString += argList[idx]
+                idx += 1
+            return parsedString
+
+        # This is where the changes happen
+        # comparison operators sorted here
+        fdef = changeToBNGL(['gt','lt','leq','geq','eq'],fdef,compParse)
+            
+        contentRule = pyparsing.Word(pyparsing.alphanums + '_') | ',' | '.' | '+' | '-' | '*' | '/' | '^' | '&' | '>' | '<' | '=' | '|' 
+        parens = pyparsing.nestedExpr( '(', ')', content=contentRule)
+        finalString = ''
+        
+        if any([re.search(r'(\W|^)({0})(\W|$)'.format(x),fdef) != None for x in ['ceil','floor','pow','sqrt','sqr','root','and','or']]):
+            argList = parens.parseString('('+ fdef + ')').asList()
+            fdef = constructFromList(argList[0],['floor','ceil','pow','sqrt','sqr','root','and','or'])
+        
+        while 'piecewise' in fdef:
+            argList = parens.parseString('('+ fdef + ')').asList()
+            fdef = constructFromList(argList[0],['piecewise'])
+        #remove references to lambda functions
+        if 'lambda(' in fdef:
+            lambdaList =  parens.parseString('(' + fdef + ')')
+            functionBody =  constructFromList(lambdaList[0].asList(),['lambda'])
+            fdef =  '{0}{1}'.format(self.Id,functionBody)
+        
+        #change references to time for time()    
+        while re.search(r'(\W|^)inf(\W|$)',fdef) != None:
+            fdef = re.sub(r'(\W|^)(inf)(\W|$)',r'\1 1e20 \3',fdef)
+
+        #combinations '+ -' break bionetgen 
+        fdef = re.sub(r'(\W|^)([-])(\s)+',r'\1-',fdef)
+        #pi
+        fdef = re.sub(r'(\W|^)(pi)(\W|$)',r'\g<1>3.1415926535\g<3>',fdef)
+        #log for log 10
+        fdef = re.sub(r'(\W|^)log\(',r'\1 ln(',fdef)
+        #reserved keyword: e
+        fdef = re.sub(r'(\W|^)(e)(\W|$)',r'\g<1>__e__\g<3>',fdef)
+        # TODO: Check if we need to replace local parameters
+        #change references to local parameters
+        # for parameter in parameterDict:
+        #     finalString = re.sub(r'(\W|^)({0})(\W|$)'.format(parameter),r'\g<1>{0}\g<3>'.format(parameterDict[parameter]),finalString)
         return fdef
 
 class Rule:
@@ -288,19 +439,22 @@ class bngModel:
         self.parameters = {}
         self.compartments = {}
         self.molecules = {}
-        self.molecule_ids = {}
         self.species = {}
         self.observables = {}
         self.rules = {}
         self.arules = {}
         self.functions = {}
+        # 
         self.metaString = ""
+        self.molecule_ids = {}
         self.translator = {}
         self.obs_map = {}
         self.molecule_mod_dict = {}
         self.noCompartment = None
         self.useID = False
         self.replaceLocParams = False
+        self.all_syms = None
+        self.function_order = None
 
     def __str__(self):
         txt = self.metaString
@@ -341,16 +495,29 @@ class bngModel:
 
         if len(self.functions) > 0:
             txt += "begin functions\n"
-            for func in self.functions.values():
-                func.replaceLocParams = self.replaceLocParams
-                # we need to update the local dictionary
-                # with potential observable name changes
-                if len(self.obs_map) > 1:
-                    if func.local_dict is not None:
-                        func.local_dict.update(self.obs_map)
-                    else:
-                        func.local_dict = self.obs_map
-                txt += "  " + str(func) + "\n"
+            if self.function_order is None:
+                for func in self.functions.values():
+                    func.replaceLocParams = self.replaceLocParams
+                    # we need to update the local dictionary
+                    # with potential observable name changes
+                    if len(self.obs_map) > 1:
+                        if func.local_dict is not None:
+                            func.local_dict.update(self.obs_map)
+                        else:
+                            func.local_dict = self.obs_map
+                    txt += "  " + str(func) + "\n"
+            else:
+                for fkey in self.function_order:
+                    func = self.functions[fkey]
+                    func.replaceLocParams = self.replaceLocParams
+                    # we need to update the local dictionary
+                    # with potential observable name changes
+                    if len(self.obs_map) > 1:
+                        if func.local_dict is not None:
+                            func.local_dict.update(self.obs_map)
+                        else:
+                            func.local_dict = self.obs_map
+                    txt += "  " + str(func) + "\n"
             txt += "end functions\n"
 
         txt += "begin reaction rules\n"
@@ -494,7 +661,68 @@ class bngModel:
         this one is to make sure the functions are reordered
         correctly, should be ported from the original codebase
         '''
-        pass
+        # initialize dependency graph
+        # import ipdb;ipdb.set_trace()
+        func_names = {}
+        dep_dict = {}
+        for fkey in self.functions:
+            func = self.functions[fkey]
+            # this finds the pure function name 
+            # with or without parans
+            ma = re.search(r'(\W|^)(\w*)(\(*)(\w*)(\)*)(\W|$)',fkey)
+            pure_name = ma.group(2)
+            func_names[pure_name] = func.Id
+            if "fRate" not in func.Id:
+                dep_dict[func.Id] = []
+        # make dependency graph between funcs only
+        func_order = []
+        unparsed = []
+        frates = []
+        func_dict = {}
+        # Let's replace and build dependency map
+        for fkey in self.functions:
+            func = self.functions[fkey]
+            f = func.definition
+            try:
+                fs = sympy.sympify(f, locals=self.all_syms)
+            except:
+                # Can't parse this func
+                if fkey.startswith("fRate"):
+                    frates.append(fkey)
+                else:
+                    unparsed.append(fkey)
+                continue
+            func_dict[fkey] = fs
+            # need to build a dependency graph to figure out what to 
+            # write first
+            # We can skip this if it's a functionRate
+            if "fRate" not in fkey:
+                list_of_deps = list(map(str, fs.atoms(sympy.Symbol)))
+                for dep in list_of_deps:
+                    if dep in func_names:
+                        dep_dict[fkey].append(func_names[dep])
+            else:
+                frates.append(fkey)
+        # Now reorder accordingly
+        ordered_funcs = []
+        # this ensures we write the independendent functions first
+        stck = sorted(dep_dict.keys(), key=lambda x: len(dep_dict[x]))
+        # FIXME: This algorithm works but likely inefficient
+        while len(stck) > 0:
+            k = stck.pop()
+            deps = dep_dict[k]
+            if len(deps) == 0:
+                if k not in ordered_funcs:
+                    ordered_funcs.append(k)
+            else:
+                stck.append(k)
+                for dep in deps:
+                    if dep not in ordered_funcs:
+                        stck.append(dep)
+                    dep_dict[k].remove(dep)
+        # print ordered functions and return
+        ordered_funcs += frates
+        self.function_order = ordered_funcs
 
     # model object creator and adder methods 
     def add_parameter(self, param):

@@ -32,6 +32,10 @@ class sympyGT(Function):
     nargs=(2)
 class sympyLT(Function):
     nargs=(2)
+class sympyGEQ(Function):
+    nargs=(2)
+class sympyLEQ(Function):
+    nargs=(2)
 class sympyAnd(Function):
     nargs=(2)
 class sympyOr(Function):
@@ -570,6 +574,10 @@ class SBML2BNGL:
                 self.all_syms["as"] = sympy.symbols("__AS__")
                 replace_dict["as"] = "__AS__"
                 continue
+            if name == "del":
+                self.all_syms["del"] = sympy.symbols("__DEL__")
+                replace_dict["del"] = "__DEL__"
+                continue
             if name == "time":
                 # Need to raise warning but do it 
                 # once per reaction
@@ -587,6 +595,7 @@ class SBML2BNGL:
         # let's parse the formula and get non-numerical symbols
         form = libsbml.formulaToString(math)
         # If we need to replace anything
+        # TODO: Replace all of these with regexp 
         for it in replace_dict.items():
             form = form.replace(it[0],it[1])
         # Let's also pool this in used_symbols
@@ -595,13 +604,24 @@ class SBML2BNGL:
                 self.used_symbols.append(sym)
         # Sympy doesn't allow and/not/or to be used 
         # outside what it deems to be acceptable
+        # TODO: Replace all of these with regexp 
         if "piecewise(" in form:
+            form = form.replace("piecewise(","sympyPiece(")
             replace_dict["piecewise"] = "sympyPiece"
         if "gt(" in form:
+            form = form.replace("gt(","sympyGT(")
             replace_dict["gt"] = "sympyGT"
+        if "geq(" in form:
+            form = form.replace("geq(","sympyGEQ(")
+            replace_dict["geq"] = "sympyGEQ"
         if "lt(" in form:
+            form = form.replace("lt(","sympyLT(")
             replace_dict["lt"] = "sympyLT"
+        if "leq(" in form:
+            form = form.replace("leq(","sympyLEQ(")
+            replace_dict["leq"] = "sympyLEQ"
         if "if(" in form:
+            form = form.replace("if(","sympyIF(")
             replace_dict["if"] = "sympyIF"
         if "and(" in form:
             form = form.replace("and(","sympyAnd(")
@@ -1523,6 +1543,7 @@ class SBML2BNGL:
             sym = sympy.sympify(form, locals=self.all_syms)
         except SympifyError as e:
             logMess("ERROR:SYMP001","Sympy couldn't parse a function, sorry but we can't handle this function definition.")
+            import IPython;IPython.embed()
             raise TranslationException(arule.getId())
         # if it's an assignment, it's going to be 
         # encoded as a unidirectional rxn

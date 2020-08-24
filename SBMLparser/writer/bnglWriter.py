@@ -119,7 +119,6 @@ def bnglFunction(rule,functionTitle,reactants,compartments=[],parameterDict={},r
             operator = '^'
         return '({0}){1}({2})'.format(match.group(2),operator,exponent)
     def compParse(match):
-
         translator = {'gt':'>','lt':'<','and':'&&','or':'||','geq':'>=','leq':'<=','eq':'==','neq':'!='}
         exponent = match.group(3)
         operator = translator[match.group(1)]

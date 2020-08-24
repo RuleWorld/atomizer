@@ -786,9 +786,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
 
     functions.extend(rateFunctions)
 
-    print("in libsbml, done with major bits")
-    import IPython;IPython.embed()
-
     for element in nonzparam:
         param.append('{0} 0'.format(element))
     param = [x for x in param if x not in removeParams]
@@ -1182,6 +1179,14 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     evaluate2 = 0 if len(observables) == 0 else len(molecules)*1.0/len(observables)
 
     # add unit information to annotations
+
+    # print("in libsbml, done completely")
+    # with open(outputFile, "w") as f:
+    #     f.write(str(parser.bngModel))
+    # import IPython;IPython.embed()
+    parser.bngModel.all_syms = parser.all_syms
+    parser.bngModel.consolidate()
+    finalString = str(parser.bngModel)
 
     annotationInfo['units'] = parser.getUnitDefinitions()
     return AnalysisResults(len(rules), len(observables), evaluate, evaluate2, len(compartments),
