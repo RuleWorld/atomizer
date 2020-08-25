@@ -108,7 +108,7 @@ class Species:
             if self.raw is not None:
                 txt = "@{}:{}{} {} #{} #{}".format(self.compartment, mod, trans_id, self.val, self.raw['returnID'], self.raw['identifier'])
             else:
-                txt = "@{}:{}{} {}".format(self.compartment, mod, trand_id, self.val)
+                txt = "@{}:{}{} {}".format(self.compartment, mod, trans_id, self.val)
         return txt
 
     def __repr__(self):
