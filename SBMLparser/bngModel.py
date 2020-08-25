@@ -1,4 +1,6 @@
 import re, pyparsing, sympy
+from sympy.printing.str import StrPrinter
+prnter = StrPrinter({'full_prec': False})    
 
 class Parameter:
     def __init__(self):
@@ -53,7 +55,7 @@ class Molecule:
         self.isConstant = raw['isConstant']
         self.isBoundary = raw['isBoundary']
         self.compartment = raw['compartment']
-        self.name = raw['name'].replace(" ","")
+        self.name = raw['name'].replace(" ","").replace("*","m")
         self.identifier = raw['identifier']
 
     def __str__(self):
@@ -71,6 +73,7 @@ class Species:
     def __init__(self):
         self.noCompartment = False
         self.translator = {}
+        self.raw = None
 
     def parse_raw(self, raw):
         self.raw = raw
@@ -91,15 +94,21 @@ class Species:
     def __str__(self):
         trans_id = self.translator[self.Id] if self.Id in self.translator else self.Id+"()"
         mod = "$" if self.isConstant else ""
-        if self.noCompartment or self.compartment == "":
-            txt = "{}{} {} #{} #{}".format(mod, trans_id, self.val, self.raw['returnID'], self.raw['identifier'])
+        if self.noCompartment or self.compartment == "" or self.compartment is None:
+            if self.raw is not None:
+                txt = "{}{} {} #{} #{}".format(mod, trans_id, self.val, self.raw['returnID'], self.raw['identifier'])
+            else:
+                txt = "{}{} {}".format(mod, trans_id, self.val)
         else:
             # removing identical compartments because 
             # we'll be usgin @comp: notation
             comp_str = "@{}".format(self.compartment)
             if comp_str in str(trans_id):
                 trans_id = str(trans_id).replace(comp_str, "")
-            txt = "@{}:{}{} {} #{} #{}".format(self.compartment, mod, trans_id, self.val, self.raw['returnID'], self.raw['identifier'])
+            if self.raw is not None:
+                txt = "@{}:{}{} {} #{} #{}".format(self.compartment, mod, trans_id, self.val, self.raw['returnID'], self.raw['identifier'])
+            else:
+                txt = "@{}:{}{} {}".format(self.compartment, mod, trand_id, self.val)
         return txt
 
     def __repr__(self):
@@ -112,6 +121,7 @@ class Observable:
         self.compartment = None
         self.noCompartment = False
         self.translator = {}
+        self.raw = None
         
     def parse_raw(self, raw):
         self.raw = raw
@@ -125,7 +135,7 @@ class Observable:
         self.identifier = raw['identifier']
 
     def get_obs_name(self):
-        if self.noCompartment or self.compartment == "":
+        if self.noCompartment or self.compartment == "" or self.compartment is None:
             return self.Id
         else:
             return "{0}_{1}".format(self.Id, self.compartment)
@@ -133,7 +143,10 @@ class Observable:
     def __str__(self):
         txt = self.type
         obs_name = self.get_obs_name()
-        pattern = self.translator[self.raw['returnID']] if self.Id in self.translator else self.raw['returnID']+"()"
+        if self.raw is not None:
+            pattern = self.translator[self.raw['returnID']] if self.Id in self.translator else self.raw['returnID']+"()"
+        else: 
+            pattern = self.Id + "()"
         if self.noCompartment or self.compartment == "":
             txt += " {0} {1} #{2}".format(obs_name, pattern, self.name)
         else:
@@ -155,6 +168,7 @@ class Function:
         self.rule_ptr = None
         self.local_dict = None
         self.replaceLocParams = False
+        self.all_syms = None
 
     def replaceLoc(self, func_def, pdict):
         for parameter in pdict:
@@ -165,11 +179,6 @@ class Function:
         return "r{}_{}".format(rind, pname)
 
     def __str__(self):
-        # TODO: Replace species names with observable names
-        # in function definitions 
-        # TODO: Implement function scrubbing, replace SBML conventions
-        # with BNGL conventions
-
         fdef = self.definition
         if self.replaceLocParams:
             # check possible places, local dict first
@@ -345,6 +354,15 @@ class Function:
         #change references to local parameters
         # for parameter in parameterDict:
         #     finalString = re.sub(r'(\W|^)({0})(\W|$)'.format(parameter),r'\g<1>{0}\g<3>'.format(parameterDict[parameter]),finalString)
+        # doing simplification
+        try:
+            sdef = sympy.sympify(fdef, locals=self.all_syms)
+            fdef = prnter.doprint(sdef.nsimplify().evalf().simplify())
+            fdef = fdef.replace("**","^")
+        except:
+            # print("can't parse function")
+            # import IPython;IPython.embed()
+            pass
         return fdef
 
 class Rule:
@@ -356,6 +374,7 @@ class Rule:
         self.comment = ""
         self.reversible = False
         self.translator = {}
+        self.raw = None
 
     def parse_raw(self, raw):
         self.raw = raw
@@ -399,8 +418,10 @@ class Rule:
             txt += " {},{}".format(self.rate_cts[0], self.rate_cts[1])
         else:
             txt += " {}".format(self.rate_cts[0])
-        
-        comment = 'Modifiers({0})'.format(', '.join(self.raw['modifiers'])) if self.raw['modifiers'] else ''
+       
+        comment = ""
+        if self.raw is not None:
+            comment = 'Modifiers({0})'.format(', '.join(self.raw['modifiers'])) if self.raw['modifiers'] else ''
         if comment != "":
             txt += " #{}".format(comment)
         return txt
@@ -450,6 +471,7 @@ class bngModel:
         self.translator = {}
         self.obs_map = {}
         self.molecule_mod_dict = {}
+        self.parsed_func = {}
         self.noCompartment = None
         self.useID = False
         self.replaceLocParams = False
@@ -505,6 +527,9 @@ class bngModel:
                             func.local_dict.update(self.obs_map)
                         else:
                             func.local_dict = self.obs_map
+                    if func.Id in self.parsed_func:
+                        func.sympy_parsed = self.parsed_func[fkey]
+                    func.all_syms = self.all_syms
                     txt += "  " + str(func) + "\n"
             else:
                 for fkey in self.function_order:
@@ -517,6 +542,9 @@ class bngModel:
                             func.local_dict.update(self.obs_map)
                         else:
                             func.local_dict = self.obs_map
+                    if func.Id in self.parsed_func:
+                        func.sympy_parsed = self.parsed_func[fkey]
+                    func.all_syms = self.all_syms
                     txt += "  " + str(func) + "\n"
             txt += "end functions\n"
 
@@ -544,14 +572,61 @@ class bngModel:
            into a function which also requires a modification
            of any reaction rules the species is associated with
         '''
-        # import ipdb;ipdb.set_trace()
         for arule in self.arules.values():
             # first one is to check parameters
             # import IPython;IPython.embed()
             if arule.isRate:
-                # this is a rate rule, it'll be turned into a 
-                # reaction/function. 
-                pass
+                # import IPython;IPython.embed()
+                # import ipdb;ipdb.set_trace()
+                # this is a rate rule, it'll be turned into a reaction
+                # first make the entry in molecules
+                if len(self.compartments) > 0 and not self.noCompartment:
+                    comp = list(self.compartments.values())[0].Id
+                else:
+                    comp = None
+                amolec = self.make_molecule()
+                amolec.Id = arule.Id
+                amolec.name = arule.Id
+                if comp is not None:
+                    amolec.compartment = self.compartments[comp]
+                self.add_molecule(amolec)
+                # turn the rate cts into a function
+                nfunc = self.make_function()
+                nfunc.Id = "rrate_{}".format(amolec.Id)
+                nfunc.definition = arule.rates[0]
+                self.add_function(nfunc)
+                # now make the rule
+                if comp is not None:
+                    prod_id = "{}()@{}".format(arule.Id, comp)
+                else:
+                    prod_id = "{}".format(arule.Id)
+                nrule = self.make_rule()
+                nrule.Id = "rrule_{}".format(arule.Id)
+                nrule.products.append([prod_id,1.0,prod_id])
+                nrule.rate_cts = (nfunc.Id,)
+                self.add_rule(nrule)
+                # add observable
+                nobs = self.make_observable()
+                nobs.Id = arule.Id
+                nobs.name = "rrule_{}".format(arule.Id)
+                nobs.compartment = comp
+                self.add_observable(nobs)
+                # remove from parameters if exists
+                # otherwise we can get namespace clashes
+                # with observables
+                if arule.Id in self.parameters:
+                    seed_val = self.parameters.pop(arule.Id).val
+                else:
+                    seed_val = 0
+                # add species
+                nspec = self.make_species()
+                nspec.Id = arule.Id
+                nspec.name = arule.Id
+                nspec.val = seed_val
+                nspec.isConstant = False
+                if comp is not None:
+                    nspec.compartment = comp
+                self.add_species(nspec)
             elif arule.isAssignment:
                 # rule is an assignment rule
                 # let's first check parameters
@@ -650,7 +725,16 @@ class bngModel:
             obs_obj = self.observables[obs]
             self.obs_map[obs_obj.Id] = obs_obj.get_obs_name()
 
+    def consolidate_compartments(self):
+        if len(self.compartments) == 1:
+            comp_key = list(self.compartments.keys())[0]
+            comp = self.compartments[comp_key]
+            if comp.size == 1.0:
+                _ = self.compartments.pop(comp_key)
+                self.noCompartment = True
+
     def consolidate(self):
+        self.consolidate_compartments()
         self.consolidate_arules()
         self.consolidate_molecules()
         self.consolidate_observables()
@@ -685,6 +769,7 @@ class bngModel:
             f = func.definition
             try:
                 fs = sympy.sympify(f, locals=self.all_syms)
+                self.parsed_func[fkey] = fs
             except:
                 # Can't parse this func
                 if fkey.startswith("fRate"):
