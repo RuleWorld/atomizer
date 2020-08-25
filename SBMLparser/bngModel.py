@@ -817,6 +817,9 @@ class bngModel:
         return Parameter()
 
     def add_compartment(self, comp):
+        # TODO: check if we really want this, this 
+        # replaces compartment in functions with their size
+        self.obs_map[comp.Id] = comp.size
         self.compartments[comp.Id] = comp
 
     def make_compartment(self):
