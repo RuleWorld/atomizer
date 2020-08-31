@@ -1756,6 +1756,7 @@ class SBML2BNGL:
             # import ipdb;ipdb.set_trace()
             arule_obj = self.bngModel.make_arule()
             arule_obj.parse_raw(rawArule)
+            arule_obj.compartmentList = compartmentList
             #rule has no name
             if arule_obj.Id == '':
                 logMess('ERROR:SIM215','atomizer has found an sbml rule without a name. {0}'.format(rawArule[1:]))
@@ -2034,6 +2035,7 @@ class SBML2BNGL:
         # this is called
         self.bngModel.molecules = {}
         self.bngModel.species = {}
+        self.bngModel.observables = {}
 
         #find concentration units
         unitDefinitions = self.getUnitDefinitions()
@@ -2063,6 +2065,7 @@ class SBML2BNGL:
             compartmentDict[compartment.getId()] = compartment.getSize()
         unitFlag = True
         for species in self.model.getListOfSpecies():
+            # import ipdb;ipdb.set_trace()
             # making molecule and seed species objs for 
             # the obj based model
             molec_obj = self.bngModel.make_molecule()
@@ -2218,13 +2221,17 @@ class SBML2BNGL:
 
                 molec_obj = self.bngModel.make_molecule()
                 molec_obj.Id = species
-                molec_obj.name = str(translator[species])
+                # TODO: Make sure we need str2 and not 
+                # just str
+                if not str(translator[species]) in self.bngModel.molecules:
+                    molec_obj.name = str(translator[species])
+                else:
+                    molec_obj.name = translator[species].str2()
                 self.bngModel.add_molecule(molec_obj)
 
         annotationInfo['species'] = speciesAnnotationInfo
 
         self.speciesMemory = []
-
         return list(set(moleculesText)),speciesText,observablesText,speciesTranslationDict, observablesDict, annotationInfo
 
     def getInitialAssignments(self, translator, param, zparam, molecules, initialConditions):

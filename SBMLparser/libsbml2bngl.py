@@ -790,7 +790,6 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
         param.append('{0} 0'.format(element))
     param = [x for x in param if x not in removeParams]
 
-    # import IPython;IPython.embed()
     # tags = '@{0}'.format(compartments[0].split(' ')[0]) if len(compartments) == 1 else '@cell'
     # ASS - trying to remove @cell as a default compartment. Also, 0th compartment 
     # is generally a comment. Here we are taking the first non-comment compartment as

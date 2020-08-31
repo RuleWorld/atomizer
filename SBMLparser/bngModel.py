@@ -572,6 +572,7 @@ class bngModel:
            into a function which also requires a modification
            of any reaction rules the species is associated with
         '''
+        # import ipdb;ipdb.set_trace()
         for arule in self.arules.values():
             # first one is to check parameters
             # import IPython;IPython.embed()
@@ -671,13 +672,24 @@ class bngModel:
                         # remove parameters as well 
                         if molec.name in self.observables:
                             obs = self.observables.pop(molec.name)
+                        elif molec.Id in self.observables:
+                            obs = self.observables.pop(molec.Id)
                         if molec.name in self.species:
                             spec = self.species.pop(molec.name)
+                        elif molec.Id in self.species:
+                            spec = self.species.pop(molec.Id)
 
                         # this will be a function
                         fobj = self.make_function()
-                        fobj.Id = mname + "()"
+                        # TODO: sometimes molec.name is not 
+                        # normalized, check if .Id works consistently
+                        fobj.Id = molec.Id + "()"
                         fobj.definition = arule.rates[0]
+                        if len(arule.compartmentList) > 0:
+                            fobj.local_dict = {}
+                            for comp in arule.compartmentList:
+                                cname, cval = comp
+                                fobj.local_dict[cname] = cval
                         self.add_function(fobj)
 
                         # TODO: This molecule should be
@@ -708,16 +720,20 @@ class bngModel:
                     and self.molecules[molec].isConstant \
                     and not self.molecules[molec].isBoundary:
                 turn_param.append(molec)
-                if molec in self.observables:
-                    self.observables.pop(molec)
-                if molec in self.species:
-                    self.species.pop(molec)
         for molec in turn_param:
             m = self.molecules.pop(molec)
             param = self.make_parameter()
             param.Id = m.Id
             param.val = m.initConc if m.initConc > 0 else m.initAmount
             self.add_parameter(param)
+            if m.name in self.observables:
+                self.observables.pop(m.name)
+            elif m.Id in self.observables: 
+                self.observables.pop(m.Id)
+            if m.name in self.species:
+                self.species.pop(m.name)
+            elif m.Id in self.species:
+                self.species.pop(m.Id)
 
     def consolidate_observables(self):
         # if we are using compartments, we need 
@@ -832,7 +848,14 @@ class bngModel:
         # didn't have rawSpecies associated with 
         if hasattr(molec, "raw"):
             self.molecule_ids[molec.raw['identifier']] = molec.name
-        self.molecules[molec.name] = molec
+        if not molec.name in self.molecules:
+            self.molecules[molec.name] = molec
+        else:
+            # TODO: check if this actually works for 
+            # everything, there are some cases where
+            # the same molecule is actually different 
+            # e.g. 103
+            self.molecules[molec.Id] = molec
 
     def make_molecule(self):
         return Molecule()
