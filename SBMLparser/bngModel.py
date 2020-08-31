@@ -701,10 +701,12 @@ class bngModel:
     def consolidate_molecules(self):
         # potentially remove unused ones
         # or EmptySet and similar useless ones
+        # import ipdb;ipdb.set_trace()
         turn_param = []
         for molec in self.molecules:
             if molec not in self.molecule_mod_dict \
-                    and self.molecules[molec].isConstant:
+                    and self.molecules[molec].isConstant \
+                    and not self.molecules[molec].isBoundary:
                 turn_param.append(molec)
                 if molec in self.observables:
                     self.observables.pop(molec)
