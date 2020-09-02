@@ -917,6 +917,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     sbmlfunctions = parser.getSBMLFunctions()
     functions.extend(aRules)
     
+    parser.bngModel.sbmlFunctions = sbmlfunctions
     processFunctions(functions, sbmlfunctions, artificialObservables, rateFunctions)
 
     for interation in range(0, 3):

@@ -92,7 +92,7 @@ class Species:
             self.val = self.initConc
             
     def __str__(self):
-        trans_id = self.translator[self.Id] if self.Id in self.translator else self.Id+"()"
+        trans_id = str(self.translator[self.Id]) if self.Id in self.translator else self.Id+"()"
         mod = "$" if self.isConstant else ""
         if self.noCompartment or self.compartment == "" or self.compartment is None:
             if self.raw is not None:
@@ -100,6 +100,17 @@ class Species:
             else:
                 txt = "{}{} {}".format(mod, trans_id, self.val)
         else:
+            # remove compartment from original Id if it exists
+            if "@" in trans_id:
+                if re.search(r'(^@)', trans_id):
+                    # @X: or @X:: syntax
+                    if re.search(r'^@[\S\s]*::', trans_id):
+                        trans_id = trans_id.split("::")[1]
+                    else:
+                        trans_id = trans_id.split(":")[1]
+                else:
+                    # X@Y syntax
+                    trans_id = trans_id.split("@")[0]
             # removing identical compartments because 
             # we'll be usgin @comp: notation
             comp_str = "@{}".format(self.compartment)
@@ -169,6 +180,7 @@ class Function:
         self.local_dict = None
         self.replaceLocParams = False
         self.all_syms = None
+        self.sbmlFunctions = None
 
     def replaceLoc(self, func_def, pdict):
         for parameter in pdict:
@@ -207,6 +219,10 @@ class Function:
     def adjust_func_def(self,fdef):
         # if this function is related to a rule, we'll pull all the 
         # relevant info
+        # TODO: Add sbml function resolution here
+        if self.sbmlFunctions is not None:
+            fdef = self.resolve_sbmlfuncs(fdef)
+
         if self.rule_ptr is not None:
             #TODO: pull info
             # react/prod/comp
@@ -365,6 +381,101 @@ class Function:
             pass
         return fdef
 
+    def extendFunction(self, function, subfunctionName,subfunction):
+        def constructFromList(argList,optionList,subfunctionParam,subfunctionBody):
+            parsedString = ''
+            idx = 0
+            while idx < len(argList):
+                if type(argList[idx]) is list:
+                    parsedString += '(' + constructFromList(argList[idx],optionList,subfunctionParam,subfunctionBody) + ')'
+                elif argList[idx] in optionList:
+                    tmp = subfunctionBody
+                    commaIndexes = [0]
+                    commaIndexes.extend([i for i, x in enumerate(argList[idx+1]) if x == ","])
+                    commaIndexes.append(len(argList[idx+1]))
+                    instancedParameters = [argList[idx+1][commaIndexes[i]:commaIndexes[i+1]] for i in range(0,len(commaIndexes)-1)]
+                    for parameter,instance in zip(subfunctionParam,instancedParameters):
+                        if ',' in instance:
+                            instance.remove(',')
+                        parsedParameter = ' ( ' + constructFromList(instance,optionList,subfunctionParam,subfunctionBody) + ' ) '
+                        tmp = re.sub(r'(\W|^)({0})(\W|$)'.format(parameter.strip()),r'\1{0} \3'.format(parsedParameter),tmp)
+                    parsedString += ' ' + tmp + ' '
+                    idx += 1
+                else:
+                    if argList[idx] == '=':
+                        parsedString += ' ' + argList[idx] + ' '
+                    else:
+                        parsedString += argList[idx]
+                idx += 1
+            return parsedString
+        param = subfunction.split(' = ')[0][len(subfunctionName)+1:-1]
+        # ASS2019: There are cases where the fuction doesn't have a definition and the 
+        # following line errors out with IndexError, let's handle it.
+        try:
+            body = subfunction.split(' = ')[1]
+        except IndexError as e:
+            logMess("ERROR:TRS002","This function doesn't have a definition, note that atomizer doesn't allow for function linking: {}".format(subfunction))
+            raise e
+        while re.search(r'(\W|^){0}\([^)]*\)(\W|$)'.format(subfunctionName),function) != None:
+            contentRule = pyparsing.Word(pyparsing.alphanums + '_.') |  ',' | '+' | '-' | '*' | '/' | '^' | '&' | '>' | '<' | '=' | '|'  
+            parens = pyparsing.nestedExpr( '(', ')', content=contentRule)
+            subfunctionList = parens.parseString('(' + function + ')').asList()
+            function = constructFromList(subfunctionList[0],[subfunctionName],param.split(','),body)
+        return function
+
+    def resolve_sbmlfuncs(self, defn):
+        modificationFlag = True
+        recursionIndex = 0
+        # remove calls to other sbml functions
+        while modificationFlag and recursionIndex <20:
+            modificationFlag = False
+            for sbml in self.sbmlFunctions:
+                if sbml in defn:
+                    temp = self.extendFunction(defn, sbml, self.sbmlFunctions[sbml])
+                    if temp != defn:
+                        defn = temp
+                        modificationFlag = True
+                        recursionIndex +=1
+                        break
+
+        defn = re.sub(r'(\W|^)(time)(\W|$)', r'\1time()\3', defn)
+        defn = re.sub(r'(\W|^)(Time)(\W|$)', r'\1time()\3', defn)
+        defn = re.sub(r'(\W|^)(t)(\W|$)', r'\1time()\3', defn)
+
+        #remove true and false
+        defn = re.sub(r'(\W|^)(true)(\W|$)', r'\1 1\3', defn)
+        defn = re.sub(r'(\W|^)(false)(\W|$)', r'\1 0\3', defn)
+        
+        # TODO: Make sure we don't need these
+        # dependencies2 = {}
+        # for idx in range(0, len(functions)):
+        #     dependencies2[functions[idx].split(' = ')[0].split('(')[0].strip()] = []
+        #     for key in artificialObservables:
+        #         oldfunc = functions[idx]
+        #         functions[idx] = (re.sub(r'(\W|^)({0})([^\w(]|$)'.format(key), r'\1\2()\3', functions[idx]))
+        #         if oldfunc != functions[idx]:
+        #             dependencies2[functions[idx].split(' = ')[0].split('(')[0]].append(key)
+        #     for element in sbmlfunctions:
+        #         oldfunc = functions[idx]
+        #         key = element.split(' = ')[0].split('(')[0]
+        #         if re.search('(\W|^){0}(\W|$)'.format(key), functions[idx].split(' = ')[1]) != None:
+        #             dependencies2[functions[idx].split(' = ')[0].split('(')[0]].append(key)
+        #     for element in tfunc:
+        #         key = element.split(' = ')[0].split('(')[0]
+        #         if key in functions[idx].split(' = ')[1]:
+        #             dependencies2[functions[idx].split( ' = ')[0].split('(')[0]].append(key)
+
+        # fd = []
+        # for function in functions:
+        #     # print(function, '---', dependencies2[function.split(' = ' )[0].split('(')[0]], '---', function.split(' = ' )[0].split('(')[0], 0)
+        #     fd.append([function, resolveDependencies(dependencies2, function.split(' = ' )[0].split('(')[0], 0)])
+        # fd = sorted(fd, key= lambda rule:rule[1])
+        # functions = [x[0] for x in fd]
+        # return functions
+
+        # returning expanded definition
+        return defn 
+
 class Rule:
     def __init__(self):
         self.Id= ""
@@ -477,6 +588,7 @@ class bngModel:
         self.replaceLocParams = False
         self.all_syms = None
         self.function_order = None
+        self.sbmlFunctions = None
 
     def __str__(self):
         txt = self.metaString
@@ -519,6 +631,7 @@ class bngModel:
             txt += "begin functions\n"
             if self.function_order is None:
                 for func in self.functions.values():
+                    func.sbmlFunctions = self.sbmlFunctions
                     func.replaceLocParams = self.replaceLocParams
                     # we need to update the local dictionary
                     # with potential observable name changes
@@ -534,6 +647,7 @@ class bngModel:
             else:
                 for fkey in self.function_order:
                     func = self.functions[fkey]
+                    func.sbmlFunctions = self.sbmlFunctions
                     func.replaceLocParams = self.replaceLocParams
                     # we need to update the local dictionary
                     # with potential observable name changes
