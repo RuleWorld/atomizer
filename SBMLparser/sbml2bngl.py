@@ -1494,6 +1494,7 @@ class SBML2BNGL:
 
         if atomize:
             self.getReactions.__func__.functionFlag = True
+        self.bngModel.tags = self.tags
         return parameters, reactions, functions
 
     def gather_terms(self, exp): 
@@ -1543,7 +1544,7 @@ class SBML2BNGL:
             sym = sympy.sympify(form, locals=self.all_syms)
         except SympifyError as e:
             logMess("ERROR:SYMP001","Sympy couldn't parse a function, sorry but we can't handle this function definition.")
-            import IPython;IPython.embed()
+            # import IPython;IPython.embed()
             raise TranslationException(arule.getId())
         # if it's an assignment, it's going to be 
         # encoded as a unidirectional rxn
@@ -2034,6 +2035,7 @@ class SBML2BNGL:
         # gotta reset the bngModel everytime 
         # this is called
         self.bngModel.molecules = {}
+        self.bngModel.molecule_ids = {}
         self.bngModel.species = {}
         self.bngModel.observables = {}
 
@@ -2269,7 +2271,7 @@ class SBML2BNGL:
         from copy import copy
         for initialAssignment in self.model.getListOfInitialAssignments():
             print("in getInitialAssignments")
-            import ipdb;ipdb.set_trace()
+            # import ipdb;ipdb.set_trace()
             symbol = initialAssignment.getSymbol()
             math = libsbml.formulaToString(initialAssignment.getMath())
             for element in pparam:
@@ -2292,7 +2294,7 @@ class SBML2BNGL:
                 # TODO: Replicate this in bngModel
                 print("In getInitialAssignments")
                 print("check pparam[symbol]/param2/initialConditions2")
-                import IPython;IPython.embed()
+                # import IPython;IPython.embed()
                 # TODO: Replicate this in bngModel
                 if pparam[symbol][1] == None:
                     param2.append('{0} {1}'.format(symbol,math))

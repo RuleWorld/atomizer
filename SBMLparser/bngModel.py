@@ -101,16 +101,16 @@ class Species:
                 txt = "{}{} {}".format(mod, trans_id, self.val)
         else:
             # remove compartment from original Id if it exists
-            if "@" in trans_id:
-                if re.search(r'(^@)', trans_id):
-                    # @X: or @X:: syntax
-                    if re.search(r'^@[\S\s]*::', trans_id):
-                        trans_id = trans_id.split("::")[1]
-                    else:
-                        trans_id = trans_id.split(":")[1]
-                else:
-                    # X@Y syntax
-                    trans_id = trans_id.split("@")[0]
+            # if "@" in trans_id:
+            #     if re.search(r'(^@)', trans_id):
+            #         # @X: or @X:: syntax
+            #         if re.search(r'^@[\S\s]*::', trans_id):
+            #             trans_id = trans_id.split("::")[1]
+            #         else:
+            #             trans_id = trans_id.split(":")[1]
+            #     else:
+            #         # X@Y syntax
+            #         trans_id = trans_id.split("@")[0]
             # removing identical compartments because 
             # we'll be usgin @comp: notation
             comp_str = "@{}".format(self.compartment)
@@ -486,6 +486,7 @@ class Rule:
         self.reversible = False
         self.translator = {}
         self.raw = None
+        self.tags = None
 
     def parse_raw(self, raw):
         self.raw = raw
@@ -510,7 +511,16 @@ class Rule:
             for ir,react in enumerate(self.reactants):
                 if ir != 0:
                     txt += " + "
-                txt += str(self.translator[react[0]]) if react[0] in self.translator else str(react[0])+"()"
+                if react[0] in self.translator:
+                    txt += str(self.translator[react[0]])
+                else:
+                    if self.tags is not None and not self.noCompartment:
+                        if react[0] in self.tags:
+                            txt += str(react[0])+"()"+self.tags[react[0]]
+                        else:
+                            txt += str(react[0])+"()" 
+                    else: 
+                        txt += str(react[0])+"()" 
         # correct rxn arrow
         if self.reversible and len(self.rate_cts) == 2:
             txt += " <-> "
@@ -523,7 +533,16 @@ class Rule:
             for ip,prod in enumerate(self.products):
                 if ip != 0:
                     txt += " + "
-                txt += str(self.translator[prod[0]]) if prod[0] in self.translator else str(prod[0])+"()"
+                if prod[0] in self.translator:
+                    txt += str(self.translator[prod[0]])
+                else:
+                    if self.tags is not None and not self.noCompartment:
+                        if prod[0] in self.tags:
+                            txt += str(prod[0])+"()"+self.tags[prod[0]]
+                        else:
+                            txt += str(prod[0])+"()" 
+                    else: 
+                        txt += str(prod[0])+"()" 
         # rate cts
         if self.reversible and len(self.rate_cts) == 2:
             txt += " {},{}".format(self.rate_cts[0], self.rate_cts[1])
@@ -589,6 +608,7 @@ class bngModel:
         self.all_syms = None
         self.function_order = None
         self.sbmlFunctions = None
+        self.tags = None
 
     def __str__(self):
         txt = self.metaString
@@ -665,6 +685,8 @@ class bngModel:
         txt += "begin reaction rules\n"
         for rule in self.rules.values():
             rule.translator = self.translator
+            rule.tags = self.tags
+            rule.noCompartment = self.noCompartment
             txt += "  " + str(rule) + "\n"
         txt += "end reaction rules\n"
 
@@ -686,13 +708,9 @@ class bngModel:
            into a function which also requires a modification
            of any reaction rules the species is associated with
         '''
-        # import ipdb;ipdb.set_trace()
         for arule in self.arules.values():
             # first one is to check parameters
-            # import IPython;IPython.embed()
             if arule.isRate:
-                # import IPython;IPython.embed()
-                # import ipdb;ipdb.set_trace()
                 # this is a rate rule, it'll be turned into a reaction
                 # first make the entry in molecules
                 if len(self.compartments) > 0 and not self.noCompartment:
@@ -820,6 +838,10 @@ class bngModel:
                     fobj.Id = arule.Id + "()"
                     fobj.definition = arule.rates[0]
                     self.add_function(fobj)
+                    # we also might need to remove these from 
+                    # observables
+                    if arule.Id in self.observables:
+                        self.observables.pop(arule.Id)
             else:
                 # not sure what this means, read SBML spec more
                 pass
