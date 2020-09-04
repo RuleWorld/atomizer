@@ -787,6 +787,7 @@ class bngModel:
                         fobj.definition = arule.rates[0]
                         self.add_function(fobj)
                 elif arule.Id in self.molecule_ids:
+                    # import ipdb;ipdb.set_trace()
                     # we are an assignment rule that modifies 
                     # a molecule, this will be converted to 
                     # a function if true
@@ -830,33 +831,48 @@ class bngModel:
                                 fobj.local_dict[cname] = cval
                         self.add_function(fobj)
 
-                        # TODO: This molecule should be
-                        # converted into a funcion and a function only
-                        # and the reactions it's a part of should be 
-                        # modified appropriately 
-                        if mname in self.molecule_mod_dict:
-                            for rule in self.molecule_mod_dict[mname]:
+                        # import ipdb;ipdb.set_trace()
+                        # we want to make sure arules are the only 
+                        # things that change species concentrations
+                        if mname in self.molecule_mod_dict or molec.Id in self.molecule_mod_dict:
+                            if mname in self.molecule_mod_dict:
+                                mkey = mname
+                            else:
+                                mkey = molec.Id
+                            for rule in self.molecule_mod_dict[mkey]:
                                 if len(rule.reactants) == 0 and len(rule.products) == 1:
                                     # this is a syn rule, should be only generating the species in question
-                                    if molec.Id == rule.products[0][0]:
-                                        self.rules.pop(rule.Id)
+                                    if mkey == rule.products[0][0]:
+                                        if rule.Id in self.rules:
+                                            self.rules.pop(rule.Id)
                                 else:
                                     # this is a more complicated rule, we need to adjust the rates
                                     for ir, react in enumerate(rule.reactants):
-                                        if react[0] == molec.Id:
+                                        if react[0] == mkey:
                                             # we have the molecule in reactants
-                                            r = rule.reactants.pop(ir)
-                                            rule.rate_cts[0] = "{0}*".format(molec.Id) + rule.rate_cts[0]
+                                            if len(rule.rate_cts) == 2:
+                                                r = rule.reactants.pop(ir)
+                                                fw, bk = rule.rate_cts
+                                                rule.rate_cts = ("{0}*".format(mkey) + fw, bk)
+                                            else:
+                                                r = rule.reactants.pop(ir)
+                                                fw = rule.rate_cts[0]
+                                                rule.rate_cts = ("{0}*".format(mkey) + fw,)
                                     for ip, prod in enumerate(rule.products):
-                                        if prod[0] == molec.Id:
+                                        if prod[0] == mkey:
                                             # molecule in products
                                             if len(rule.rate_cts) == 2:
                                                 # adjust back rate
                                                 p = rule.products.pop(ip)
-                                                rule.rate_cts[1] = "{0}*".format(molec.Id) + rule.rate_cts[1]
+                                                fw, bk = rule.rate_cts
+                                                rule.rate_cts = (fw,"{0}*".format(mkey) + bk)
                                             else:
                                                 # we can just remove
                                                 rule.products.pop(ip)
+                                    if len(rule.reactants) == 0 and len(rule.products):
+                                        if rule.Id in self.rules:
+                                            self.rules.pop(rule.Id)
+                            
                 else:
                     # this is just a simple assignment (hopefully)
                     # just convert to a function
@@ -868,6 +884,43 @@ class bngModel:
                     # observables
                     if arule.Id in self.observables:
                         self.observables.pop(arule.Id)
+                    # import ipdb;ipdb.set_trace()
+                    # we also have to remove this from rules 
+                    if arule.Id in self.molecule_mod_dict:
+                        mkey = arule.Id 
+                        for rule in self.molecule_mod_dict[mkey]:
+                            if len(rule.reactants) == 0 and len(rule.products) == 1:
+                                # this is a syn rule, should be only generating the species in question
+                                if mkey == rule.products[0][0]:
+                                    if rule.Id in self.rules:
+                                        self.rules.pop(rule.Id)
+                            else:
+                                # this is a more complicated rule, we need to adjust the rates
+                                for ir, react in enumerate(rule.reactants):
+                                    if react[0] == mkey:
+                                        # we have the molecule in reactants
+                                        if len(rule.rate_cts) == 2:
+                                            r = rule.reactants.pop(ir)
+                                            fw, bk = rule.rate_cts
+                                            rule.rate_cts = ("{0}*".format(mkey) + fw, bk)
+                                        else:
+                                            r = rule.reactants.pop(ir)
+                                            fw = rule.rate_cts[0]
+                                            rule.rate_cts = ("{0}*".format(mkey) + fw,)
+                                for ip, prod in enumerate(rule.products):
+                                    if prod[0] == mkey:
+                                        # molecule in products
+                                        if len(rule.rate_cts) == 2:
+                                            # adjust back rate
+                                            p = rule.products.pop(ip)
+                                            fw, bk = rule.rate_cts
+                                            rule.rate_cts = (fw,"{0}*".format(mkey) + bk)
+                                        else:
+                                            # we can just remove
+                                            rule.products.pop(ip)
+                                if len(rule.reactants) == 0 and len(rule.products):
+                                    if rule.Id in self.rules:
+                                        self.rules.pop(rule.Id)
             else:
                 # not sure what this means, read SBML spec more
                 pass
@@ -916,7 +969,9 @@ class bngModel:
                 _ = self.compartments.pop(comp_key)
                 self.noCompartment = True
 
+
     def consolidate(self):
+        # import IPython;IPython.embed()
         self.consolidate_compartments()
         self.consolidate_arules()
         self.consolidate_molecules()
