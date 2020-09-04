@@ -94,7 +94,7 @@ class Species:
     def __str__(self):
         trans_id = str(self.translator[self.Id]) if self.Id in self.translator else self.Id+"()"
         mod = "$" if self.isConstant else ""
-        if self.noCompartment or self.compartment == "" or self.compartment is None:
+        if self.noCompartment or self.compartment == "" or self.compartment is None or "@" in trans_id:
             if self.raw is not None:
                 txt = "{}{} {} #{} #{}".format(mod, trans_id, self.val, self.raw['returnID'], self.raw['identifier'])
             else:
@@ -181,8 +181,14 @@ class Function:
         self.replaceLocParams = False
         self.all_syms = None
         self.sbmlFunctions = None
+        self.compartmentList = None
 
     def replaceLoc(self, func_def, pdict):
+        if self.compartmentList is not None:
+            if len(self.compartmentList) > 0:
+                for comp in self.compartmentList:
+                    cname, cval = comp
+                    pdict[cname] = cval
         for parameter in pdict:
             func_def = re.sub(r'(\W|^)({0})(\W|$)'.format(parameter),r'\g<1>{0}\g<3>'.format(pdict[parameter]),func_def)
         return func_def
@@ -830,7 +836,27 @@ class bngModel:
                         # modified appropriately 
                         if mname in self.molecule_mod_dict:
                             for rule in self.molecule_mod_dict[mname]:
-                                print("{} is being turned to a function, change rule: {}".format(mname, rule))
+                                if len(rule.reactants) == 0 and len(rule.products) == 1:
+                                    # this is a syn rule, should be only generating the species in question
+                                    if molec.Id == rule.products[0][0]:
+                                        self.rules.pop(rule.Id)
+                                else:
+                                    # this is a more complicated rule, we need to adjust the rates
+                                    for ir, react in enumerate(rule.reactants):
+                                        if react[0] == molec.Id:
+                                            # we have the molecule in reactants
+                                            r = rule.reactants.pop(ir)
+                                            rule.rate_cts[0] = "{0}*".format(molec.Id) + rule.rate_cts[0]
+                                    for ip, prod in enumerate(rule.products):
+                                        if prod[0] == molec.Id:
+                                            # molecule in products
+                                            if len(rule.rate_cts) == 2:
+                                                # adjust back rate
+                                                p = rule.products.pop(ip)
+                                                rule.rate_cts[1] = "{0}*".format(molec.Id) + rule.rate_cts[1]
+                                            else:
+                                                # we can just remove
+                                                rule.products.pop(ip)
                 else:
                     # this is just a simple assignment (hopefully)
                     # just convert to a function

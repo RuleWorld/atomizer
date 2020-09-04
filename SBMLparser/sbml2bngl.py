@@ -37,9 +37,9 @@ class sympyGEQ(Function):
 class sympyLEQ(Function):
     nargs=(2)
 class sympyAnd(Function):
-    nargs=(2)
+    nargs=(2,3,4,5)
 class sympyOr(Function):
-    nargs=(2)
+    nargs=(2,3,4,5)
 class sympyNot(Function):
     nargs=(1)
 
@@ -1360,6 +1360,7 @@ class SBML2BNGL:
             fobj = self.bngModel.make_function()
             fobj.Id = functionName
             fobj.rule_ptr = rule_obj
+            fobj.compartmentList = compartmentList
             # import ipdb;ipdb.set_trace()
             if rule_obj.reversible:
                 if rule_obj.raw_num[0] > threshold or rule_obj.raw_rates[0] in translator:
@@ -1382,6 +1383,7 @@ class SBML2BNGL:
                     fobj_2.Id = functionName2
                     fobj_2.rule_ptr = rule_obj
                     fobj_2.definition = rule_obj.raw_rates[1]
+                    fobj_2.compartmentList = compartmentList
                     if self.getReactions.functionFlag:
                         # local parameter replacement flag
                         if self.replaceLocParams:
