@@ -87,7 +87,7 @@ class SCTSolver:
                 if self.database.dependencyGraph[element] != []:
                     self.database.alternativeDependencyGraph[element] = lexicalDependencyGraph[element]
                 else:
-                    logMess('INFO:LAE009','{0}: being set to be a modification of cosntructed species {1}'.format(element,lexicalDependencyGraph[element][0]))
+                    logMess('INFO:LAE009','{0}: being set to be a modification of constructed species {1}'.format(element,lexicalDependencyGraph[element][0]))
                     atoAux.addToDependencyGraph(self.database.dependencyGraph,element,lexicalDependencyGraph[element][0])
             else:
                 if element not in strippedMolecules:

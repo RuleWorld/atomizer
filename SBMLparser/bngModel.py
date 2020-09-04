@@ -903,7 +903,10 @@ class bngModel:
         # with new observable names
         for obs in self.observables:
             obs_obj = self.observables[obs]
-            self.obs_map[obs_obj.Id] = obs_obj.get_obs_name()
+            oname = obs_obj.get_obs_name()
+            self.obs_map[obs_obj.Id] = oname
+            if oname in self.parameters:
+                self.parameters.pop(oname)
 
     def consolidate_compartments(self):
         if len(self.compartments) == 1:
