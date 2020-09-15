@@ -113,6 +113,7 @@ class SBML2BNGL:
         self.convertSubstanceUnits = False
         # keep track of obs names
         self.obs_names = []
+        self.obs_map = {}
 
         # ASS - I think there should be a check for compartments right here
         # to determine if a) any compartment is actually used and
@@ -289,7 +290,6 @@ class SBML2BNGL:
         # two species cannot have the same name. Ids are unique but less informative, however typically species can be differentiated
         # by compartment
         if logEntries and standardizedName != '0':
-
             if standardizedName in self.speciesMemory:
                 if len(list(self.model.getListOfCompartments())) == 1:
                     standardizedName += '_' + species.getId()
@@ -902,6 +902,7 @@ class SBML2BNGL:
     def __getRawRules(self, reaction, symmetryFactors, parameterFunctions, translator, sbmlfunctions):
         zerospecies = ['emptyset','trash','sink','source']
         split_rxn = False
+
         if self.useID:
             reactant = [(reactant.getSpecies(), reactant.getStoichiometry(), reactant.getSpecies())
                         for reactant in reaction.getListOfReactants() if
@@ -987,9 +988,19 @@ class SBML2BNGL:
             #     rateL = '({0})/{1}'.format(rateL, symmetryFactors[0])
             # if symmetryFactors[1] > 1:
             #     rateR = '({0})/{1}'.format(rateR, symmetryFactors[1])
+
+            # we need to resolve observables BEFORE we do this
+            for obs_key in self.obs_map:
+                resL = re.search(r'(\W|^){0}(\W|$)'.format(obs_key), rateL)
+                if resL is not None:
+                    rateL = re.sub(r'(\W|^)({0})(\W|$)'.format(obs_key), r'\g<1>{0}\g<3>'.format(self.obs_map[obs_key]), rateL)
+                resR = re.search(r'(\W|^){0}(\W|$)'.format(obs_key), rateR)
+                if resR is not None:
+                    rateR = re.sub(r'(\W|^)({0})(\W|$)'.format(obs_key), r'\g<1>{0}\g<3>'.format(self.obs_map[obs_key]), rateR)
+
             if not self.useID:
-                rateL = self.convertToName(rateL)
-                rateR = self.convertToName(rateR)
+                srateL = self.convertToName(rateL)
+                srateR = self.convertToName(rateR)
             if uReversible:
                 pass
             # return compartments if the reaction is unimolecular
@@ -1004,7 +1015,7 @@ class SBML2BNGL:
                         if len(rProduct) != 2:
                              rateR = '{0} * {1}'.format(rateR,compartment.getSize())
             '''
-        return {'reactants': reactant, 'products': product, 'parameters': parameters, 'rates': [rateL, rateR],
+        return {'reactants': reactant, 'products': product, 'parameters': parameters, 'rates': [srateL, srateR],
                 'reversible': uReversible, 'reactionID': reaction.getId(), 'numbers': [nl, nr], 'modifiers': rModifiers, 'split_rxn': split_rxn}
 
     def getReactionCenter(self, reactant, product, translator):
@@ -1361,7 +1372,6 @@ class SBML2BNGL:
             fobj.Id = functionName
             fobj.rule_ptr = rule_obj
             fobj.compartmentList = compartmentList
-            # import ipdb;ipdb.set_trace()
             if rule_obj.reversible:
                 if rule_obj.raw_num[0] > threshold or rule_obj.raw_rates[0] in translator:
                     fobj.definition = rule_obj.raw_rates[0]
@@ -1736,7 +1746,7 @@ class SBML2BNGL:
         and parameters initialized as 0, so they need to be removed from the parameters list
         '''
         # FIXME: This function removes compartment info and this leads to mis-replacement of variables downstream. e.g. Calc@ER and Calc@MIT both gets written as Calc and downstream the replacement is wrong. 
-        # FIXME: This function gets a list of observables which sometimes are turned into assignment rules but then are not updated in hte observablesDict. E.g. X_comp1 gets in, X_ar is created and you can't have BOTH X_comp1 in a reaction AND X_ar adjusting X itself. You MUST pick one, if both are happening raise and error and exit out. For now I'll say if we have _ar then we replace the X_comp1 with X_ar and test.
+        # FIXME: This function gets a list of observables which sometimes are turned into assignment rules but then are not updated in the observablesDict. E.g. X_comp1 gets in, X_ar is created and you can't have BOTH X_comp1 in a reaction AND X_ar adjusting X itself. You MUST pick one, if both are happening raise and error and exit out. For now I'll say if we have _ar then we replace the X_comp1 with X_ar and test.
 
         # Going to use this to match names and remove params 
         # if need be
@@ -2111,6 +2121,11 @@ class SBML2BNGL:
                     if rawSpecies['returnID'] in speciesAnnotationInfo:
                         annotationInfo['moleculeTypes'][translator[rawSpecies['returnID']].str2()] = annotationTemp
                         del speciesAnnotationInfo[rawSpecies['returnID']]
+                # TODO: Not sure if there are more examples of this 
+                # but glucose in 380 has both a normal species AND 
+                # a boundary species separately
+                # elif rawSpecies['isBoundary']:
+                #     self.bngModel.add_molecule(molec_obj)
             else:
                 # we'll add this to our model
                 self.bngModel.add_molecule(molec_obj)
@@ -2121,7 +2136,8 @@ class SBML2BNGL:
                     annotationInfo['moleculeTypes'][rawSpecies['returnID']] = speciesAnnotationInfo[rawSpecies['returnID']]
                     del speciesAnnotationInfo[rawSpecies['returnID']]
 
-
+            # if rawSpecies['identifier'] == 'glx' and len(translator) > 0:
+            #     import ipdb;ipdb.set_trace()
             temp = '$' if rawSpecies['isConstant'] != 0 else ''
             tmp = translator[str(rawSpecies['returnID'])] if rawSpecies['returnID'] in translator \
                 else rawSpecies['returnID'] + '()'
@@ -2132,7 +2148,6 @@ class SBML2BNGL:
                     tmp2 = (self.tags[rawSpecies['identifier']])
                 if rawSpecies['initialAmount'] > 0.0:
                     # Removing the compartment section if we are not using it
-                    # self.bngModel.add_species((tmp2,
                     if self.noCompartment:
                         speciesText.append('{1}{2} {3} #{4} #{5}'.format(tmp2, temp, str(tmp), 
                             rawSpecies['initialAmount'],rawSpecies['returnID'],rawSpecies['identifier']))
@@ -2196,16 +2211,18 @@ class SBML2BNGL:
             else:
                 modifiedName = rawSpecies['returnID']
 
-            # user defined zero molecuels are not included in the observable list
+            # user defined zero molecules are not included in the observable list
             if str(tmp) != '0':
                 if rawSpecies['compartment'] != '' and len(list(self.model.getListOfCompartments())) > 1:
 
                     self.obs_names.append(modifiedName)
+                    self.obs_map[rawSpecies['identifier']] = "{0}_{1}".format(modifiedName, rawSpecies['compartment'])
                     observablesText.append('Species {0}_{3} @{3}:{1} #{2}'.format(modifiedName, tmp,rawSpecies['name'],rawSpecies['compartment']))
                     observablesDict[modifiedName] = '{0}_{1}'.format(modifiedName,rawSpecies['compartment'])
                 else:
                     # ASS - Is this not supposed to be the version without compartments?
                     self.obs_names.append(modifiedName)
+                    self.obs_map[rawSpecies['identifier']] = modifiedName
                     observablesText.append('Species {0} {1} #{2}'.format(modifiedName, tmp,rawSpecies['name']))
                     observablesDict[modifiedName] = '{0}'.format(modifiedName)
                 speciesTranslationDict[rawSpecies['identifier']] = tmp

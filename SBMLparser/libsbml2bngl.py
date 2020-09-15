@@ -16,6 +16,7 @@ import sys
 from os import listdir
 import re
 import pickle
+import copy
 log = {'species': [], 'reactions': []}
 from collections import Counter, namedtuple
 
@@ -761,6 +762,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
             rawSpecies[rawtemp['identifier']] = rawtemp
     parser.reset()
 
+    # parser.bngModel.translator = copy.deepcopy(translator)
     parser.bngModel.translator = translator
     molecules, initialConditions, observables, speciesDict, \
         observablesDict, annotationInfo = parser.getSpecies(translator, [x.split(' ')[0] for x in param])
@@ -1158,6 +1160,18 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     for i in obs_to_rem:
         observables.remove(i)
     # done removing useless species/seed species/obs
+
+    # TODO: temporary: check structured molecule ratio
+    struc_count = 0
+    for molec_str in molecules:
+        srch = re.search(r'(\W|^)(.+)\((.*)\)',molec_str)
+        if srch is not None:
+            if len(srch.group(3)) > 0:
+                struc_count += 1
+    struc_ratio = float(struc_count)/len(molecules) if len(molecules) > 0 else 0
+    # if struc_ratio == 0.5:
+        # import IPython;IPython.embed()
+    print("Structured molecule type ratio: {}".format(struc_ratio))
 
     # If we must, add __epsilon__ to parameter list
     if parser.write_epsilon:
