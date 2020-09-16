@@ -896,6 +896,8 @@ class bngModel:
                             spec = self.species.pop(molec.name)
                         elif molec.Id in self.species:
                             spec = self.species.pop(molec.Id)
+                        if molec.Id in self.parameters:
+                            param = self.parameters.pop(molec.Id)
 
                         # this will be a function
                         fobj = self.make_function()
@@ -1009,7 +1011,6 @@ class bngModel:
     def consolidate_molecules(self):
         # potentially remove unused ones
         # or EmptySet and similar useless ones
-        # import ipdb;ipdb.set_trace()
         turn_param = []
         str_comp = []
         to_remove = []
