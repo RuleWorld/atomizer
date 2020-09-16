@@ -910,6 +910,7 @@ class bngModel:
                                 fobj.local_dict[cname] = cval
                         self.add_function(fobj)
 
+                        # import IPython;IPython.embed()
                         # import ipdb;ipdb.set_trace()
                         # we want to make sure arules are the only 
                         # things that change species concentrations
@@ -1008,6 +1009,7 @@ class bngModel:
     def consolidate_molecules(self):
         # potentially remove unused ones
         # or EmptySet and similar useless ones
+        # import ipdb;ipdb.set_trace()
         turn_param = []
         str_comp = []
         to_remove = []

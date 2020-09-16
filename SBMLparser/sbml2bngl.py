@@ -1994,9 +1994,14 @@ class SBML2BNGL:
                     param_obj.units = parameter.getUnits()
                 else:
                     parameters.append('{0} {1}'.format(parameterSpecs[0], parameterSpecs[1]))
-            param_obj.Id = parameterSpecs[0]
-            param_obj.val = parameterSpecs[1]
-            param_obj.cts = parameterSpecs[2]
+            if len(parameterSpecs) == 3:
+                param_obj.Id = parameterSpecs[0]
+                param_obj.val = parameterSpecs[1]
+                param_obj.cts = parameterSpecs[2]
+            else:
+                param_obj.Id = parameterSpecs[0]
+                param_obj.val = parameterSpecs[1]
+                param_obj.cts = True
             self.bngModel.add_parameter(param_obj)
 
         return parameters, zparam
