@@ -601,6 +601,18 @@ class Rule:
                             txt += str(prod[0])+"()" 
                     else: 
                         txt += str(prod[0])+"()" 
+        if self.reversible and len(self.rate_cts) == 2:
+            if len(self.model.param_repl) > 0:
+                for prep in self.model.param_repl:
+                    if self.rate_cts[0] == prep:
+                        self.rate_cts = (self.model.param_repl[prep],self.rate_cts[1])
+                    if self.rate_cts[1] == prep:
+                        self.rate_cts = (self.rate_cts[0], self.model.param_repl[prep])
+        else:
+            if len(self.model.param_repl) > 0:
+                for prep in self.model.param_repl:
+                    if self.rate_cts[0] == prep:
+                        self.rate_cts = (self.model.param_repl[prep],)
         # rate cts
         if self.reversible and len(self.rate_cts) == 2:
             # we need to check if the rate constant refers to an
@@ -738,6 +750,11 @@ class bngModel:
                             func.local_dict.update(self.obs_map)
                         else:
                             func.local_dict = self.obs_map
+                    if len(self.param_repl) > 1:
+                        if func.local_dict is not None:
+                            func.local_dict.update(self.param_repl)
+                        else:
+                            func.local_dict = self.param_repl
                     if func.Id in self.parsed_func:
                         func.sympy_parsed = self.parsed_func[fkey]
                     func.all_syms = self.all_syms
@@ -754,6 +771,11 @@ class bngModel:
                             func.local_dict.update(self.obs_map)
                         else:
                             func.local_dict = self.obs_map
+                    if len(self.param_repl) > 1:
+                        if func.local_dict is not None:
+                            func.local_dict.update(self.param_repl)
+                        else:
+                            func.local_dict = self.param_repl
                     if func.Id in self.parsed_func:
                         func.sympy_parsed = self.parsed_func[fkey]
                     func.all_syms = self.all_syms

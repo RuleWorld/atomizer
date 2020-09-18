@@ -114,6 +114,7 @@ class SBML2BNGL:
         # keep track of obs names
         self.obs_names = []
         self.obs_map = {}
+        self.param_repl = {}
 
         # ASS - I think there should be a check for compartments right here
         # to determine if a) any compartment is actually used and
@@ -1986,6 +1987,7 @@ class SBML2BNGL:
             if parameterSpecs[0] == 'e':
                 # TODO: raise a warning
                 parameterSpecs = ('__e__', parameterSpecs[1])
+                self.param_repl['e'] = '__e__'
             if parameterSpecs[1] == 0:
                 zparam.append(parameterSpecs[0])
             else:
@@ -2003,6 +2005,7 @@ class SBML2BNGL:
                 param_obj.val = parameterSpecs[1]
                 param_obj.cts = True
             self.bngModel.add_parameter(param_obj)
+        self.bngModel.param_repl = self.param_repl
 
         return parameters, zparam
 
