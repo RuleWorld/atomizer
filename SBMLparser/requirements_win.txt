@@ -11,5 +11,5 @@ PyInstaller==3.3.1
 pylru==1.0.9
 pyparsing==2.2.0
 pywin32==223
-PyYAML==5.1
+PyYAML==5.4
 winpexpect==1.5
