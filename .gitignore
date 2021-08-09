@@ -10,3 +10,4 @@ bin
 test/tmp
 test/BioNetGen-2.*
 test/semantic
+SBMLparser/test/*

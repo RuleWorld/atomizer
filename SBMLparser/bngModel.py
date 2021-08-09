@@ -868,21 +868,21 @@ class bngModel:
                 # let's first check parameters
                 if arule.Id in self.parameters:
                     a_param = self.parameters[arule.Id]
-                    if not a_param.cts:
-                        # this means that one of our parameters 
-                        # is _not_ a constant and is modified by 
-                        # an assignment rule
-                        # TODO: Not sure if anything else 
-                        # can happen here. Confirm via SBML spec
-                        a_param = self.parameters.pop(arule.Id)
-                        # TODO: check if an initial value to 
-                        # a non-constant parameter is relevant?
-                        # I think the only thing we need is to 
-                        # turn this into a function
-                        fobj = self.make_function()
-                        fobj.Id = arule.Id
-                        fobj.definition = arule.rates[0]
-                        self.add_function(fobj)
+                    #if not a_param.cts:
+                    # this means that one of our parameters 
+                    # is _not_ a constant and is modified by 
+                    # an assignment rule
+                    # TODO: Not sure if anything else 
+                    # can happen here. Confirm via SBML spec
+                    a_param = self.parameters.pop(arule.Id)
+                    # TODO: check if an initial value to 
+                    # a non-constant parameter is relevant?
+                    # I think the only thing we need is to 
+                    # turn this into a function
+                    fobj = self.make_function()
+                    fobj.Id = arule.Id
+                    fobj.definition = arule.rates[0]
+                    self.add_function(fobj)
                 elif arule.Id in self.molecule_ids:
                     # import ipdb;ipdb.set_trace()
                     # we are an assignment rule that modifies 

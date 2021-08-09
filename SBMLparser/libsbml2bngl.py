@@ -1201,7 +1201,7 @@ def analyzeHelper(document, reactionDefinitions, useID, outputFile, speciesEquiv
     # import IPython;IPython.embed()
     parser.bngModel.all_syms = parser.all_syms
     parser.bngModel.consolidate()
-    finalString = str(parser.bngModel)
+    # finalString = str(parser.bngModel)
 
     annotationInfo['units'] = parser.getUnitDefinitions()
     return AnalysisResults(len(rules), len(observables), evaluate, evaluate2, len(compartments),

@@ -1211,9 +1211,9 @@ class SBML2BNGL:
         '''
         idid = compartment.getId()
         name = compartment.getName()
-        # size = compartment.getSize()
+        size = compartment.getSize()
         # volume messes up the reactions
-        size = 1.0
+        # size = 1.0
         dimensions = compartment.getSpatialDimensions()
         if dimensions in [0, 1]:
             logMess('WARNING:SIM103', '{1}-D compartments are not supported. Changing for 2-D compartments for {0}. Please verify this does not affect simulation'.format(name, dimensions))
@@ -2038,6 +2038,7 @@ class SBML2BNGL:
             #     # we have 1 compartment and it's volume is 1
             #     # just don't use compartments.
             #     self.noCompartment = True
+            #     self.bngModel.noCompartment = True
         elif len(allUsedCompartments) > 1:
             logMess("WARNING:COMP001", "Multiple compartments are used, please note that Atomizer does not automatically try to infer your compartment topology which is important for how rules fire in cBNGL. Make sure your comparment topology is set correctly after translation")
         self.speciesMemory = []
